@@ -7,6 +7,12 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Formants only with the pitch moved**: the button Formants (and Playback >
+  Keep the formants) is greyed out while the pitch is that of the
+  recording, where it changes nothing; it keeps its state.
+- **Buttons that are on are clearly on**: Formants and the repeat button,
+  when on, are filled with the theme's selection colour (grey, if on but
+  greyed out), not just slightly sunken.
 - **Speeds chosen beforehand**: the button Speeds, beside 1×, and Playback >
   Speed presets list speeds in percent (at first 50, 60, 70, 75, 80, 90,
   100, 110, 125 and 150), the one playing ticked; Edit the speeds changes

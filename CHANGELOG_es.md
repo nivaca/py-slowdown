@@ -7,6 +7,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Formantes solo con la altura movida**: el botón Formantes (y
+  Reproducción > Conservar los formantes) está apagado mientras la altura
+  es la de la grabación, donde no cambia nada; guarda su estado.
+- **Los botones encendidos se ven encendidos**: Formantes y el botón de
+  repetir, encendidos, se ven llenos del color de selección del tema (de
+  gris, si están encendidos pero apagados), y no apenas hundidos.
 - **Velocidades elegidas de antemano**: el botón Velocidades, junto a 1×, y
   Reproducción > Velocidades elegidas muestran velocidades en por ciento
   (al principio 50, 60, 70, 75, 80, 90, 100, 110, 125 y 150), con la que

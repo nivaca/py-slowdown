@@ -187,6 +187,7 @@ class Window(QMainWindow):
         self.volume.setValue(int(self.settings.value("volume", 100, type=int)))
         self._update_enabled()
         self._check_rubberband()
+        self._update_formants()
         self.wave.setFocus()
 
     def _check_rubberband(self) -> None:
@@ -229,6 +230,12 @@ class Window(QMainWindow):
         self.transport = QWidget(self)
         # Dos filas: los mandos y el tiempo; debajo, la velocidad, la altura y el volumen (en una sola, la ventana
         # no cabía en una pantalla de 1366 píxeles).
+        # Un botón encendido (repetir, formantes) se ve lleno del color de selección del tema, no apenas hundido.
+        self.transport.setStyleSheet(
+            "QToolButton:checked { background-color: palette(highlight); color: palette(highlighted-text);"
+            " border: 1px solid palette(highlight); border-radius: 3px; }"
+            "QToolButton:checked:disabled { background-color: palette(mid); color: palette(window);"
+            " border: 1px solid palette(mid); }")
         rows = QVBoxLayout(self.transport)
         rows.setContentsMargins(0, 4, 0, 0)
         rows.setSpacing(2)
@@ -966,6 +973,7 @@ class Window(QMainWindow):
         self.pitch_box.setValue(self.player.pitch)
         self.pitch_box.blockSignals(False)
         self.b_pitch.setEnabled(self.player.pitch != 0.0)
+        self._update_formants()
 
     def set_quality(self, quality: str) -> None:
         """Stretch the sound with QUALITY: "high" (R3), "light" (R3 with a short window, half the processor) or
@@ -973,6 +981,12 @@ class Window(QMainWindow):
         self.player.quality = quality
         self.a_qualities[quality].setChecked(True)
         self.settings.setValue("quality", quality)
+
+    def _update_formants(self) -> None:
+        # Los formantes solo cuentan cuando la altura se movió: si no, el botón está apagado (y guarda su estado).
+        moved = self.stretching and self.player.pitch != 0.0
+        self.b_formants.setEnabled(moved)
+        self.a_formants.setEnabled(moved)
 
     def set_formants(self, on: bool) -> None:
         """Keep the formants when the pitch moves: a voice or an instrument keeps its timbre, instead of

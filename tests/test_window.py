@@ -822,3 +822,16 @@ def test_each_menu_letter_once(app, output, tmp_path, monkeypatch, lang):
         w.close()
     finally:
         interface.use("en")
+
+
+def test_formants_only_with_the_pitch_moved(window, app, wav):
+    """Formants can be chosen only when the pitch is moved; at 0 the button is off but keeps its state; a button
+    that is on is drawn filled (the theme's highlight)."""
+    loaded(window, app, wav)
+    assert not window.b_formants.isEnabled() and not window.a_formants.isEnabled()
+    window.set_pitch(3.0)
+    assert window.b_formants.isEnabled() and window.a_formants.isEnabled()
+    window.b_formants.click()
+    window.set_pitch(0.0)
+    assert not window.b_formants.isEnabled() and window.b_formants.isChecked() and window.player.formants
+    assert "QToolButton:checked" in window.transport.styleSheet()

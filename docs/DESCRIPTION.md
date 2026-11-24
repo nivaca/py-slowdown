@@ -581,10 +581,17 @@ menu Playback showed that two of its entries shared the letter of Alt, and
 so did three in Spanish; a test now goes through every menu in both
 languages.
 
+Two small things followed. The button Formants changes nothing while the
+pitch is that of the recording, so it is greyed out then, keeping its
+state. And a button that is on was hard to tell from one that is off: the
+style of the desktop only sinks it a little. A short style sheet for the
+controls fills it with the theme's selection colour, and with grey when it
+is on but greyed out.
+
 Testing
 -------
 
-The program has 188 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 189 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
