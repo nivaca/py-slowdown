@@ -339,16 +339,15 @@ The count-in did not work for me: I heard no clicks. Recorded in the
 callback, with the real window and sound card, the four clicks were there,
 at the tempo set, before the music. So the sound was followed further, into
 a silent virtual output of PipeWire made for the test, with the program
-playing into it: there too the clicks arrived whole. They were lost after
-PipeWire, in my Bluetooth earphones, which, like many, mute themselves
-while they receive silence and take a moment to wake: a click of 35
-milliseconds after silence did not wake them, and the music, which goes
-on, did. The count now begins with a very faint hiss (about −58 dB), four
+playing into it: there too the clicks arrived whole. So they were lost
+after PipeWire; and the output was a pair of Bluetooth earphones, which,
+like many, may mute themselves while they receive silence and take a
+moment to wake, so that a click of 35 milliseconds after silence would not
+wake them, and the music, which goes on, would. The count now begins with a very faint hiss (about −58 dB), four
 tenths of a second before the first click, and keeps it, fainter, between
 the clicks, so that the output is never exact silence while it counts; the
 clicks are fuller, a tone and its octave for 60 milliseconds. Through the
-virtual output, the hiss and the clicks arrive as they should; whether the
-earphones keep them is what I tried by ear.
+virtual output, the hiss and the clicks arrive as they should.
 
 Testing
 -------
