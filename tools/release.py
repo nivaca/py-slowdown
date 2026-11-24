@@ -12,6 +12,12 @@ checked, against the public key published, before anything is published.
     uv run python tools/release.py [--notes TEXT | --notes-file FILE] [--no-rpm | --no-copr] [--pypi]
                                    [--no-build] [--no-appimage] [--no-tests] [--redo]
                                    [--only github|codeberg] [--dry-run] [--yes]
+    uv run python tools/release.py --installers [--dry-run] [--yes]
+
+The installers for Windows and macOS are made by GitHub, on its own machines, when the tag arrives
+(.github/workflows/installers.yml), and added to the release once this has published it; then --installers
+downloads them, signs them here (FILE.asc, SHA256SUMS-installers and its signature), and attaches the
+signatures to the release on GitHub and the installers and their signatures to the one on Codeberg.
 
 In order, each step only if it is needed:
 
@@ -22,8 +28,9 @@ In order, each step only if it is needed:
 2. runs the tests (unless --no-tests);
 3. makes the wheel and the source package (uv build), the ZIP of the
    source (git archive of HEAD), the libraries of the AppImage
-   (tools/build-libs.py), the AppImage (tools/bundle-appimage.py)
-   and the Debian package made from it (tools/bundle-deb.py)
+   (tools/build-libs.py), the AppImage (tools/bundle-appimage.py),
+   and the Debian package and the installer for Linux (.run) made from it
+   (tools/bundle-deb.py, tools/bundle-run.py)
    in dist/, unless --no-build (then those in
    dist/ are used); unless --no-rpm, also the signed RPM in build/rpm/
    (packaging/build-rpm.sh --sign, which checks its signature; gpg asks for
@@ -78,6 +85,14 @@ DEB = f"dist/py-slowdown_{VERSION}-1_amd64.deb"  # (hecho de la AppImage, va con
 # The source of the Rubber Band compiled into the AppImage and the .deb (tools/build-libs.py): it is published
 # with them, as the GPL asks of whoever distributes a program built from it.
 RUBBERBAND_SOURCE = "build/libs/rubberband-4.0.0.tar.bz2"
+RUN = f"dist/py-slowdown-{VERSION}-linux-x86_64.run"  # (el instalador para Linux, hecho de la AppImage)
+# Windows y macOS los hace GitHub (.github/workflows/installers.yml), y --installers los baja aquí
+CI_INSTALLERS = [f"build/installers/{name}" for name in (
+    f"py-slowdown-{VERSION}-windows-x64-setup.exe",
+    f"py-slowdown-{VERSION}-macos-arm64.dmg",
+    f"py-slowdown-{VERSION}-macos-x86_64.dmg",
+)]
+CI_SUMS = "build/installers/SHA256SUMS-installers"
 SPEC = "packaging/py-slowdown.spec"
 PUBLIC_KEY = "packaging/RPM-GPG-KEY-py-slowdown"  # (the public key published with every release)
 SUMS = "dist/SHA256SUMS"
@@ -228,6 +243,7 @@ class Release:
                       "tools/build-libs.py")
             self.plan("Make the AppImage", "uv", "run", "python", "tools/bundle-appimage.py")
             self.plan("Make the Debian package", "uv", "run", "python", "tools/bundle-deb.py")
+            self.plan("Make the installer for Linux", "uv", "run", "python", "tools/bundle-run.py")
         if self.args.rpm:
             self.plan("Make the signed RPM", "packaging/build-rpm.sh", "--sign")
 
@@ -315,11 +331,45 @@ class Release:
         self.plan("PyPI: upload the wheel and the source package", "uv", "publish",
                   "--check-url", "https://pypi.org/simple/", WHEEL, SDIST)
 
+    def installers(self):
+        """--installers: those of Windows and macOS, from the release on GitHub (made by installers.yml) to
+        the one on Codeberg, each signed here, with the signatures attached to both."""
+        self.forges = ["github", "codeberg"]
+        for tool in ("gh", "tea", "gpg"):
+            if not shutil.which(tool):
+                sys.exit(f"release.py: {tool} is not installed")
+        key = signing_key()
+        if not key or subprocess.run(["gpg", "--batch", "--list-secret-keys", key],
+                                     capture_output=True).returncode != 0:
+            sys.exit(f"release.py: the signing key {key or '(none pinned)'} is not in this machine's gpg keyring")
+        repos = self.repos()
+        names = [Path(f).name for f in CI_INSTALLERS]
+        on_github = self.read("gh", "release", "view", TAG, "--repo", repos["github"], "--json", "assets",
+                              "--jq", ".assets[].name", check=False).split("\n")
+        missing = [n for n in names if n not in on_github]
+        if missing:
+            sys.exit(f"release.py: the release {TAG} on GitHub does not have {', '.join(missing)} "
+                     "(has installers.yml finished?)")
+        patterns = [a for n in names for a in ("--pattern", n)]
+        self.plan("Download the installers from GitHub", "gh", "release", "download", TAG, *patterns, "--dir",
+                  "build/installers", "--clobber", "--repo", repos["github"])
+        # Se firman aquí, como los demás archivos de la versión, con sus propias sumas; las firmas van a las dos
+        self.plan("Sign the installers, and check each signature with the published key", sys.executable,
+                  "tools/sign_release.py", "--key", key, "--public", PUBLIC_KEY, "--sums", CI_SUMS, *CI_INSTALLERS)
+        signatures = [f"{f}.asc" for f in CI_INSTALLERS] + [CI_SUMS, f"{CI_SUMS}.asc"]
+        self.plan("GitHub: attach their signatures to the release", "gh", "release", "upload", TAG, *signatures,
+                  "--clobber", "--repo", repos["github"])
+        self.files = CI_INSTALLERS + signatures
+        self.codeberg(repos["codeberg"])
+        self.run_plan()
+
     def __call__(self):
         a = self.args
+        if a.installers:
+            return self.installers()
         self.forges = [a.only] if a.only else ["github", "codeberg"]
         a.rpm = not a.no_rpm  # (the signed RPM, always, unless --no-rpm)
-        self.files = [WHEEL, SDIST, ZIP] + ([] if a.no_appimage else [APPIMAGE, DEB, RUBBERBAND_SOURCE])
+        self.files = [WHEEL, SDIST, ZIP] + ([] if a.no_appimage else [APPIMAGE, DEB, RUN, RUBBERBAND_SOURCE])
         if a.rpm:
             self.files += [rpm()]
         self.files += [PUBLIC_KEY]
@@ -359,6 +409,9 @@ def main(argv=None):
                         help=f"move {TAG} to HEAD if it is on another commit (here and on the remotes), and "
                              "replace the files of the releases")
     parser.add_argument("--only", choices=("github", "codeberg"), help="publish on one forge only")
+    parser.add_argument("--installers", action="store_true",
+                        help="only sign the installers for Windows and macOS (made on GitHub by installers.yml) "
+                             "and copy them, with their signatures, to the release on Codeberg")
     parser.add_argument("--tea-login", default="codeberg", help="the login of tea for Codeberg (default: codeberg)")
     parser.add_argument("-n", "--dry-run", action="store_true", help="only show the commands")
     parser.add_argument("-y", "--yes", action="store_true", help="don't ask before running them")

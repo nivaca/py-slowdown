@@ -27,7 +27,23 @@
    a signed tag, and checks it (`git tag -v`); pushes to GitHub (`origin`)
    and Codeberg (`codeberg`); and attaches the files to the release on both;
    then it sends the signed source RPM to Copr (project nivaca/py-slowdown).
-   `--dry-run` only shows the commands.
+   `--dry-run` only shows the commands. It also makes the installer for
+   Linux (`.run`, from the AppImage).
+
+3. The tag starts `.github/workflows/installers.yml` on GitHub, which makes
+   the installers for Windows (Inno Setup) and macOS (a `.dmg` for Apple
+   Silicon and one for Intel), each on its own system, installs each one,
+   tries it, removes it, and adds them to the release. When it has
+   finished (half an hour or so), sign them and copy them to Codeberg:
+
+   ```bash
+   uv run python tools/release.py --installers
+   ```
+
+   This downloads them, signs them here (`FILE.asc`, and
+   `SHA256SUMS-installers` with its signature), checks each signature with
+   the published key, and attaches the signatures to GitHub's release and
+   the installers with their signatures to Codeberg's.
 
 ## What the RPM build needs
 
@@ -41,6 +57,18 @@ sudo dnf install rpm-build rpm-sign rpmdevtools python3-devel pyproject-rpm-macr
 whole test suite on the installed package, so they must be installed here.
 (Where RPM Fusion's `ffmpeg` is installed, it provides `/usr/bin/ffmpeg`
 instead of `ffmpeg-free`.)
+
+## The installers for Windows and macOS
+
+`tools/bundle-installer.py` makes them, on their own systems (that is,
+on GitHub): a Python 3.14 of python-build-standalone, pinned with its
+SHA-256, with py-slowdown and its wheels installed into it, Qt trimmed as
+in the AppImage, and the Rubber Band of `tools/build-libs.py` (for
+Windows compiled with zig, from any system; for macOS with Apple's clang,
+on macOS). `--stage-only` lays out the folder of an installer on any
+system, to look at it. They are not signed by Microsoft or Apple (that
+needs paid certificates), so SmartScreen and Gatekeeper warn the first
+time; the manuals say what to do.
 
 ## The libraries in the AppImage and the Debian package
 

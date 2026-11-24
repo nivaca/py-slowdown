@@ -17,6 +17,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 from pathlib import Path
@@ -43,8 +44,12 @@ def cache_dir() -> Path:
     Not /tmp: on many systems (Fedora among them) it lives in memory, which
     is what the mapped file is meant to spare.
     """
-    base = os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")
-    path = Path(base) / "py-slowdown"
+    if sys.platform == "win32" and os.environ.get("LOCALAPPDATA"):
+        path = Path(os.environ["LOCALAPPDATA"]) / "py-slowdown" / "cache"
+    elif sys.platform == "darwin":
+        path = Path.home() / "Library" / "Caches" / "py-slowdown"
+    else:
+        path = Path(os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")) / "py-slowdown"
     path.mkdir(parents=True, exist_ok=True)
     return path
 

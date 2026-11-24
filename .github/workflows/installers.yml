@@ -1,32 +1,91 @@
-# The installer of install/, run on Linux and macOS: it installs py-slowdown
-# from this source with Python 3.14, checks what it made, runs the tests of the
-# program (not those of the packaging, which are Fedora's) against the program
-# installed, and uninstalls it. macOS (whose minutes count ten times) only for
-# tags, on Mondays and when started by hand.
+# Makes the installers of py-slowdown for Windows and macOS
+# (tools/bundle-installer.py), each on its own system, installs each one, tries
+# it and removes it:
+#
+#   Windows   py-slowdown-VERSION-windows-x64-setup.exe   (Inno Setup)
+#   macOS     py-slowdown-VERSION-macos-arm64.dmg, -macos-x86_64.dmg
+#
+# With each tag that is pushed, they are added to the release of the tag once
+# tools/release.py has published it (it is waited for, never made here); then
+# tools/release.py --installers signs them and copies them to Codeberg. Run by
+# hand ("Run workflow"), they are only kept as artifacts of the run. (The
+# installer for Linux, the .run, is made and signed by tools/release.py.)
 
 name: installers
 
 on:
   push:
-    branches: [main]
     tags: ["v*"]
-    paths: ["install/**", "src/**", "tests/**", "pyproject.toml", ".github/workflows/installers.yml"]
-  schedule:
-    - cron: "17 6 * * 1"
   workflow_dispatch:
 
+permissions:
+  contents: write             # (to add them to the release)
+
 jobs:
-  unix:
+  windows:
+    runs-on: windows-latest
+    env:
+      PYTHONUTF8: "1"
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@v6
+      - name: Inno Setup
+        shell: pwsh
+        run: |
+          $found = Get-ChildItem "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe", "$env:ProgramFiles\Inno Setup *\ISCC.exe" -ErrorAction SilentlyContinue
+          if (-not $found) { choco install innosetup -y --no-progress }
+      - name: Build the installer
+        run: python tools/bundle-installer.py --system windows
+      - name: Install it, try it and remove it
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = (Get-ChildItem dist\*-windows-x64-setup.exe).FullName
+          Start-Process -Wait -FilePath $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER', '/TASKS=openwith', '/LOG=install.log'
+          $app = "$env:LOCALAPPDATA\Programs\py-slowdown"
+          & "$app\python\python.exe" -s packaging\installer\check.py
+          if ($LASTEXITCODE) { throw 'check.py failed' }
+          $out = & "$app\python\python.exe" -s -m py_slowdown --version | Out-String
+          if ($out -notmatch 'py-slowdown') { throw "--version said: $out" }
+          $menu = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\py-slowdown.lnk"
+          if (-not (Test-Path $menu)) { throw 'no Start menu shortcut' }
+          $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($menu)
+          if ($shortcut.TargetPath -notlike '*\python\pythonw.exe') { throw "the shortcut runs $($shortcut.TargetPath)" }
+          $open = (Get-Item 'HKCU:\Software\Classes\.mp3\OpenWithProgids').GetValueNames()
+          if ($open -notcontains 'py-slowdown.audio') { throw 'not in Open with for .mp3' }
+          $command = (Get-ItemProperty 'HKCU:\Software\Classes\py-slowdown.audio\shell\open\command').'(default)'
+          if ($command -notlike '*pythonw.exe*-m py_slowdown*') { throw "Open with runs $command" }
+          Start-Process -Wait -FilePath "$app\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+          # (the uninstaller goes on in a copy of itself)
+          for ($i = 0; $i -lt 60 -and (Test-Path "$app\python"); $i++) { Start-Sleep 1 }
+          if (Test-Path "$app\python") { throw 'not uninstalled' }
+          if (Test-Path $menu) { throw 'the shortcut is still there' }
+          if (Test-Path 'HKCU:\Software\Classes\py-slowdown.audio') { throw 'Open with is still there' }
+          $left = (Get-Item 'HKCU:\Software\Classes\.mp3\OpenWithProgids' -ErrorAction SilentlyContinue)
+          if ($left -and ($left.GetValueNames() -contains 'py-slowdown.audio')) { throw '.mp3 still offers it' }
+      - name: The log of the installation
+        if: always()
+        shell: pwsh
+        run: if (Test-Path install.log) { Get-Content install.log -Tail 60 }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-windows
+          path: dist/*.exe
+
+  macos:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        mac:
-          - ${{ github.event_name != 'push' || startsWith(github.ref, 'refs/tags/') }}
-        exclude:
-          - os: macos-latest
-            mac: false
-    runs-on: ${{ matrix.os }}
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
     env:
       QT_QPA_PLATFORM: offscreen
     steps:
@@ -34,43 +93,58 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
-      - name: Libraries for Qt, Rubber Band, PortAudio, and ffmpeg (the tests read files with it too)
-        if: runner.os == 'Linux'
+      - uses: astral-sh/setup-uv@v6
+      - name: Build the installer
+        run: python3 tools/bundle-installer.py --system macos --arch ${{ matrix.arch }}
+      - name: Install it, try it and remove it
         run: |
-          sudo apt-get update -q
-          sudo apt-get install -q -y libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 \
-              librubberband2 libportaudio2 ffmpeg
-      - name: Rubber Band and ffmpeg
-        if: runner.os == 'macOS'
-        run: brew install rubberband ffmpeg
-      - name: Install
-        run: bash install/install.sh
-      - name: What it made
+          set -ex
+          dmg=$(ls dist/*-macos-${{ matrix.arch }}.dmg)
+          hdiutil verify "$dmg"
+          mount=$(mktemp -d)
+          hdiutil attach "$dmg" -nobrowse -readonly -mountpoint "$mount"
+          test -L "$mount/Applications"
+          cp -R "$mount/py-slowdown.app" /Applications/
+          hdiutil detach "$mount"
+          app=/Applications/py-slowdown.app
+          codesign --verify --deep --strict "$app"
+          plutil -lint "$app/Contents/Info.plist"
+          test -s "$app/Contents/Resources/py-slowdown.icns"
+          "$app/Contents/Resources/python/bin/python3" -s packaging/installer/check.py
+          "$app/Contents/MacOS/py-slowdown" --version | grep -q py-slowdown
+          lipo -archs "$app/Contents/Resources/python/lib/python3.14/site-packages/py_slowdown/lib/librubberband.dylib" | grep -q ${{ matrix.arch }}
+          rm -rf "$app"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-macos-${{ matrix.arch }}
+          path: dist/*.dmg
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installer-*
+          path: installers
+          merge-multiple: true
+      - name: Add them to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          set -x
-          ~/.local/bin/py-slowdown --version || ~/bin/py-slowdown --version
-          if [ "$RUNNER_OS" = macOS ]; then
-            app=~/Applications/py-slowdown.app
-            test -x "$app/Contents/MacOS/py-slowdown"
-            plutil -lint "$app/Contents/Info.plist"
-            test -s "$app/Contents/Resources/py-slowdown.icns"
-            "$app/Contents/MacOS/py-slowdown" --version
-            venv=~/"Library/Application Support/py-slowdown/venv"
-          else
-            desktop-file-validate ~/.local/share/applications/py-slowdown.desktop || true
-            grep -q "^Exec=\"$HOME/.local/share/py-slowdown/venv/bin/py-slowdown\"" ~/.local/share/applications/py-slowdown.desktop
-            test -s ~/.local/share/icons/hicolor/48x48/apps/py-slowdown.png
-            venv=~/.local/share/py-slowdown/venv
+          # tools/release.py hace la versión (con los archivos firmados) después de subir la etiqueta:
+          # aquí se la espera, publicada, y nunca se hace, o las dos se harían a la vez
+          draft=""
+          for i in $(seq 1 120); do
+            draft="$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null || true)"
+            [ "$draft" = false ] && break
+            sleep 30
+          done
+          if [ "$draft" != false ]; then
+            echo "There is no release of $TAG after an hour: make it with tools/release.py, then run this again."
+            exit 1
           fi
-          echo "VENV=$venv" >> "$GITHUB_ENV"
-      - name: Tests, against the program installed
-        run: |
-          "$VENV/bin/python" -m pip install --quiet pytest
-          "$VENV/bin/python" -m pytest -q -p no:cacheprovider tests --ignore=tests/test_packaging.py
-      - name: Uninstall
-        run: |
-          bash install/install.sh --uninstall
-          test ! -e "$VENV"
-          test ! -e ~/.local/bin/py-slowdown
-          test ! -e ~/Applications/py-slowdown.app
-          test ! -e ~/.local/share/applications/py-slowdown.desktop
+          gh release upload "$TAG" installers/* --clobber

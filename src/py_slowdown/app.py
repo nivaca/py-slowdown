@@ -43,15 +43,37 @@ def translate_qt(app) -> None:
         app._qt_translator = translator  # (que no se lo lleve el recolector)
 
 
+def application_class():
+    """The QApplication of the program, which also takes the files that macOS sends as events (Open With in
+    the Finder, a file dropped on the icon in the Dock): to the window, or kept until there is one."""
+    from PySide6.QtCore import QEvent
+    from PySide6.QtWidgets import QApplication
+
+    class Application(QApplication):
+        window = None
+
+        def event(self, event):
+            if event.type() == QEvent.Type.FileOpen and event.file():
+                if self.window is not None:
+                    self.window.open_file(event.file())
+                else:
+                    self.waiting.append(event.file())
+                return True
+            return super().event(event)
+
+    return Application
+
+
 def main(argv: list[str] | None = None) -> int:
     config = settings()
     interface.use(config.value("interface", "") or interface.system_code())
     interface.translate_argparse()
+    # (macOS antiguo añadía -psn_... al abrir una aplicación desde el Finder)
+    argv = [a for a in (sys.argv[1:] if argv is None else argv) if not a.startswith("-psn_")]
     args = build_parser().parse_args(argv)
 
-    from PySide6.QtWidgets import QApplication
-
-    app = QApplication(sys.argv[:1])
+    app = application_class()(sys.argv[:1])
+    app.waiting = []
     app.setApplicationName("py-slowdown")
     app.setOrganizationName("py-slowdown")
     app.setDesktopFileName("py-slowdown")
@@ -61,8 +83,9 @@ def main(argv: list[str] | None = None) -> int:
 
     window = Window(settings=config)
     window.show()
-    if args.file:
-        window.open_file(args.file)
+    app.window = window
+    for path in ([args.file] if args.file else []) + app.waiting:
+        window.open_file(path)
     return app.exec()
 
 

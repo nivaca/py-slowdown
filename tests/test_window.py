@@ -153,3 +153,41 @@ def test_without_rubberband(app, output, tmp_path, monkeypatch, wav):
     assert w.player.speed == 1.0
     assert w.open_file(wav)
     w.close()
+
+
+def test_files_sent_by_the_system(app, wav):
+    """macOS sends the files of Open With as events (FileOpen): to the window, or kept until there is one."""
+    from types import SimpleNamespace
+
+    from PySide6.QtGui import QFileOpenEvent
+
+    from py_slowdown.app import application_class
+
+    opened = []
+    event = application_class().event  # (on a stand-in: there is only one QApplication per process)
+    early = SimpleNamespace(window=None, waiting=[])
+    assert event(early, QFileOpenEvent(str(wav))) is True
+    assert early.waiting == [str(wav)]
+    ready = SimpleNamespace(window=SimpleNamespace(open_file=opened.append), waiting=[])
+    assert event(ready, QFileOpenEvent(str(wav))) is True
+    assert opened == [str(wav)] and ready.waiting == []
+
+
+def test_finder_argument_is_ignored(monkeypatch):
+    """An old macOS adds -psn_0_12345 when it opens an application: it is not taken as an unknown option."""
+    from py_slowdown import app
+
+    seen = []
+    monkeypatch.setattr(app, "build_parser", lambda: SimpleParser(seen))
+    monkeypatch.setattr(app, "application_class", lambda: (_ for _ in ()).throw(SystemExit(0)))
+    with pytest.raises(SystemExit):
+        app.main(["-psn_0_12345", "talk.mp3"])
+    assert seen == [["talk.mp3"]]
+
+
+class SimpleParser:
+    def __init__(self, seen):
+        self.seen = seen
+
+    def parse_args(self, argv):
+        self.seen.append(argv)

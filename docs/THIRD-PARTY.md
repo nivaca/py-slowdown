@@ -6,7 +6,7 @@ Open-source software used by py-slowdown
 py-slowdown is free software, under the GNU General Public License, version 3
 or later (GPL-3.0-or-later). It is built on the open-source software listed
 here: the libraries it uses, the programs it runs, and the tools that build,
-test and package it. The versions are those of py-slowdown 0.1.0 (as
+test and package it. The versions are those of py-slowdown 0.2.0 (as
 `uv.lock` resolves them); `uv tree` shows those of any later version.
 Licences are given as SPDX identifiers, as each project declares them.
 
@@ -66,4 +66,6 @@ Tools that build, test and package it
 | [Pillow](https://python-pillow.org) | MIT-CMU | The icon for Windows (.ico) |
 | [LuaLaTeX](https://www.luatex.org), [latexmk](https://ctan.org/pkg/latexmk), makeindex | GPL-2.0-or-later, GPL-2.0-only, MIT | The user manuals |
 | [Junicode](https://github.com/psb1558/Junicode-font), [DejaVu](https://dejavu-fonts.github.io) | OFL-1.1, Bitstream-Vera | The fonts of the manuals |
+| [python-build-standalone](https://github.com/astral-sh/python-build-standalone) | MPL-2.0 (Python: PSF-2.0) | The Python of the installers for Windows and macOS |
+| [Inno Setup](https://jrsoftware.org/isinfo.php) | Inno Setup License (BSD-style) | Makes the installer for Windows |
 | [AppStream](https://www.freedesktop.org/wiki/Distributions/AppStream/), desktop-file-utils | LGPL-2.1-or-later, GPL-2.0-or-later | Check the metadata and the menu entry |

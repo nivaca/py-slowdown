@@ -7,7 +7,7 @@ py-slowdown es software libre, bajo la Licencia Pública General de GNU,
 versión 3 o posterior (GPL-3.0-or-later). Está hecho sobre el software de
 código abierto que se lista aquí: las bibliotecas que usa, los programas que
 corre y las herramientas con que se hace, se prueba y se empaqueta. Las
-versiones son las de py-slowdown 0.1.0 (como las resuelve `uv.lock`); `uv
+versiones son las de py-slowdown 0.2.0 (como las resuelve `uv.lock`); `uv
 tree` muestra las de cualquier versión posterior. Las licencias van como
 identificadores SPDX, tal como cada proyecto las declara.
 
@@ -68,4 +68,6 @@ Las herramientas con que se hace, se prueba y se empaqueta
 | [Pillow](https://python-pillow.org) | MIT-CMU | El ícono para Windows (.ico) |
 | [LuaLaTeX](https://www.luatex.org), [latexmk](https://ctan.org/pkg/latexmk), makeindex | GPL-2.0-or-later, GPL-2.0-only, MIT | Los manuales de usuario |
 | [Junicode](https://github.com/psb1558/Junicode-font), [DejaVu](https://dejavu-fonts.github.io) | OFL-1.1, Bitstream-Vera | Las fuentes de los manuales |
+| [python-build-standalone](https://github.com/astral-sh/python-build-standalone) | MPL-2.0 (Python: PSF-2.0) | El Python de los instaladores para Windows y macOS |
+| [Inno Setup](https://jrsoftware.org/isinfo.php) | Inno Setup License (BSD-style) | Hace el instalador para Windows |
 | [AppStream](https://www.freedesktop.org/wiki/Distributions/AppStream/), desktop-file-utils | LGPL-2.1-or-later, GPL-2.0-or-later | Comprueban los metadatos y la entrada del menú |

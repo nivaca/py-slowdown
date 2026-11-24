@@ -8,7 +8,7 @@ lectures and interviews, where one needs to hear a passage again and again
 at a speed one can follow; it follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in six stages.
+in seven stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -190,10 +190,59 @@ them in the language of the interface too. The manuals also showed that
 the monospaced font joined two hyphens into a dash (`--help` came out as
 `–help`), so TeX's ligatures are turned off in it.
 
+7. Installers for Windows, macOS and Linux
+-----------------------------------------
+
+The packages so far served Linux, and macOS only from the source. For the
+installers of the other two systems I followed py-words, which already has
+them: each carries its own Python, a pinned build of python-build-standalone
+checked by its SHA-256, with the program and its wheels installed into it
+and Qt trimmed as in the AppImage, and each is made on its own system, by
+GitHub, which installs it, tries it with `packaging/installer/check.py` (a
+file read and stretched, PortAudio found, the window made), removes it,
+and adds it to the release; `tools/release.py --installers` then signs them
+here and copies them to Codeberg. For Windows it is a setup made with Inno
+Setup, for one user without administrator's rights or for everyone, with
+an entry in the Start menu and py-slowdown in "Open with" for audio files,
+under a file type of its own, so no other program loses the files it
+opens. For macOS it is a disk image with `py-slowdown.app`, one for Apple
+Silicon and one for Intel, rather than py-words' package: py-slowdown is
+only a window, and dragging it to Applications is what a Mac user
+expects.
+
+Rubber Band had to be compiled for each. For Windows, zig makes the DLL
+from Linux as well, and it needs only what Windows 10 already has; for
+macOS it is compiled on the Mac, with Apple's clang, because there Rubber
+Band uses Apple's own FFT, in a framework that zig does not bring.
+PortAudio comes with sounddevice's own wheels for both. Laying out the
+installers here, with the packages for Windows and macOS (`--stage-only`),
+showed two things: PySide6 and PyAV need macOS 13, not 11, and the
+bookmarks and the decoded sound went to `~/.local/share` and `~/.cache` on
+every system. They now go where each system keeps such things
+(`%APPDATA%` and `%LOCALAPPDATA%` on Windows, `~/Library` on macOS). And
+files opened from the Finder reach a program as an event, not as an
+argument, so the window now takes them.
+
+For Linux, the RPM, the Debian package and the AppImage were already
+there; but the AppImage puts nothing in the menu, and many distributions
+use neither of the two packages. So there is also an installer, a `.run`
+made from the AppImage, as the Debian package is: a shell script followed
+by its contents, checked by their SHA-256, which installs for the user or,
+with sudo, for everyone, with the command, the menu entry, the icons, the
+manual pages and an uninstaller that removes only what it put. Its test
+builds it from a stand-in AppImage and installs it in a home of its own,
+with its own data folder too (the lesson of stage 5).
+
+None of the installers is signed by Microsoft or Apple, which needs
+certificates that cost money every year; so SmartScreen and Gatekeeper
+warn the first time, and the manuals say what to do. The signature of
+each file, with the project's key, is what proves that it is the one
+published.
+
 Testing
 -------
 
-The program has 75 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 83 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -212,10 +261,12 @@ documentation: the versions
 agree, the licence, the desktop file, the metainfo, the spec, the manual
 pages, the icons, the signing key and the signing of a release (with a key
 made for the test), and that the manuals have the version of the program,
-the same pictures in both languages, and their PDFs. Besides, the player was run on the real sound card at
+the same pictures in both languages, and their PDFs; and the installers:
+the `.run` installed and uninstalled, the Inno Setup script, and the names
+that the workflow makes and the release looks for. Besides, the player was run on the real sound card at
 seven speeds, with no buffer underrun, also through the PortAudio and the
 Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 57 files and about 8,400 lines (5,200 of them in Python).
+The program has 64 files and about 10,100 lines (6,100 of them in Python).

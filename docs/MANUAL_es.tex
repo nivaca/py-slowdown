@@ -1,4 +1,4 @@
-\newcommand*{\version}{0.1.0}
+\newcommand*{\version}{0.2.0}
 
 \documentclass[12pt,
               article,
@@ -186,8 +186,66 @@ La ventana está en inglés o en español. Este manual describe la versión
 
 \index{instalacion@instalación}%
 Las versiones están en GitHub y en Codeberg (las direcciones están en la
-primera página). Cada una trae los paquetes que siguen, y todos los
-archivos van firmados: véase la sección~\ref{sec:firmas}.
+primera página). Cada una trae los instaladores y paquetes que siguen, y
+todos los archivos van firmados: véase la sección~\ref{sec:firmas}. Cada
+instalador lleva todo lo que el programa necesita, su propio Python y sus
+bibliotecas incluidos; no hay que instalar nada más.
+
+\subsection{Windows}
+
+\index{windows@Windows}\index{instalador}%
+\texttt{py-slowdown-\version-windows-x64-setup.exe} instala el programa en
+Windows 10 o posterior. Lo instala para el usuario que lo corre, sin
+permisos de administrador, salvo que en su primera página se elija
+instalarlo para todos. Pone una entrada en el menú Inicio, un ícono en el
+escritorio si se pide, y \menu{py-slowdown} en \menu{Abrir con} de los
+archivos de audio (sin quitarle a ningún otro programa los archivos que
+abre); el programa se quita en \menu{Configuración\then Aplicaciones}, como
+cualquier otro.
+
+\index{smartscreen@SmartScreen}%
+El instalador no está firmado con un certificado que Windows conozca, así
+que la primera vez Windows puede decir que protegió el equipo
+(SmartScreen). \menu{Más información\then Ejecutar de todas formas} sigue
+adelante. La firma de la sección~\ref{sec:firmas} es la que prueba que el
+archivo es el publicado.
+
+\subsection{macOS}
+
+\index{macos@macOS}%
+Hay una imagen de disco para cada clase de Mac:
+\texttt{py-slowdown-\version-macos-arm64.dmg} para los que tienen Apple
+Silicon (M1 y posteriores), y \texttt{py-slowdown-\version-macos-x86\_64.dmg}
+para los que tienen Intel. Necesitan macOS 13 (Ventura) o posterior. Se
+abre la imagen y se arrastra \menu{py-slowdown} a \menu{Aplicaciones}.
+Desde entonces los archivos de audio se pueden abrir con él desde el Finder
+(\menu{Abrir con}), o soltarlos sobre su ícono.
+
+\index{gatekeeper@Gatekeeper}%
+La aplicación no está notarizada por Apple, así que la primera vez macOS
+dice que no puede comprobarla. En \menu{Ajustes del Sistema\then
+Privacidad y seguridad}, abajo, se elige \menu{Abrir igualmente} para
+py-slowdown (en macOS 14 y anteriores, un clic derecho sobre la aplicación
+y \menu{Abrir} hace lo mismo). Se pregunta una sola vez.
+
+\subsection{Cualquier Linux: el instalador}
+
+\index{instalador}%
+\texttt{py-slowdown-\version-linux-x86\_64.run} instala el programa en
+cualquier Linux con glibc 2.34 o posterior, con una entrada en el menú de
+aplicaciones:
+
+\begin{quote}
+\texttt{sh py-slowdown-\version-linux-x86\_64.run}
+\end{quote}
+
+\noindent Lo instala para el usuario que lo corre (en
+\texttt{\textasciitilde/.local/share/py-slowdown/app}, con la orden
+\texttt{py-slowdown} en \texttt{\textasciitilde/.local/bin}) o, corrido con
+\texttt{sudo}, para todos (en \texttt{/opt/py-slowdown}). Pregunta antes
+(\texttt{-{}-yes} no pregunta), y \texttt{-{}-check} solo comprueba el
+archivo. Para quitar el programa, se corre \texttt{uninstall.sh}, en su
+carpeta.
 
 \subsection{Fedora}
 
@@ -249,8 +307,7 @@ macOS: \texttt{brew install rubberband}
 
 \noindent\index{uv}%
 Para correrlo desde el código sin instalarlo, con \texttt{uv}:
-\texttt{uv run py-slowdown [ARCHIVO]}. Todavía no hay versión para
-Windows.
+\texttt{uv run py-slowdown [ARCHIVO]}.
 
 \subsection{Cómo comprobar los archivos de una versión}
 \label{sec:firmas}
@@ -265,9 +322,10 @@ comprueban con la clave pública que se publica con la versión:
 \texttt{gpg -{}-verify ARCHIVO.asc ARCHIVO}
 \end{quote}
 
-\noindent El RPM va firmado también por dentro; \texttt{dnf} lo comprueba
-una vez importada la clave (\texttt{sudo rpm -{}-import
-RPM-GPG-KEY-py-slowdown}).
+\noindent Los instaladores para Windows y macOS, que hace GitHub, tienen
+sus sumas en \texttt{SHA256SUMS-installers}, también firmado. El RPM va
+firmado también por dentro; \texttt{dnf} lo comprueba una vez importada la
+clave (\texttt{sudo rpm -{}-import RPM-GPG-KEY-py-slowdown}).
 
 \section{Cómo se abre el programa}
 
@@ -450,16 +508,28 @@ recientes.
 
 \index{archivos de configuracion@archivos de configuración}\index{marcadores!donde se guardan@dónde se guardan}%
 \begin{description}
-\item[\texttt{\textasciitilde/.config/py-slowdown/py-slowdown.conf}] la
-  configuración. Si se borra, con el programa cerrado, vuelven los valores
-  de siempre.
-\item[\texttt{\textasciitilde/.local/share/py-slowdown/bookmarks.json}] los
-  marcadores y el punto donde se dejó cada archivo (en
-  \texttt{\$XDG\_DATA\_HOME}, si está definida). Es un archivo JSON, que se
-  puede copiar a otro computador o leer con otros programas.
-\item[\texttt{\textasciitilde/.cache/py-slowdown/}] el sonido decodificado
-  del archivo abierto, en un archivo temporal sin nombre, que se va con él.
+\item[La configuración] en
+  \texttt{\textasciitilde/.config/py-slowdown/py-slowdown.conf} en Linux; en
+  el registro, bajo \texttt{HKEY\_CURRENT\_USER\textbackslash
+  Software\textbackslash py-slowdown}, en Windows, y en
+  \texttt{\textasciitilde/Library/Preferences/com.py-slowdown.py-slowdown.plist}
+  en macOS. Si se borra, con el programa cerrado, vuelven los valores de
+  siempre.
+\item[Los marcadores] y el punto donde se dejó cada archivo, en
+  \texttt{bookmarks.json}: en \texttt{\textasciitilde/.local/share/py-slowdown/}
+  en Linux (en \texttt{\$XDG\_DATA\_HOME}, si está definida), en
+  \texttt{\%APPDATA\%\textbackslash py-slowdown} en Windows y en
+  \texttt{\textasciitilde/Library/Application Support/py-slowdown/} en macOS.
+  Es un archivo JSON, que se puede copiar a otro computador o leer con
+  otros programas.
+\item[El sonido decodificado] del archivo abierto, en un archivo temporal
+  sin nombre, que se va con él: en \texttt{\textasciitilde/.cache/py-slowdown/}
+  en Linux, \texttt{\%LOCALAPPDATA\%\textbackslash py-slowdown\textbackslash
+  cache} en Windows y \texttt{\textasciitilde/Library/Caches/py-slowdown/} en
+  macOS.
 \end{description}
+
+\noindent Desinstalar el programa nunca los quita.
 
 \section{Teclas}
 
@@ -502,8 +572,10 @@ recientes.
 \item[Los marcadores de un archivo desaparecieron] el archivo se movió o se
   renombró; sus marcadores siguen en \texttt{bookmarks.json}, con su ruta
   anterior, y allí se pueden pasar a la nueva, con el programa cerrado.
-\item[Un ajuste quedó mal] borre \texttt{py-slowdown.conf}
+\item[Un ajuste quedó mal] borre la configuración
   (sección~\ref{sec:archivos}).
+\item[macOS o Windows no abren el programa] no está firmado por Apple ni
+  por Microsoft: véase la sección~\ref{sec:instalacion}.
 \end{description}
 
 \noindent

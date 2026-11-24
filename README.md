@@ -57,21 +57,32 @@ Installing
 ----------
 
 Each release, on [GitHub](https://github.com/nivaca/py-slowdown/releases)
-and [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases), has:
+and [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases), has
+installers that carry all the program needs (their own Python, Qt, FFmpeg
+and Rubber Band), so nothing else has to be installed:
 
-- an RPM for Fedora (also in Copr: `sudo dnf copr enable nivaca/py-slowdown`
-  and `sudo dnf install py-slowdown`), which uses Fedora's Rubber Band,
-  PortAudio and ffmpeg;
-- an AppImage for any Linux with glibc 2.34 or later (Ubuntu 22.04,
-  Debian 12, Fedora 35 and later), which needs nothing installed: it
-  carries its own Python, Qt, FFmpeg, Rubber Band and PortAudio;
-- a Debian package for Debian 12, Ubuntu 22.04 and later, made from the
-  AppImage, which installs it in `/opt/py-slowdown`;
-- the wheel and the source, for installing with pip.
+- **Windows** 10 or later: `py-slowdown-VERSION-windows-x64-setup.exe`. It
+  installs for you alone, without administrator's rights (or for everyone,
+  if you choose so), with a Start-menu entry and "Open with" for audio
+  files. The installer is not signed by Microsoft: if SmartScreen stops it,
+  choose *More info > Run anyway*.
+- **macOS** 13 or later: `py-slowdown-VERSION-macos-arm64.dmg` (Apple
+  Silicon) or `-macos-x86_64.dmg` (Intel). Drag py-slowdown to
+  Applications. It is not notarized by Apple: the first time, choose *Open
+  Anyway* in System Settings > Privacy & Security.
+- **Linux**: an RPM for Fedora (also in Copr: `sudo dnf copr enable
+  nivaca/py-slowdown` and `sudo dnf install py-slowdown`), which uses
+  Fedora's Rubber Band, PortAudio and ffmpeg; a Debian package for Debian
+  12, Ubuntu 22.04 and later; and, for any Linux with glibc 2.34 or later,
+  an installer (`sh py-slowdown-VERSION-linux-x86_64.run`, for you alone,
+  or with sudo for everyone, with a menu entry and an uninstaller) and an
+  AppImage, which needs no installing.
+- The wheel and the source, for installing with pip.
 
 Every file is signed with the key in `packaging/RPM-GPG-KEY-py-slowdown`
-(`FILE.asc`, and `SHA256SUMS` with its signature): `gpg --import
-RPM-GPG-KEY-py-slowdown`, then `gpg --verify FILE.asc FILE`.
+(`FILE.asc`, and `SHA256SUMS` with its signature; those of the installers
+for Windows and macOS, which GitHub makes, in `SHA256SUMS-installers`):
+`gpg --import RPM-GPG-KEY-py-slowdown`, then `gpg --verify FILE.asc FILE`.
 
 From the source, with Python 3.14 or later, `install/install.sh` installs it
 for one user on Linux or macOS, in an environment of its own, with a menu
@@ -79,7 +90,6 @@ entry (`--uninstall` removes it). It needs the Rubber Band Library (version
 3 or later) and, on Linux, PortAudio from the system: `sudo dnf install
 rubberband-libs portaudio` on Fedora, `sudo apt install librubberband2
 libportaudio2` on Debian and Ubuntu, `brew install rubberband` on macOS.
-There is no Windows version yet.
 
 To run it from the source, with [uv](https://docs.astral.sh/uv/):
 
@@ -103,15 +113,22 @@ Documentation
 Where things are kept
 ---------------------
 
-- Bookmarks and positions: `~/.local/share/py-slowdown/bookmarks.json`
-  (`$XDG_DATA_HOME`), by the full path of each audio file. A file that is
-  moved or renamed loses them.
+- Bookmarks and positions: `bookmarks.json`, by the full path of each audio
+  file, in `~/.local/share/py-slowdown/` on Linux (`$XDG_DATA_HOME`),
+  `%APPDATA%\py-slowdown` on Windows and `~/Library/Application
+  Support/py-slowdown/` on macOS. A file that is moved or renamed loses
+  them.
 - Settings (window, volume, skip length, language, recent files):
-  `~/.config/py-slowdown/py-slowdown.conf`.
+  `~/.config/py-slowdown/py-slowdown.conf` on Linux, the registry
+  (`HKEY_CURRENT_USER\Software\py-slowdown`) on Windows, and
+  `~/Library/Preferences/com.py-slowdown.py-slowdown.plist` on macOS.
 - While a file is open, its decoded samples are kept in an unnamed
-  temporary file in `~/.cache/py-slowdown/`, which disappears when the file
-  is closed (two hours of stereo take about 2.5 GB there, but only what is
-  read stays in memory).
+  temporary file in the cache folder (`~/.cache/py-slowdown/`,
+  `%LOCALAPPDATA%\py-slowdown\cache`, `~/Library/Caches/py-slowdown/`),
+  which disappears when the file is closed (two hours of stereo take about
+  2.5 GB there, but only what is read stays in memory).
+
+Uninstalling the program never removes them.
 
 License
 -------

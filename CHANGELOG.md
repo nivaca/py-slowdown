@@ -5,6 +5,26 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## 0.2.0 — 2026-11-24
+
+- **Installers for Windows and macOS**, which carry their own Python, Qt,
+  FFmpeg and Rubber Band: for Windows 10 and later, a setup made with Inno
+  Setup, for the user alone (without administrator's rights) or for
+  everyone, with a Start-menu entry and py-slowdown in "Open with" for audio
+  files; for macOS 13 and later, a disk image with py-slowdown.app, for
+  Apple Silicon and for Intel. GitHub makes them, tries them and removes
+  them, on its own machines, and they are signed like the other files.
+- **An installer for any Linux** (`.run`), made from the AppImage: for the
+  user, or with sudo for everyone, with the command, the menu entry, the
+  icons, the manual pages and an uninstaller.
+- **Files opened from the Finder** (Open With, or dropped on the icon in the
+  Dock) are opened by the window.
+- **The bookmarks and the decoded sound in the folders of each system**:
+  `%APPDATA%` and `%LOCALAPPDATA%` on Windows, `~/Library` on macOS (on
+  Linux, as before).
+- The manuals and the READMEs tell how to install on each system, and what
+  to do when Windows or macOS warn that the program is not signed by them.
+
 ## 0.1.0 — 2026-11-24
 
 The first version.

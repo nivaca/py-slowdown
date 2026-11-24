@@ -59,22 +59,34 @@ Instalación
 -----------
 
 Cada versión, en [GitHub](https://github.com/nivaca/py-slowdown/releases) y
-en [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases), trae:
+en [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases), trae
+instaladores que llevan todo lo que el programa necesita (su propio Python,
+Qt, FFmpeg y Rubber Band), así que no hay que instalar nada más:
 
-- un RPM para Fedora (también en Copr: `sudo dnf copr enable
+- **Windows** 10 o posterior: `py-slowdown-VERSIÓN-windows-x64-setup.exe`.
+  Lo instala solo para usted, sin permisos de administrador (o para todos,
+  si así lo elige), con su entrada en el menú Inicio y «Abrir con» para los
+  archivos de audio. El instalador no está firmado por Microsoft: si
+  SmartScreen lo detiene, elija *Más información > Ejecutar de todas
+  formas*.
+- **macOS** 13 o posterior: `py-slowdown-VERSIÓN-macos-arm64.dmg` (Apple
+  Silicon) o `-macos-x86_64.dmg` (Intel). Arrastre py-slowdown a
+  Aplicaciones. No está notarizado por Apple: la primera vez, elija *Abrir
+  igualmente* en Ajustes del Sistema > Privacidad y seguridad.
+- **Linux**: un RPM para Fedora (también en Copr: `sudo dnf copr enable
   nivaca/py-slowdown` y `sudo dnf install py-slowdown`), que usa el Rubber
-  Band, el PortAudio y el ffmpeg de Fedora;
-- una AppImage para cualquier Linux con glibc 2.34 o posterior (Ubuntu
-  22.04, Debian 12, Fedora 35 y posteriores), que no necesita nada
-  instalado: trae su propio Python, Qt, FFmpeg, Rubber Band y PortAudio;
-- un paquete de Debian para Debian 12, Ubuntu 22.04 y posteriores, hecho de
-  la AppImage, que la instala en `/opt/py-slowdown`;
-- el wheel y el código, para instalarlo con pip.
+  Band, el PortAudio y el ffmpeg de Fedora; un paquete de Debian para
+  Debian 12, Ubuntu 22.04 y posteriores, y, para cualquier Linux con glibc
+  2.34 o posterior, un instalador (`sh py-slowdown-VERSIÓN-linux-x86_64.run`,
+  para usted o, con sudo, para todos, con su entrada en el menú y un
+  desinstalador) y una AppImage, que no necesita instalarse.
+- El wheel y el código, para instalarlo con pip.
 
 Todos los archivos van firmados con la clave de
 `packaging/RPM-GPG-KEY-py-slowdown` (`ARCHIVO.asc`, y `SHA256SUMS` con su
-firma): `gpg --import RPM-GPG-KEY-py-slowdown` y luego `gpg --verify
-ARCHIVO.asc ARCHIVO`.
+firma; los de los instaladores para Windows y macOS, que hace GitHub, en
+`SHA256SUMS-installers`): `gpg --import RPM-GPG-KEY-py-slowdown` y luego
+`gpg --verify ARCHIVO.asc ARCHIVO`.
 
 Desde el código, con Python 3.14 o posterior, `install/install.sh` lo
 instala para un usuario en Linux o en macOS, en un entorno propio, con su
@@ -82,7 +94,7 @@ entrada en el menú (`--uninstall` lo quita). Necesita del sistema la
 biblioteca Rubber Band (versión 3 o posterior) y, en Linux, PortAudio:
 `sudo dnf install rubberband-libs portaudio` en Fedora, `sudo apt install
 librubberband2 libportaudio2` en Debian y Ubuntu, `brew install rubberband`
-en macOS. Todavía no hay versión para Windows.
+en macOS.
 
 Para correrlo desde el código, con [uv](https://docs.astral.sh/uv/):
 
@@ -106,15 +118,23 @@ Documentación
 Dónde se guarda todo
 --------------------
 
-- Marcadores y posiciones: `~/.local/share/py-slowdown/bookmarks.json`
-  (`$XDG_DATA_HOME`), por la ruta completa de cada archivo de audio. Si el
-  archivo se mueve o se renombra, los pierde.
+- Marcadores y posiciones: `bookmarks.json`, por la ruta completa de cada
+  archivo de audio, en `~/.local/share/py-slowdown/` en Linux
+  (`$XDG_DATA_HOME`), `%APPDATA%\py-slowdown` en Windows y
+  `~/Library/Application Support/py-slowdown/` en macOS. Si el archivo se
+  mueve o se renombra, los pierde.
 - Configuración (ventana, volumen, salto, idioma, archivos recientes):
-  `~/.config/py-slowdown/py-slowdown.conf`.
+  `~/.config/py-slowdown/py-slowdown.conf` en Linux, el registro
+  (`HKEY_CURRENT_USER\Software\py-slowdown`) en Windows y
+  `~/Library/Preferences/com.py-slowdown.py-slowdown.plist` en macOS.
 - Mientras un archivo está abierto, sus muestras decodificadas van a un
-  archivo temporal sin nombre en `~/.cache/py-slowdown/`, que desaparece al
-  cerrarlo (dos horas en estéreo ocupan allí unos 2,5 GB, pero en la memoria
-  queda solo lo que se lee).
+  archivo temporal sin nombre en la carpeta de caché
+  (`~/.cache/py-slowdown/`, `%LOCALAPPDATA%\py-slowdown\cache`,
+  `~/Library/Caches/py-slowdown/`), que desaparece al cerrarlo (dos horas en
+  estéreo ocupan allí unos 2,5 GB, pero en la memoria queda solo lo que se
+  lee).
+
+Desinstalar el programa nunca los quita.
 
 Licencia
 --------

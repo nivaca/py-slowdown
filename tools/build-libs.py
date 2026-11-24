@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Compila las dos bibliotecas que llevan la AppImage y el paquete de Debian:
+"""Compila las bibliotecas que llevan la AppImage, el paquete de Debian y los instaladores:
 
-    uv run python tools/build-libs.py [-o CARPETA]
+    uv run python tools/build-libs.py [--target linux|windows-x64|macos-arm64|macos-x86_64] [-o CARPETA]
 
-En CARPETA (build/libs por omisión) deja:
+Para linux (lo de siempre), en CARPETA (build/libs por omisión) deja:
 
     librubberband.so    Rubber Band 4.0.0, el estirador (GPL 2 o posterior)
     libportaudio.so.2   PortAudio 19.7.0, la salida de sonido (MIT), solo con ALSA
     rubberband-4.0.0.tar.bz2   el código de Rubber Band, que se publica con cada versión (la GPL lo pide)
+
+Para Windows y macOS (build/libs-OBJETIVO), solo Rubber Band: rubberband.dll, compilado con zig desde
+cualquier sistema, o librubberband.dylib, compilado en macOS con su clang (Rubber Band usa allí la FFT de
+Accelerate, el marco de Apple, que zig no trae). PortAudio viene ya en los paquetes de sounddevice para esos
+dos sistemas.
 
 El RPM no las usa: Fedora tiene las suyas. Pero las de Fedora piden una glibc muy nueva (la 2.43, y la 2.38
 PortAudio, que además trae JACK y PipeWire), y la AppImage debe correr desde la 2.34. Así que se compilan
@@ -37,6 +42,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ZIG = ["uvx", "--from", "ziglang==0.17.1", "python", "-m", "ziglang"]
 TARGET = "x86_64-linux-gnu.2.28"
+TARGETS = ("linux", "windows-x64", "macos-arm64", "macos-x86_64")
+MACOS_MINIMUM = "13.0"  # (PySide6 and PyAV need macOS 13)
 
 RUBBERBAND = {
     "url": "https://breakfastquay.com/files/releases/rubberband-4.0.0.tar.bz2",
@@ -119,24 +126,55 @@ def build_portaudio(work: Path, out: Path) -> Path:
 
 
 def check(lib: Path, symbol: str):
-    """Stop unless LIB exports SYMBOL and needs no glibc newer than 2.28."""
+    """Stop unless LIB exports SYMBOL and (on Linux) needs no glibc newer than 2.28."""
     import ctypes
     import re
 
     if not hasattr(ctypes.CDLL(str(lib)), symbol):
         raise OSError(f"{lib.name} does not export {symbol}")
-    if shutil.which("objdump"):
+    if shutil.which("objdump") and lib.suffix != ".dylib":
         dump = subprocess.run(["objdump", "-T", str(lib)], capture_output=True, text=True, check=True).stdout
         versions = {tuple(map(int, v.split("."))) for v in re.findall(r"GLIBC_([0-9.]+)", dump)}
         if versions and max(versions) > (2, 28):
             raise OSError(f"{lib.name} needs glibc {'.'.join(map(str, max(versions)))}")
 
 
-def build(out: Path) -> list[Path]:
-    if not shutil.which("uvx"):
+def build_windows(work: Path, out: Path) -> Path:
+    say("Compiling Rubber Band for Windows (one file; a minute or so)")
+    source = unpack(fetch(RUBBERBAND), work, RUBBERBAND["folder"])
+    target = out / "rubberband.dll"
+    # (zig deja también una biblioteca de importación, RubberBandSingle.lib, que no hace falta)
+    zig("c++", "-target", "x86_64-windows-gnu", "-shared", "-O2", "-s", "-std=c++17", "-DNDEBUG",
+        "-D_USE_MATH_DEFINES", "single/RubberBandSingle.cpp", "-o", str(target), cwd=source)
+    for extra in out.glob("*.lib"):
+        extra.unlink()
+    return target
+
+
+def build_macos(work: Path, out: Path, arch: str) -> Path:
+    if sys.platform != "darwin" or not shutil.which("clang++"):
+        raise OSError("the library for macOS is compiled on macOS, with its clang++ (xcode-select --install)")
+    say(f"Compiling Rubber Band for macOS ({arch})")
+    source = unpack(fetch(RUBBERBAND), work, RUBBERBAND["folder"])
+    target = out / "librubberband.dylib"
+    subprocess.run(["clang++", "-arch", arch, f"-mmacosx-version-min={MACOS_MINIMUM}", "-dynamiclib", "-O2",
+                    "-std=c++17", "-DNDEBUG", "-install_name", "@loader_path/librubberband.dylib",
+                    "single/RubberBandSingle.cpp", "-framework", "Accelerate", "-o", str(target)],
+                   cwd=source, check=True)
+    return target
+
+
+def build(out: Path, target: str = "linux") -> list[Path]:
+    if not shutil.which("uvx") and target in ("linux", "windows-x64"):
         raise OSError("uvx (of uv) is needed, to run zig's compiler (https://docs.astral.sh/uv/)")
     out.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="py-slowdown-libs-") as tmp:
+        if target == "windows-x64":
+            return [build_windows(Path(tmp), out)]
+        if target.startswith("macos-"):
+            lib = build_macos(Path(tmp), out, target.split("-", 1)[1])
+            check(lib, "rubberband_get_engine_version")
+            return [lib]
         rubberband = build_rubberband(Path(tmp), out)
         portaudio = build_portaudio(Path(tmp), out)
     check(rubberband, "rubberband_get_engine_version")
@@ -147,13 +185,16 @@ def build(out: Path) -> list[Path]:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="tools/build-libs.py",
                                      description="Compile Rubber Band and PortAudio for the AppImage.")
-    parser.add_argument("-o", "--output", type=Path, default=ROOT / "build" / "libs",
-                        help="the folder to write them in (build/libs)")
+    parser.add_argument("--target", choices=TARGETS, default="linux",
+                        help="the system they are for (default: linux, for the AppImage)")
+    parser.add_argument("-o", "--output", type=Path, default=None,
+                        help="the folder to write them in (build/libs, or build/libs-TARGET)")
     args = parser.parse_args(argv)
-    if not sys.platform.startswith("linux"):
-        sys.exit("build-libs.py: these are the libraries of the AppImage, made on Linux")
+    if args.target == "linux" and not sys.platform.startswith("linux"):
+        sys.exit("build-libs.py: the libraries of the AppImage are made on Linux")
+    output = args.output or ROOT / "build" / ("libs" if args.target == "linux" else f"libs-{args.target}")
     try:
-        built = build(args.output)
+        built = build(output, args.target)
     except (OSError, subprocess.CalledProcessError, tarfile.TarError) as error:
         sys.exit(f"build-libs.py: {error}")
     for path in built:

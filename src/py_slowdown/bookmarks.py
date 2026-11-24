@@ -1,8 +1,9 @@
 """Los marcadores de cada archivo, y el punto donde se dejó.
 
 Se guardan juntos en un archivo JSON de la carpeta de datos del usuario
-($XDG_DATA_HOME/py-slowdown/bookmarks.json, o ~/.local/share/...), por la ruta
-completa del archivo de audio:
+($XDG_DATA_HOME/py-slowdown/bookmarks.json, o ~/.local/share/... en Linux;
+%APPDATA%\\py-slowdown en Windows; ~/Library/Application Support/py-slowdown en
+macOS), por la ruta completa del archivo de audio:
 
     {"version": 1,
      "files": {"/home/.../clase.mp3": {
@@ -17,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -28,6 +30,11 @@ class Bookmark:
 
 
 def data_dir() -> Path:
+    """Where the bookmarks are kept: the folder of each system for the data of programs."""
+    if sys.platform == "win32" and os.environ.get("APPDATA"):
+        return Path(os.environ["APPDATA"]) / "py-slowdown"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "py-slowdown"
     base = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
     return Path(base) / "py-slowdown"
 

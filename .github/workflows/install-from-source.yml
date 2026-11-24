@@ -1,0 +1,76 @@
+# The installer of install/, run on Linux and macOS: it installs py-slowdown
+# from this source with Python 3.14, checks what it made, runs the tests of the
+# program (not those of the packaging, which are Fedora's) against the program
+# installed, and uninstalls it. macOS (whose minutes count ten times) only for
+# tags, on Mondays and when started by hand.
+
+name: install from source
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths: ["install/**", "src/**", "tests/**", "pyproject.toml", ".github/workflows/install-from-source.yml"]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        mac:
+          - ${{ github.event_name != 'push' || startsWith(github.ref, 'refs/tags/') }}
+        exclude:
+          - os: macos-latest
+            mac: false
+    runs-on: ${{ matrix.os }}
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Libraries for Qt, Rubber Band, PortAudio, and ffmpeg (the tests read files with it too)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -q -y libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 \
+              librubberband2 libportaudio2 ffmpeg
+      - name: Rubber Band and ffmpeg
+        if: runner.os == 'macOS'
+        run: brew install rubberband ffmpeg
+      - name: Install
+        run: bash install/install.sh
+      - name: What it made
+        run: |
+          set -x
+          ~/.local/bin/py-slowdown --version || ~/bin/py-slowdown --version
+          if [ "$RUNNER_OS" = macOS ]; then
+            app=~/Applications/py-slowdown.app
+            test -x "$app/Contents/MacOS/py-slowdown"
+            plutil -lint "$app/Contents/Info.plist"
+            test -s "$app/Contents/Resources/py-slowdown.icns"
+            "$app/Contents/MacOS/py-slowdown" --version
+            venv=~/"Library/Application Support/py-slowdown/venv"
+          else
+            desktop-file-validate ~/.local/share/applications/py-slowdown.desktop || true
+            grep -q "^Exec=\"$HOME/.local/share/py-slowdown/venv/bin/py-slowdown\"" ~/.local/share/applications/py-slowdown.desktop
+            test -s ~/.local/share/icons/hicolor/48x48/apps/py-slowdown.png
+            venv=~/.local/share/py-slowdown/venv
+          fi
+          echo "VENV=$venv" >> "$GITHUB_ENV"
+      - name: Tests, against the program installed
+        run: |
+          "$VENV/bin/python" -m pip install --quiet pytest
+          "$VENV/bin/python" -m pytest -q -p no:cacheprovider tests --ignore=tests/test_packaging.py
+      - name: Uninstall
+        run: |
+          bash install/install.sh --uninstall
+          test ! -e "$VENV"
+          test ! -e ~/.local/bin/py-slowdown
+          test ! -e ~/Applications/py-slowdown.app
+          test ! -e ~/.local/share/applications/py-slowdown.desktop

@@ -46,3 +46,22 @@ def test_clock_and_parse():
     assert clock(3600 * 2 + 5) == "2:00:05"
     assert parse("83") == 83 and parse("1:23.5") == 83.5 and parse("1:01:23") == 3683
     assert parse("1,5") == 1.5 and parse("abc") is None
+
+
+def test_folders_of_each_system(monkeypatch, tmp_path):
+    """The bookmarks and the decoded sound go where each system keeps such things."""
+    import sys
+
+    from py_slowdown import audio, bookmarks
+
+    monkeypatch.setenv("APPDATA", str(tmp_path / "Roaming"))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "Local"))
+    monkeypatch.setattr(sys, "platform", "win32")
+    assert bookmarks.data_dir() == tmp_path / "Roaming" / "py-slowdown"
+    assert audio.cache_dir() == tmp_path / "Local" / "py-slowdown" / "cache"
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert bookmarks.data_dir() == tmp_path / "Library" / "Application Support" / "py-slowdown"
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    assert bookmarks.data_dir() == tmp_path / "data" / "py-slowdown"

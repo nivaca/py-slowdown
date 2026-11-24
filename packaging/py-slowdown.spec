@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-slowdown
-Version:        0.1.0
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        Play audio slower or faster without changing its pitch
 
@@ -97,6 +97,11 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*
 
 %changelog
+* Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.2.0-1
+- Version 0.2.0: installers for Windows (Inno Setup) and macOS (a .dmg, Apple
+  Silicon and Intel), and a .run for any Linux; files opened from the Finder;
+  the bookmarks and the cache in the folders of each system
+
 * Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.1.0-1
 - First package: the speed from 0.25x to 3x with Rubber Band's R3 engine,
   a waveform, the usual controls, bookmarks kept for each file, in English
