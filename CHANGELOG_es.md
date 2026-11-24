@@ -7,6 +7,14 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Oír una parte de la mezcla**: Reproducción > Oír, y el botón Oír de la
+  segunda fila, eligen los canales (los dos, solo el izquierdo o el
+  derecho, los dos en uno, o la mezcla sin su centro, donde suelen estar la
+  voz y el solo) y un filtro (solo los graves, debajo de 250 Hz, para
+  seguir la línea del bajo, o todo menos los graves). Los filtros son de
+  fase lineal y se aplican bloque tras bloque sin costuras; un cambio,
+  mientras suena, pasa de uno a otro en un fundido. La elección se
+  recuerda.
 - **Conservar los formantes**: el botón Formantes, junto a la altura, y
   Reproducción > Conservar los formantes hacen que Rubber Band conserve los
   formantes cuando la altura se mueve, de modo que una voz o un instrumento

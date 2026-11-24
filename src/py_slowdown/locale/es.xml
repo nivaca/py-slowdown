@@ -683,4 +683,72 @@
     <en>Keep the &amp;formants</en>
     <tr>Conservar los &amp;formantes</tr>
   </text>
+  <text>
+    <en>&amp;Both channels</en>
+    <tr>&amp;Los dos canales</tr>
+  </text>
+  <text>
+    <en>&amp;Left channel only</en>
+    <tr>Solo el canal &amp;izquierdo</tr>
+  </text>
+  <text>
+    <en>&amp;Right channel only</en>
+    <tr>Solo el canal &amp;derecho</tr>
+  </text>
+  <text>
+    <en>&amp;Mono (both channels in one)</en>
+    <tr>&amp;Mono (los dos canales en uno)</tr>
+  </text>
+  <text>
+    <en>Without the &amp;centre (what is in the middle of the mix)</en>
+    <tr>Sin el &amp;centro (lo que está en el medio de la mezcla)</tr>
+  </text>
+  <text>
+    <en>&amp;No filter</en>
+    <tr>&amp;Sin filtro</tr>
+  </text>
+  <text>
+    <en>Bass &amp;only (below 250 Hz)</en>
+    <tr>Solo los &amp;graves (debajo de 250 Hz)</tr>
+  </text>
+  <text>
+    <en>Without the b&amp;ass (above 250 Hz)</en>
+    <tr>Sin los g&amp;raves (encima de 250 Hz)</tr>
+  </text>
+  <text>
+    <en>left</en>
+    <tr>izquierdo</tr>
+  </text>
+  <text>
+    <en>right</en>
+    <tr>derecho</tr>
+  </text>
+  <text>
+    <en>no centre</en>
+    <tr>sin centro</tr>
+  </text>
+  <text>
+    <en>bass only</en>
+    <tr>solo graves</tr>
+  </text>
+  <text>
+    <en>no bass</en>
+    <tr>sin graves</tr>
+  </text>
+  <text>
+    <en>Hear: {what}</en>
+    <tr>Oír: {what}</tr>
+  </text>
+  <text>
+    <en>Hear</en>
+    <tr>Oír</tr>
+  </text>
+  <text>
+    <en>Hear one channel, the two in one, the mix without its centre, only the bass, or all but the bass</en>
+    <tr>Oír un canal, los dos en uno, la mezcla sin su centro, solo los graves, o todo menos los graves</tr>
+  </text>
+  <text>
+    <en>&amp;Hear</en>
+    <tr>&amp;Oír</tr>
+  </text>
 </interface>

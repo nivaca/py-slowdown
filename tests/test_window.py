@@ -596,3 +596,23 @@ def test_reopen_the_last_file(app, output, tmp_path, monkeypatch, wav):
     fifth.open_at_start(None)
     assert fifth.audio is None
     fifth.close()
+
+
+def test_hearing_in_the_window(window, app, wav, tmp_path):
+    """Hear > a channel and a filter: the player hears them, the button says them, and they are remembered; a mono
+    file has no channels to choose."""
+    loaded(window, app, wav)
+    window.a_channels["left"].trigger()
+    window.a_filters["bass"].trigger()
+    assert window.player.hearing == ("left", "bass")
+    assert window.b_hear.text() == "Hear: left, bass only"
+    assert window.settings.value("hearing/channels") == "left"
+    window.a_channels["both"].trigger()
+    window.a_filters["none"].trigger()
+    assert window.b_hear.text() == "Hear"
+    from conftest import tone, write
+
+    mono = tmp_path / "mono.wav"
+    write(mono, tone(2.0, channels=1))
+    loaded(window, app, mono)
+    assert not window.a_channels["left"].isEnabled() and window.a_filters["bass"].isEnabled()

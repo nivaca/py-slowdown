@@ -26,6 +26,7 @@ import numpy as np
 
 from . import rubberband
 from .audio import Audio
+from .hearing import Hearing
 
 MIN_SPEED = 0.25
 MAX_SPEED = 3.0
@@ -390,6 +391,8 @@ class Player:
         self._speed = 1.0
         self._pitch = 0.0
         self._formants = False
+        self._hearing_mode = ("both", "none")  # (canales, filtro): cómo se oye
+        self._hearing: Hearing | None = None
         self._lock = threading.Lock()
         self._wake = threading.Condition(self._lock)
         self._queue: deque[Block] = deque()
@@ -410,6 +413,7 @@ class Player:
         self._renderer.set_speed(self._speed)
         self._renderer.set_pitch(self._pitch)
         self._renderer.set_formants(self._formants)
+        self._hearing = Hearing(audio.rate, *self._hearing_mode)
         self.loop = None
         self._position = 0.0
         self._queue.clear()
@@ -525,6 +529,18 @@ class Player:
             self._wake.notify_all()
 
     @property
+    def hearing(self) -> tuple[str, str]:
+        """(channels, filter): how the sound is heard (see hearing.py)."""
+        return self._hearing_mode
+
+    @hearing.setter
+    def hearing(self, value: tuple[str, str]) -> None:
+        self._hearing_mode = (str(value[0]), str(value[1]))
+        with self._lock:
+            self._requests.append(("hearing", self._hearing_mode))
+            self._wake.notify_all()
+
+    @property
     def formants(self) -> bool:
         """Whether the formants are kept when the pitch moves (voices and instruments keep their timbre)."""
         return self._formants
@@ -588,7 +604,13 @@ class Player:
                     renderer.set_pitch(value)
                 elif kind == "formants":
                     renderer.set_formants(value)
+                elif kind == "hearing":
+                    self._hearing.set(*value)
             block, seam = renderer.render()
+            if block is not None and len(block.frames):
+                if seam:
+                    self._hearing.reset()  # (lo de antes del corte no se mezcla con lo que sigue)
+                block.frames = self._hearing.process(block.frames)
             with self._lock:
                 if any(kind == "seek" for kind, _value in self._requests):
                     continue  # a seek came while this block was made: it is not heard

@@ -7,6 +7,13 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Hear one part of the mix**: Playback > Hear, and the button Hear in the
+  second row, choose the channels (both, the left or the right only, the
+  two in one, or the mix without its centre, where the voice and the solo
+  usually are) and a filter (only the bass, below 250 Hz, to follow the bass
+  line, or everything but the bass). The filters are linear-phase, applied
+  block after block without seams; a change, while it plays, goes from one
+  to the other in a fade. The choice is remembered.
 - **Keep the formants**: the button Formants, beside the pitch, and
   Playback > Keep the formants, make Rubber Band keep the formants when the
   pitch moves, so that a voice or an instrument keeps its natural timbre

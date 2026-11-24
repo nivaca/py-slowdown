@@ -46,3 +46,9 @@ def test_use_and_tr():
     finally:
         interface.use("en")
     assert interface.tr("&File") == "&File"
+
+
+def test_each_text_once():
+    text = (interface.FOLDER / "es.xml").read_text(encoding="utf-8")
+    keys = re.findall(r"<en>(.*?)</en>", text, re.S)
+    assert len(keys) == len(set(keys))

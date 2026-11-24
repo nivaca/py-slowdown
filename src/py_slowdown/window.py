@@ -37,6 +37,7 @@ from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Store, export_text
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, number, recording_tempo
 from .engine import MAX_PITCH, MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
+from .hearing import CHANNELS, FILTERS
 from .interface import tr
 from .panel import BookmarkPanel
 from .timefmt import clock
@@ -46,6 +47,23 @@ APP = "py-slowdown"
 SPEED_STEP = 0.05
 SKIPS = (1, 2, 5, 10, 15, 30, 60)
 RECENT = 10
+
+
+def hearing_names() -> tuple[dict[str, str], dict[str, str]]:
+    """The names of the ways of hearing, in the menu: ({channels: name}, {filter: name})."""
+    return ({"both": tr("&Both channels"), "left": tr("&Left channel only"), "right": tr("&Right channel only"),
+             "mono": tr("&Mono (both channels in one)"),
+             "no_centre": tr("Without the &centre (what is in the middle of the mix)")},
+            {"none": tr("&No filter"), "bass": tr("Bass &only (below 250 Hz)"),
+             "no_bass": tr("Without the b&ass (above 250 Hz)")})
+
+
+def hearing_short(channels: str, filter_: str) -> str:
+    """A few words for the button Hear: what is heard, if not everything."""
+    words = {"left": tr("left"), "right": tr("right"), "mono": tr("mono"), "no_centre": tr("no centre"),
+             "bass": tr("bass only"), "no_bass": tr("no bass")}
+    parts = [words[x] for x in (channels, filter_) if x in words]
+    return tr("Hear: {what}", what=", ".join(parts)) if parts else tr("Hear")
 ICON = Path(__file__).resolve().parent / "icons" / "py-slowdown.svg"
 
 
@@ -277,6 +295,15 @@ class Window(QMainWindow):
         row.addWidget(self.b_formants)
         row.addSpacing(12)
 
+        self.b_hear = QToolButton(self)
+        self.b_hear.setText(tr("Hear"))
+        self.b_hear.setToolTip(tr("Hear one channel, the two in one, the mix without its centre, only the bass, or "
+                                  "all but the bass"))
+        self.b_hear.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.b_hear.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        row.addWidget(self.b_hear)
+        row.addSpacing(12)
+
         speaker = QLabel(self)
         speaker.setPixmap(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume).pixmap(20, 20))
         row.addWidget(speaker)
@@ -354,6 +381,21 @@ class Window(QMainWindow):
         file.addSeparator()
         file.addAction(self.a_quit)
 
+        self.hear_menu = QMenu(tr("&Hear"), self)
+        self.a_channels: dict[str, QAction] = {}
+        self.a_filters: dict[str, QAction] = {}
+        channel_names, filter_names = hearing_names()
+        for names, actions, key in ((channel_names, self.a_channels, CHANNELS), (filter_names, self.a_filters, FILTERS)):
+            group = QActionGroup(self)
+            for value in key:
+                action = self.hear_menu.addAction(names[value])
+                action.setCheckable(True)
+                action.triggered.connect(self._hearing_chosen)
+                group.addAction(action)
+                actions[value] = action
+            self.hear_menu.addSeparator()
+        self.b_hear.setMenu(self.hear_menu)
+
         play = bar.addMenu(tr("&Playback"))
         for action in (self.a_play, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
                        self.a_forward_1, self.a_forward, self.a_end, None,
@@ -362,6 +404,11 @@ class Window(QMainWindow):
                        self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, None,
                        self.a_count, self.a_count_settings, self.a_tap):
             play.addSeparator() if action is None else play.addAction(action)
+        play.addSeparator()
+        play.addMenu(self.hear_menu)
+        channels = self.settings.value("hearing/channels", "both")
+        filter_ = self.settings.value("hearing/filter", "none")
+        self.set_hearing(channels if channels in CHANNELS else "both", filter_ if filter_ in FILTERS else "none")
 
         marks = bar.addMenu(tr("&Bookmarks"))
         for action in (self.a_mark, self.a_prev_mark, self.a_next_mark, None, self.a_export):
@@ -477,6 +524,7 @@ class Window(QMainWindow):
         self.bookmarks = self.store.bookmarks(path)
         self._show_bookmarks()
         self.set_speed(self.player.speed)
+        self.set_hearing(*self.player.hearing)
         # Sigue donde se dejó, cuando el archivo esté decodificado hasta allí (_tick).
         self._resume = self.store.position(path)
         self.setWindowTitle(f"{path.name} — {APP}")
@@ -710,6 +758,28 @@ class Window(QMainWindow):
         self.player.formants = on
         self.settings.setValue("formants", on)
 
+    def set_hearing(self, channels: str, filter_: str) -> None:
+        """Hear CHANNELS (both, left, right, mono, no_centre) through FILTER (none, bass, no_bass)."""
+        if self.audio is not None and self.audio.channels == 1:
+            channels = "both"  # (un archivo mono no tiene lados)
+        self.player.hearing = (channels, filter_)
+        self.a_channels[channels].setChecked(True)
+        self.a_filters[filter_].setChecked(True)
+        self.b_hear.setText(hearing_short(channels, filter_))
+        self.settings.setValue("hearing/channels", channels)
+        self.settings.setValue("hearing/filter", filter_)
+
+    def _hearing_chosen(self) -> None:
+        channels = next(k for k, a in self.a_channels.items() if a.isChecked())
+        filter_ = next(k for k, a in self.a_filters.items() if a.isChecked())
+        self.set_hearing(channels, filter_)
+
+    def _update_hearing_choices(self) -> None:
+        # Con un archivo mono, los canales no se eligen.
+        stereo = self.audio is None or self.audio.channels == 2
+        for value, action in self.a_channels.items():
+            action.setEnabled(stereo or value == "both")
+
     def change_pitch(self, delta: float) -> None:
         self.set_pitch(self.player.pitch + delta)
 
@@ -774,6 +844,7 @@ class Window(QMainWindow):
                        self.a_sel_start, self.a_sel_end, self.a_sel_clear):
             action.setEnabled(loaded)
         self.a_export.setEnabled(loaded and bool(self.bookmarks))
+        self._update_hearing_choices()
         self._update_play_button()
 
     def _set_skip(self, seconds: float) -> None:
