@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in seventeen stages.
+in eighteen stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -530,10 +530,24 @@ The program is for music, not for transcribing speech, and the
 documentation now says so; its examples, and the pictures of the manual,
 are of songs.
 
+18. A choice of quality
+-----------------------
+
+The R3 engine is the best Rubber Band has, and also the one that needs the
+most processor. Measured on a recording at 48 kHz, stretched to 0.75×, it
+runs about 14 times faster than real time; with its short window, about 31;
+and the older engine, R2, about 27. Settings > Playback quality offers the
+three: Highest, R3 as before; Lighter, R3 with the short window, for an
+older or busy computer, with less delay and a little less detail in the low
+notes; and the Older engine, R2, whose crisp attacks some prefer for drums.
+The options of a stretcher are fixed when it is made, so a change makes a
+new one, from where the output has got to, as a change of speed from 1×
+does. Exports always use the highest, since they have no real time to keep.
+
 Testing
 -------
 
-The program has 172 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 177 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -548,7 +562,8 @@ and the pitch, by the frequency of a tone. They check the reading in
 parts, identical to the straight one with each codec and both readers, and
 its going back to the straight reading when a part does not agree; the
 filters of Hear against a convolution, and that a change makes no click;
-the formants, by the resonance of a vowel; the export, its lengths, the
+the formants, by the resonance of a vowel; each quality, by its engine,
+its length, its pitch and its clicks; the export, its lengths, the
 places of its clicks and its formats; and the loops, the settings kept for
 each file, the keyboard shortcuts and the waveform kept for the next
 time. The player is

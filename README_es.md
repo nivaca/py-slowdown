@@ -32,7 +32,9 @@ Lo que hace
   altura. El estiramiento lo hace la [biblioteca Rubber Band](https://breakfastquay.com/rubberband/),
   con su motor R3 («finer»), el de más calidad, por medio de un enlace
   pequeño, propio de py-slowdown. A 1× el archivo suena tal
-  cual, muestra por muestra, sin pasar por Rubber Band.
+  cual, muestra por muestra, sin pasar por Rubber Band. Se puede elegir una
+  calidad más liviana (la mitad del procesador) o el motor anterior, R2, de
+  ataques nítidos (Configuración > Calidad de la reproducción).
 - Marcadores en la posición que suena (B), o en cualquier punto con el clic
   derecho sobre la forma de onda; cada uno puede llevar un nombre. Se
   listan en un panel lateral, se dibujan sobre la forma de onda y se pueden

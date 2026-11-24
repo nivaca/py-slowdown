@@ -434,3 +434,33 @@ def test_formants(tmp_path):
     assert strongest(False) > 1000  # (la resonancia sube con la altura: 800 × 1,5)
     assert strongest(True) < 900  # (se queda donde estaba)
     audio.close()
+
+
+@pytest.mark.parametrize(("quality", "engine"), [("high", 3), ("light", 3), ("r2", 2)])
+def test_qualities(audio, quality, engine):
+    """Each quality stretches with its engine, to the right length, keeping the pitch and the clicks in place."""
+    renderer = Renderer(audio)
+    renderer.set_quality(quality)
+    renderer.set_speed(0.75)
+    blocks = render_all(renderer)
+    assert renderer._stretcher.engine_version == engine
+    out = np.concatenate([b.frames for b in blocks])
+    assert dominant(out, 0.75) == pytest.approx(220, rel=0.007)
+    assert 8.0 - 0.05 < len(out) / RATE < 8.0 + 0.25
+    assert clicks(blocks) == pytest.approx([1, 2, 3, 4, 5], abs=0.02)
+
+
+def test_quality_changed_while_playing(audio, output):
+    """A change of quality while it plays goes on from where it was, with a new stretcher, without a gap."""
+    player = Player(output)
+    player.load(audio)
+    player.speed = 0.5
+    player.play()
+    assert wait_for(player, output, lambda: player.position > 0.5)
+    before = player.position
+    player.quality = "light"
+    assert wait_for(player, output, lambda: player.position > before + 0.5)
+    assert player._renderer.quality == "light" and player._renderer._stretcher.engine_version == 3
+    player.quality = "nonsense"
+    assert player.quality == "high"
+    player.unload()

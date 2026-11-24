@@ -744,3 +744,11 @@ def test_keyboard_shortcuts(window, app, monkeypatch, tmp_path, output):
     shortcuts.save(again.shortcut_actions, again.default_shortcuts, again.settings)
     assert again.a_tap.shortcuts() == [QKeySequence("T")] and again.settings.value("shortcuts/a_tap") is None
     again.close()
+
+
+def test_playback_quality(window, app, wav):
+    """Settings > Playback quality: the player stretches with it, and it is remembered."""
+    loaded(window, app, wav)
+    assert window.player.quality == "high" and window.a_qualities["high"].isChecked()
+    window.a_qualities["r2"].trigger()
+    assert window.player.quality == "r2" and window.settings.value("quality") == "r2"

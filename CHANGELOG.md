@@ -5,6 +5,15 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Unreleased
+
+- **Playback quality** (Settings): Highest, Rubber Band's R3 engine as
+  until now; Lighter, R3 with a short window, which needs half the
+  processor and has less delay, with a little less detail in the low notes;
+  or the Older engine, R2, with crisp attacks, which some prefer for drums
+  and percussion. It changes while it plays, and is remembered. Exports
+  always use the highest.
+
 ## 1.1.0 — 2026-11-24
 
 For working on music: export what is heard, hear one part of the mix, keep

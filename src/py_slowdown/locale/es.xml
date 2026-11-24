@@ -929,4 +929,20 @@
     <en>a semitone lower</en>
     <tr>un semitono más abajo</tr>
   </text>
+  <text>
+    <en>&amp;Highest (R3 engine)</en>
+    <tr>La &amp;más alta (motor R3)</tr>
+  </text>
+  <text>
+    <en>&amp;Lighter (R3, half the processor, a little less detail in the low notes)</en>
+    <tr>Más &amp;liviana (R3, la mitad del procesador, algo menos de detalle en los graves)</tr>
+  </text>
+  <text>
+    <en>&amp;Older engine (R2, crisp attacks, for drums and percussion)</en>
+    <tr>Motor &amp;anterior (R2, ataques nítidos, para batería y percusión)</tr>
+  </text>
+  <text>
+    <en>Playback &amp;quality</en>
+    <tr>Calidad de la re&amp;producción</tr>
+  </text>
 </interface>

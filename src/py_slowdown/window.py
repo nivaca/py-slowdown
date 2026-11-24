@@ -62,6 +62,13 @@ def hearing_names() -> tuple[dict[str, str], dict[str, str]]:
              "no_bass": tr("Without the b&ass (above 250 Hz)")})
 
 
+def quality_names() -> dict[str, str]:
+    """The choices of Settings > Playback quality."""
+    return {"high": tr("&Highest (R3 engine)"),
+            "light": tr("&Lighter (R3, half the processor, a little less detail in the low notes)"),
+            "r2": tr("&Older engine (R2, crisp attacks, for drums and percussion)")}
+
+
 def hearing_short(channels: str, filter_: str) -> str:
     """A few words for the button Hear: what is heard, if not everything."""
     words = {"left": tr("left"), "right": tr("right"), "mono": tr("mono"), "no_centre": tr("no centre"),
@@ -178,6 +185,7 @@ class Window(QMainWindow):
             for action in (self.a_slower, self.a_faster, self.a_normal, self.a_higher, self.a_lower,
                            self.a_original_pitch, self.a_formants):
                 action.setEnabled(False)
+            self.quality_menu.setEnabled(False)
             self.statusBar().showMessage(why)
         else:
             self.stretching = True
@@ -449,6 +457,18 @@ class Window(QMainWindow):
         settings.addAction(self.a_edit_shortcuts)
         settings.addAction(self.a_reopen)
         settings.addSeparator()
+        qualities = settings.addMenu(tr("Playback &quality"))
+        group = QActionGroup(self)
+        self.a_qualities: dict[str, QAction] = {}
+        for key, name in quality_names().items():
+            action = qualities.addAction(name)
+            action.setCheckable(True)
+            action.triggered.connect(lambda _=False, k=key: self.set_quality(k))
+            group.addAction(action)
+            self.a_qualities[key] = action
+        self.quality_menu = qualities
+        quality = self.settings.value("quality", "high")
+        self.set_quality(quality if quality in self.a_qualities else "high")
         skips = settings.addMenu(tr("&Skip length"))
         group = QActionGroup(self)
         for seconds in SKIPS:
@@ -838,6 +858,13 @@ class Window(QMainWindow):
         self.pitch_box.setValue(self.player.pitch)
         self.pitch_box.blockSignals(False)
         self.b_pitch.setEnabled(self.player.pitch != 0.0)
+
+    def set_quality(self, quality: str) -> None:
+        """Stretch the sound with QUALITY: "high" (R3), "light" (R3 with a short window, half the processor) or
+        "r2" (the older engine, with crisp attacks). It changes while it plays; exports always use "high"."""
+        self.player.quality = quality
+        self.a_qualities[quality].setChecked(True)
+        self.settings.setValue("quality", quality)
 
     def set_formants(self, on: bool) -> None:
         """Keep the formants when the pitch moves: a voice or an instrument keeps its timbre, instead of

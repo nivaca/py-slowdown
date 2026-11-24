@@ -5,6 +5,16 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+- **Calidad de la reproducción** (Configuración): la más alta, el motor R3
+  de Rubber Band como hasta ahora; más liviana, R3 con una ventana corta,
+  que necesita la mitad del procesador y tiene menos retraso, con algo
+  menos de detalle en los graves; o el motor anterior, R2, de ataques
+  nítidos, que algunos prefieren para la batería y la percusión. Cambia
+  mientras suena, y se recuerda. Las exportaciones usan siempre la más
+  alta.
+
 ## 1.1.0 — 2026-11-24
 
 Para trabajar con la música: exportar lo que se oye, oír una parte de la

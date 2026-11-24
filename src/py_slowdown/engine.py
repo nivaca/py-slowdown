@@ -35,13 +35,19 @@ FADE = 192  # cuadros de cada rampa contra chasquidos (unos 4 ms)
 OUTPUT_LATENCY = 0.1  # segundos del búfer de la tarjeta: margen para cuando Python tarda en atenderla
 QUEUE_SECONDS = 0.15  # audio preparado de antemano: también el retraso de un cambio de velocidad
 
-OPTIONS = (
+COMMON = (
     rubberband.PROCESS_REALTIME
-    | rubberband.ENGINE_FINER  # R3, the high-quality engine
     | rubberband.CHANNELS_TOGETHER  # keeps the stereo image and mono compatibility of a mix
-    | rubberband.WINDOW_STANDARD
     | rubberband.PITCH_HIGH_CONSISTENCY  # the pitch changes while it plays, without a click
 )
+# La calidad del estiramiento: lo que cuesta al procesador contra lo que se oye. Medido en una grabación de 48 kHz a
+# 0,75×: "high" va a unas 14 veces el tiempo real, "light" y "r2" a unas 30.
+QUALITIES = {
+    "high": COMMON | rubberband.ENGINE_FINER | rubberband.WINDOW_STANDARD,  # R3, the best
+    "light": COMMON | rubberband.ENGINE_FINER | rubberband.WINDOW_SHORT,  # R3 with a short window: half the work
+    "r2": COMMON | rubberband.ENGINE_FASTER | rubberband.TRANSIENTS_CRISP,  # the older engine: crisp attacks
+}
+OPTIONS = QUALITIES["high"]
 MAX_PITCH = 12.0  # semitonos, arriba o abajo
 
 
@@ -130,6 +136,7 @@ class Renderer:
         self.speed = 1.0
         self.pitch = 0.0  # semitonos
         self.formants = False  # keep the formants when the pitch moves
+        self.quality = "high"  # una de QUALITIES
         self.pos = 0.0  # cuadro del archivo que corresponde al próximo cuadro de salida
         self._stretcher: rubberband.Stretcher | None = None
         self._stretching = False  # whether the stretcher holds the stream now
@@ -197,6 +204,16 @@ class Renderer:
             self.pitch = semitones
             self._changed(was_plain)
 
+    def set_quality(self, quality: str) -> None:
+        """Stretch with QUALITY (see QUALITIES) from now on: a new stretcher, from where the output has got to."""
+        quality = quality if quality in QUALITIES else "high"
+        if quality != self.quality:
+            self.quality = quality
+            self._stretcher = None  # (sus opciones se fijan al hacerlo)
+            if self._stretching:
+                self._stretching = False
+                self._seam = True
+
     def set_formants(self, preserved: bool) -> None:
         self.formants = bool(preserved)
         if self._stretcher is not None:
@@ -249,7 +266,8 @@ class Renderer:
         # después corresponde justo a self.pos, sin el arranque en falso de un estirador vacío.
         audio = self.audio
         if self._stretcher is None:
-            self._stretcher = rubberband.Stretcher(audio.rate, audio.channels, OPTIONS, 1.0 / self.speed)
+            self._stretcher = rubberband.Stretcher(audio.rate, audio.channels, QUALITIES[self.quality],
+                                                   1.0 / self.speed)
             self._stretcher.set_max_process_size(4096)
             self._stretcher.set_formants(self.formants)
         st = self._stretcher
@@ -392,6 +410,7 @@ class Player:
         self._speed = 1.0
         self._pitch = 0.0
         self._formants = False
+        self._quality = "high"
         self._hearing_mode = ("both", "none")  # (canales, filtro): cómo se oye
         self._hearing: Hearing | None = None
         self._lock = threading.Lock()
@@ -414,6 +433,7 @@ class Player:
         self._renderer.set_speed(self._speed)
         self._renderer.set_pitch(self._pitch)
         self._renderer.set_formants(self._formants)
+        self._renderer.set_quality(self._quality)
         self._hearing = Hearing(audio.rate, *self._hearing_mode)
         self.loop = None
         self._position = 0.0
@@ -542,6 +562,18 @@ class Player:
             self._wake.notify_all()
 
     @property
+    def quality(self) -> str:
+        """How the sound is stretched (see QUALITIES): "high", "light" or "r2"."""
+        return self._quality
+
+    @quality.setter
+    def quality(self, value: str) -> None:
+        self._quality = value if value in QUALITIES else "high"
+        with self._lock:
+            self._requests.append(("quality", self._quality))
+            self._wake.notify_all()
+
+    @property
     def formants(self) -> bool:
         """Whether the formants are kept when the pitch moves (voices and instruments keep their timbre)."""
         return self._formants
@@ -605,6 +637,8 @@ class Player:
                     renderer.set_pitch(value)
                 elif kind == "formants":
                     renderer.set_formants(value)
+                elif kind == "quality":
+                    renderer.set_quality(value)
                 elif kind == "hearing":
                     self._hearing.set(*value)
             block, seam = renderer.render()

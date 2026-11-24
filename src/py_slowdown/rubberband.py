@@ -23,7 +23,10 @@ import numpy as np
 
 PROCESS_REALTIME = 0x00000001
 WINDOW_STANDARD = 0x00000000
+WINDOW_SHORT = 0x00100000  # en R3: la mitad del procesador y menos retraso, algo menos de detalle en los graves
+TRANSIENTS_CRISP = 0x00000000  # en R2: los ataques nítidos
 CHANNELS_TOGETHER = 0x10000000
+ENGINE_FASTER = 0x00000000  # R2, the older engine
 ENGINE_FINER = 0x20000000
 PITCH_HIGH_CONSISTENCY = 0x04000000  # changes of pitch while it plays, without discontinuities
 FORMANT_SHIFTED = 0x00000000  # los formantes suben y bajan con la altura (lo de siempre)
