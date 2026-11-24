@@ -20,6 +20,13 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   tenue, 0,4 s antes del primer golpe, y lo mantiene entre los golpes; los
   golpes son más llenos (60 ms, una nota y su octava). El pulso aparece en
   la forma de onda con el primer golpe.
+- **Marcar el tempo**: el botón Marcar, junto a Cuenta previa, o la tecla T,
+  pulsados con el pulso mientras suena la música, miden su tempo (el valor
+  del medio de los intervalos entre los ocho últimos golpes; una pausa de
+  más de dos segundos empieza otra vez), que pasa a ser el de la cuenta
+  previa; a otra velocidad, con la cuenta siguiéndola, se guarda el tempo
+  de la grabación. El diálogo de la cuenta previa también tiene un botón
+  Marcar.
 - **Los ajustes de la cuenta previa se encuentran fácil**: una flecha junto
   al botón Cuenta previa los abre, y también Configuración > Cuenta previa
   (además de Reproducción > Ajustes de la cuenta previa); la etiqueta del

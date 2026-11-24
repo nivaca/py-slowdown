@@ -583,4 +583,40 @@
     <en>Count in before playing (C): {what}. The arrow beside it changes them.</en>
     <tr>Contar antes de tocar (C): {what}. La flecha de al lado los cambia.</tr>
   </text>
+  <text>
+    <en>T&amp;ap</en>
+    <tr>&amp;Marcar</tr>
+  </text>
+  <text>
+    <en>Tap with the beat of the music, a few times: the tempo is measured</en>
+    <tr>Marque el pulso de la música, unas cuantas veces: se mide el tempo</tr>
+  </text>
+  <text>
+    <en>Tap</en>
+    <tr>Marcar</tr>
+  </text>
+  <text>
+    <en>Tap with the beat of the music (T), a few times: the tempo of the count-in is measured</en>
+    <tr>Marque el pulso de la música (T), unas cuantas veces: se mide el tempo de la cuenta previa</tr>
+  </text>
+  <text>
+    <en>Tap the tempo</en>
+    <tr>Marcar el tempo</tr>
+  </text>
+  <text>
+    <en>Tap the tempo (with the beat)</en>
+    <tr>Marcar el tempo (con el pulso)</tr>
+  </text>
+  <text>
+    <en>Tap again, with the beat…</en>
+    <tr>Marque otra vez, con el pulso…</tr>
+  </text>
+  <text>
+    <en>Tempo: {heard} BPM heard at {speed}×, {bpm} BPM in the recording ({taps} taps)</en>
+    <tr>Tempo: {heard} BPM oídos a {speed}×, {bpm} BPM en la grabación ({taps} golpes)</tr>
+  </text>
+  <text>
+    <en>Tempo: {bpm} BPM ({taps} taps)</en>
+    <tr>Tempo: {bpm} BPM ({taps} golpes)</tr>
+  </text>
 </interface>

@@ -346,3 +346,57 @@ def test_count_in_settings_are_easy_to_reach(window, app, monkeypatch):
     assert window.count == CountIn(True, 3, 132, False) and window.b_count.isChecked()
     assert "3 clicks at 132 BPM." in window.b_count.toolTip()
     assert CountIn.load(window.settings) == CountIn(True, 3, 132, False)  # (guardados)
+
+
+def test_tap_tempo():
+    from py_slowdown.countin import TapTempo, recording_tempo
+
+    tapper = TapTempo()
+    assert tapper.tap(10.0) is None  # (one tap: no tempo yet)
+    assert tapper.tap(10.5) == pytest.approx(120)
+    # Uneven by a few hundredths, and one tap late: the median keeps 120
+    for when in (11.0, 11.52, 11.98, 12.6, 13.0, 13.5):
+        bpm = tapper.tap(when)
+    assert bpm == pytest.approx(120, abs=2)
+    # A pause of more than two seconds begins a new measure
+    assert tapper.tap(20.0) is None and tapper.taps == 1
+    assert tapper.tap(20.75) == pytest.approx(80)
+    # Only the last eight taps count: a change of tempo is followed
+    for k in range(1, 9):
+        bpm = tapper.tap(20.75 + k * 0.4)
+    assert bpm == pytest.approx(150)
+    # Tapped at 0.75×, following the speed: the recording is faster
+    assert recording_tempo(90, 0.75, True) == 120 and recording_tempo(90, 0.75, False) == 90
+    assert recording_tempo(1000, 1.0, False) == 300
+
+
+def test_tap_in_the_window(window, app, wav, monkeypatch):
+    import time as clock
+
+    loaded(window, app, wav)
+    now = [100.0]
+    monkeypatch.setattr(clock, "monotonic", lambda: now[0])
+    window.set_speed(0.5)
+    for _ in range(4):
+        window.a_tap.trigger()
+        now[0] += 1.0  # 60 BPM heard, at half speed
+    assert window.count.bpm == 120  # (el de la grabación: la cuenta sigue la velocidad)
+    assert "60 BPM heard" in window.statusBar().currentMessage()
+    assert "2 clicks" not in window.b_count.toolTip() and "120 BPM" in window.b_count.toolTip()
+    window.b_tap.click()
+    assert window.count.bpm == 120
+
+
+def test_tap_in_the_dialog(app, monkeypatch):
+    import time as clock
+
+    from py_slowdown.countin import CountIn, CountInDialog
+
+    now = [5.0]
+    monkeypatch.setattr(clock, "monotonic", lambda: now[0])
+    dialog = CountInDialog(CountIn(True, 4, 100, False), 1.0)
+    for _ in range(3):
+        dialog.tap_button.click()
+        now[0] += 0.4
+    assert dialog.bpm.value() == 150
+    dialog.close()

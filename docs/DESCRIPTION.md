@@ -8,7 +8,7 @@ lectures and interviews, where one needs to hear a passage again and again
 at a speed one can follow; it follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in eleven stages.
+in twelve stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -349,10 +349,27 @@ the clicks, so that the output is never exact silence while it counts; the
 clicks are fuller, a tone and its octave for 60 milliseconds. Through the
 virtual output, the hiss and the clicks arrive as they should.
 
+12. Tapping the tempo
+--------------------
+
+To set the tempo of the count-in, the simplest is to tap it: a button, Tap,
+beside Count-in, and the key T, pressed with the beat while the music
+plays. The tempo is the middle value (the median) of the intervals between
+the last eight taps, not their mean, so that one tap early or late does not
+move it; a pause of more than two seconds begins a new measure. What is
+tapped is the tempo heard, so at another speed, when the count-in follows
+the speed, the recording's own is kept (the tempo tapped divided by the
+speed): a beat tapped at 60 at half speed is 120 in the recording, and the
+count-in is right at every speed. The tests tap with times given, not with
+the clock, uneven by a few hundredths and with one tap late. In the dialog,
+the box of the tempo and its Tap button side by side left the label without
+the box its key leads to, so it showed its ampersand ("&Tempo"); the label
+now names its box.
+
 Testing
 -------
 
-The program has 101 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 105 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

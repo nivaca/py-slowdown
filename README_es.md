@@ -41,7 +41,8 @@ Lo que hace
   forma de onda, o I y O, y luego L): el final del pasaje entra en su
   principio con un fundido breve, a cualquier velocidad.
 - Cuenta antes de tocar, como un metrónomo (C): se eligen cuántos golpes
-  y el tempo, que puede seguir la velocidad.
+  y el tempo, que puede seguir la velocidad; el tempo se puede medir
+  marcando el pulso (T).
 - Recuerda, por archivo, sus marcadores y el punto donde se dejó, y la vez
   siguiente sigue desde allí.
 - Interfaz en inglés y en español (Configuración > Idioma).
@@ -67,6 +68,7 @@ Teclado
 | Seleccionar                       | Mayús+arrastrar, o I y O         |
 | Quitar la selección               | Esc                              |
 | Contar antes de tocar             | C                                |
+| Marcar el tempo (con el pulso)    | T                                |
 | Abrir un archivo                  | Ctrl+O                           |
 
 Instalación

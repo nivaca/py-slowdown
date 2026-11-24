@@ -3,7 +3,8 @@
 CountIn guarda lo que el usuario eligió (si se cuenta, cuántos golpes, a qué
 tempo, y si el tempo sigue la velocidad) en la configuración, y dice cuántos
 golpes y a qué tempo hay que dar ahora. CountInDialog es el diálogo donde se
-eligen.
+eligen. TapTempo mide el tempo de unos golpes del usuario, que marca el pulso
+de la música (el botón Marcar, o la tecla T).
 """
 
 from __future__ import annotations
@@ -16,7 +17,9 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
+    QHBoxLayout,
     QLabel,
+    QPushButton,
     QSpinBox,
     QVBoxLayout,
 )
@@ -56,6 +59,43 @@ class CountIn:
         return min(MAX_BPM, max(MIN_BPM, self.bpm * speed if self.follow else self.bpm))
 
 
+class TapTempo:
+    """The tempo of taps: the median of the intervals between the last taps (one uneven tap does not move it);
+    a pause of more than PAUSE seconds begins a new measure."""
+
+    PAUSE = 2.0
+    KEEP = 8  # taps measured (seven intervals)
+
+    def __init__(self):
+        self.times: list[float] = []
+
+    def tap(self, when: float | None = None) -> float | None:
+        """A tap at WHEN (seconds; now if None): the tempo in BPM so far, or None after the first tap."""
+        import time
+
+        when = time.monotonic() if when is None else when
+        if self.times and when - self.times[-1] > self.PAUSE:
+            self.times = []
+        self.times = (self.times + [when])[-self.KEEP:]
+        if len(self.times) < 2:
+            return None
+        intervals = sorted(b - a for a, b in zip(self.times, self.times[1:]))
+        middle = len(intervals) // 2
+        median = intervals[middle] if len(intervals) % 2 else (intervals[middle - 1] + intervals[middle]) / 2
+        return min(MAX_BPM, max(MIN_BPM, 60.0 / median))
+
+    @property
+    def taps(self) -> int:
+        return len(self.times)
+
+
+def recording_tempo(heard: float, speed: float, follow: bool) -> int:
+    """The tempo of the recording, from the tempo HEARD at SPEED: with the count-in following the speed, what
+    was tapped at 0.75× is the recording's tempo times 0.75."""
+    bpm = heard / speed if follow and speed > 0 else heard
+    return round(min(MAX_BPM, max(MIN_BPM, bpm)))
+
+
 class CountInDialog(QDialog):
     """Count in before playing: how many clicks, and at what tempo."""
 
@@ -77,9 +117,18 @@ class CountInDialog(QDialog):
         self.note = QLabel(self)
         self.note.setWordWrap(True)
         self._speed = speed
+        self.tap_button = QPushButton(tr("T&ap"), self)
+        self.tap_button.setToolTip(tr("Tap with the beat of the music, a few times: the tempo is measured"))
+        self.tap_button.clicked.connect(self._tap)
+        self._tapper = TapTempo()
+        tempo = QHBoxLayout()
+        tempo.addWidget(self.bpm, 1)
+        tempo.addWidget(self.tap_button)
         form = QFormLayout()
         form.addRow(tr("Cou&nts:"), self.beats)
-        form.addRow(tr("&Tempo:"), self.bpm)
+        label = QLabel(tr("&Tempo:"), self)
+        label.setBuddy(self.bpm)  # (con la casilla y el botón juntos, la etiqueta necesita saber a cuál lleva Alt+T)
+        form.addRow(label, tempo)
         form.addRow("", self.follow)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel, self)
         buttons.accepted.connect(self.accept)
@@ -94,6 +143,11 @@ class CountInDialog(QDialog):
         self.follow.toggled.connect(self._explain)
         self.on.toggled.connect(self._explain)
         self._explain()
+
+    def _tap(self) -> None:
+        heard = self._tapper.tap()
+        if heard is not None:
+            self.bpm.setValue(recording_tempo(heard, self._speed, self.follow.isChecked()))
 
     def value(self) -> CountIn:
         return CountIn(self.on.isChecked(), self.beats.value(), self.bpm.value(), self.follow.isChecked())

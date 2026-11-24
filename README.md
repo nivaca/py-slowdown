@@ -39,7 +39,8 @@ What it does
   waveform, or I and O, then L): the end of the passage runs into its
   start through a short fade, at any speed.
 - Counts in before playing, as a metronome (C): the number of clicks and
-  the tempo are chosen, and the tempo can follow the speed.
+  the tempo are chosen, and the tempo can follow the speed; the tempo can
+  be measured by tapping with the beat (T).
 - Remembers, for each file, its bookmarks and the point where it was left,
   and goes on from there the next time.
 - Interface in English and in Spanish (Settings > Language).
@@ -65,6 +66,7 @@ Keyboard
 | Select                         | Shift+drag, or I and O           |
 | Clear the selection            | Esc                              |
 | Count in before playing        | C                                |
+| Tap the tempo (with the beat)  | T                                |
 | Open a file                    | Ctrl+O                           |
 
 Installing

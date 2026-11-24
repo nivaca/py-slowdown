@@ -35,7 +35,7 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Store, export_text
-from .countin import CountIn, CountInDialog
+from .countin import CountIn, CountInDialog, TapTempo, number, recording_tempo
 from .engine import MAX_PITCH, MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player
 from .interface import tr
 from .panel import BookmarkPanel
@@ -70,6 +70,7 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Start / end of the selection at the position"), "I / O"),
         (tr("Clear the selection"), tr("Esc")),
         (tr("Count in before playing"), "C"),
+        (tr("Tap the tempo (with the beat)"), "T"),
         (tr("Open a file"), "Ctrl+O"),
     ]
 
@@ -87,6 +88,7 @@ class Window(QMainWindow):
         self._announced: Audio | None = None  # the file whose end of reading was told
         self.skip = float(self.settings.value("skip", 5, type=float))
         self.count = CountIn.load(self.settings)
+        self.tapper = TapTempo()
         self.selection: tuple[float, float] | None = None  # seconds
         self.setWindowTitle(APP)
         if ICON.is_file():
@@ -202,8 +204,14 @@ class Window(QMainWindow):
         self.b_count.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         # Un botón partido: el botón enciende o apaga la cuenta; la flecha de al lado abre sus ajustes.
         self.b_count.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        self.b_tap = QToolButton(self)
+        self.b_tap.setText(tr("Tap"))
+        self.b_tap.setToolTip(tr("Tap with the beat of the music (T), a few times: the tempo of the count-in is "
+                                 "measured"))
+        self.b_tap.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         row.addWidget(self.b_repeat)
         row.addWidget(self.b_count)
+        row.addWidget(self.b_tap)
         row.addSpacing(12)
 
         self.time_label = QLabel("0:00.0 / 0:00.0", self)
@@ -311,6 +319,7 @@ class Window(QMainWindow):
         self.a_count.setChecked(self.count.on)
         self.a_count_settings = a(tr("Co&unt-in settings…"), self.count_settings)
         self.a_count_options = a(tr("&Count-in…"), self.count_settings)  # (el mismo, en Configuración)
+        self.a_tap = a(tr("Tap the tempo"), self.tap_tempo, ["T"])
         self.a_mark = a(tr("&Add a bookmark"), self.add_bookmark, ["B", "Ctrl+B"])
         self.a_prev_mark = a(tr("&Previous bookmark"), lambda: self.goto_bookmark(-1), ["Ctrl+Left", "PgUp"])
         self.a_next_mark = a(tr("&Next bookmark"), lambda: self.goto_bookmark(1), ["Ctrl+Right", "PgDown"])
@@ -340,7 +349,7 @@ class Window(QMainWindow):
                        self.a_slower, self.a_faster, self.a_normal, None,
                        self.a_higher, self.a_lower, self.a_original_pitch, None,
                        self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, None,
-                       self.a_count, self.a_count_settings):
+                       self.a_count, self.a_count_settings, self.a_tap):
             play.addSeparator() if action is None else play.addAction(action)
 
         marks = bar.addMenu(tr("&Bookmarks"))
@@ -405,6 +414,7 @@ class Window(QMainWindow):
         self.a_count.toggled.connect(self.b_count.setChecked)
         self.b_count.setChecked(self.count.on)
         self.b_count.customContextMenuRequested.connect(lambda _pos: self.count_settings())
+        self.b_tap.clicked.connect(self.tap_tempo)
         count_menu = QMenu(self.b_count)
         count_menu.addAction(self.a_count_settings)
         self.b_count.setMenu(count_menu)
@@ -526,6 +536,25 @@ class Window(QMainWindow):
             self.count.save(self.settings)
             self.a_count.setChecked(self.count.on)
             self._update_count_tip()
+
+    def tap_tempo(self) -> None:
+        """A tap with the beat of the music: after a few, the tempo of the count-in. What is tapped is the tempo
+        heard; with the count-in following the speed, the recording's own is kept (tapped / speed)."""
+        heard = self.tapper.tap()
+        if heard is None:
+            self.statusBar().showMessage(tr("Tap again, with the beat…"), 3000)
+            return
+        speed = self.player.speed
+        self.count.bpm = recording_tempo(heard, speed, self.count.follow)
+        self.count.save(self.settings)
+        self._update_count_tip()
+        taps = self.tapper.taps
+        if self.count.follow and speed != 1.0:
+            message = tr("Tempo: {heard} BPM heard at {speed}×, {bpm} BPM in the recording ({taps} taps)",
+                         heard=round(heard), speed=number(speed), bpm=self.count.bpm, taps=taps)
+        else:
+            message = tr("Tempo: {bpm} BPM ({taps} taps)", bpm=self.count.bpm, taps=taps)
+        self.statusBar().showMessage(message, 4000)
 
     def _update_count_tip(self) -> None:
         # Lo que la cuenta hace ahora, a la vista al pasar sobre el botón.

@@ -19,6 +19,12 @@ Debian package, the RPM, the wheel and the source, are on
   before the first click, and keeps it between the clicks; the clicks are
   fuller (60 ms, a tone and its octave). The beat appears on the waveform
   with the first click.
+- **Tap the tempo**: the button Tap, beside Count-in, or the key T, pressed
+  with the beat while the music plays, measures its tempo (the middle value
+  of the intervals between the last eight taps; a pause of over two seconds
+  begins again), which becomes the tempo of the count-in; at another speed,
+  with the count-in following it, the recording's own tempo is kept. The
+  dialog of the count-in has a Tap button too.
 - **The settings of the count-in are easy to find**: an arrow beside the
   button Count-in opens them, and so does Settings > Count-in (besides
   Playback > Count-in settings); the button's tooltip says what they are.
