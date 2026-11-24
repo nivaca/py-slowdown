@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in nineteen stages.
+in twenty stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -570,10 +570,21 @@ With their menus in the menu bar, the buttons Count-in and Hear were no
 longer needed, and they went; what the count-in does now, which the button
 said, is now in the status bar over the items of its menu.
 
+20. Speeds of one's own
+-----------------------
+
+A musician practising a passage goes through a few speeds again and again,
+50%, 75%, 100%, so a button Speeds, beside 1×, lists them, with the one
+playing ticked; the list is the user's, written as numbers separated by
+commas, from 25 to 300, and the slider stays for any other. Adding it to the
+menu Playback showed that two of its entries shared the letter of Alt, and
+so did three in Spanish; a test now goes through every menu in both
+languages.
+
 Testing
 -------
 
-The program has 184 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 188 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

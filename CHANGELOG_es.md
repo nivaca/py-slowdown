@@ -7,6 +7,14 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Velocidades elegidas de antemano**: el botón Velocidades, junto a 1×, y
+  Reproducción > Velocidades elegidas muestran velocidades en por ciento
+  (al principio 50, 60, 70, 75, 80, 90, 100, 110, 125 y 150), con la que
+  suena marcada; Cambiar las velocidades cambia la lista, Restaurar las de
+  siempre la devuelve. El deslizador se queda.
+- En cada menú, ya no hay dos acciones con la misma letra de Alt, en
+  ninguno de los dos idiomas (Ir al final y Conservar los formantes la
+  tenían; una prueba las revisa todas).
 - **Los ajustes de cada grabación en un archivo XML de su nombre**: al
   cerrar un archivo, su posición, velocidad, altura, formantes, manera de
   oír, selección, cuenta previa, marcadores y bucles se escriben en

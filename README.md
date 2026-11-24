@@ -32,7 +32,8 @@ What it does
   with its R3 ("finer") engine, its highest quality, called through a small
   binding of py-slowdown's own. At 1× the file is
   played as it is, sample for sample, without going through Rubber Band.
-  A lighter quality (half the processor) or the older R2 engine (crisp
+  The button Speeds has a list of speeds of one's own (50%, 75%, 100%,
+  125%…). A lighter quality (half the processor) or the older R2 engine (crisp
   attacks) can be chosen (Settings > Playback quality).
 - Bookmarks at the playing position (B), or anywhere with a right click on
   the waveform; each can have a label. They are listed in a side panel,

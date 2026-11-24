@@ -6,7 +6,7 @@
 Escribe docs/img/manual/NOMBRE_IDIOMA.png: la ventana con un archivo abierto, la forma de onda de cerca, el
 menú del clic derecho sobre la forma de onda, una selección que se repite con la cuenta previa, el diálogo de la
 cuenta previa, el del nombre de un marcador, los menús Reproducción, Oír y Configuración, los bucles, el diálogo
-de Exportar el audio, el de los atajos y la lista de los atajos. Todo sobre una grabación de muestra hecha aquí
+de Exportar el audio, el de los atajos, la lista de los atajos y el menú de las velocidades. Todo sobre una grabación de muestra hecha aquí
 (con ffmpeg), dibujado
 fuera de la pantalla, sin tarjeta de sonido y con una configuración propia: la del usuario no se lee ni se
 escribe (HOME y las carpetas XDG apuntan a una carpeta temporal).
@@ -144,6 +144,10 @@ def shoot(lang: str, audio: Path, folder: Path):
                         (tr("&Settings"), "menu_settings")):
         action = next(a for a in w.menuBar().actions() if a.text() == title)
         menu_shot(app, action.menu(), name, lang)
+
+    # Las velocidades elegidas, con 75 % marcada.
+    w._fill_speed_menu()
+    menu_shot(app, w.speed_menu, "speeds", lang)
 
     # Oír: solo los graves, de los dos canales.
     w.set_hearing("both", "bass")

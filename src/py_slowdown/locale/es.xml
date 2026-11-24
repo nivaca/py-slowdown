@@ -672,8 +672,8 @@
     <tr>Conservar los formantes: cuando la altura se mueve, las voces y los instrumentos conservan su timbre natural</tr>
   </text>
   <text>
-    <en>Keep the &amp;formants</en>
-    <tr>Conservar los &amp;formantes</tr>
+    <en>&amp;Keep the formants</en>
+    <tr>&amp;Conservar los formantes</tr>
   </text>
   <text>
     <en>&amp;Both channels</en>
@@ -855,7 +855,7 @@
   </text>
   <text>
     <en>Sa&amp;ve the selection as a loop</en>
-    <tr>&amp;Guardar la selección como bucle</tr>
+    <tr>Guardar la selección como &amp;bucle</tr>
   </text>
   <text>
     <en>Loop {start} – {end}: write its name</en>
@@ -968,5 +968,33 @@
   <text>
     <en>Count in before playing (C): {what}.</en>
     <tr>Contar antes de tocar (C): {what}.</tr>
+  </text>
+  <text>
+    <en>Speeds</en>
+    <tr>Velocidades</tr>
+  </text>
+  <text>
+    <en>Speeds chosen beforehand (50%, 75%, 100%…), which can be changed</en>
+    <tr>Velocidades elegidas de antemano (50 %, 75 %, 100 %…), que se pueden cambiar</tr>
+  </text>
+  <text>
+    <en>Spee&amp;d presets</en>
+    <tr>Velocidade&amp;s elegidas</tr>
+  </text>
+  <text>
+    <en>&amp;Edit the speeds…</en>
+    <tr>&amp;Cambiar las velocidades…</tr>
+  </text>
+  <text>
+    <en>&amp;Restore the usual speeds</en>
+    <tr>&amp;Restaurar las de siempre</tr>
+  </text>
+  <text>
+    <en>The speeds, in percent, separated by commas (from 25 to 300):</en>
+    <tr>Las velocidades, en por ciento, separadas por comas (de 25 a 300):</tr>
+  </text>
+  <text>
+    <en>Write whole numbers from 25 to 300, separated by commas: 50, 75, 100, 125.</en>
+    <tr>Escriba números enteros de 25 a 300, separados por comas: 50, 75, 100, 125.</tr>
   </text>
 </interface>

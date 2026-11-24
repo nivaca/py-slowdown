@@ -49,6 +49,24 @@ from .waveform import WaveformView
 
 APP = "py-slowdown"
 SPEED_STEP = 0.05
+SPEED_PRESETS = (50, 60, 70, 75, 80, 90, 100, 110, 125, 150)  # por ciento: las velocidades de siempre del botón
+
+
+def parse_speeds(text: str) -> list[int] | None:
+    """The speeds, in percent, of TEXT ("50, 75%, 100"), in order and each once; None if one is not a whole
+    number from MIN_SPEED to MAX_SPEED (25 to 300)."""
+    speeds = set()
+    for part in text.replace(";", ",").replace(" ", ",").split(","):
+        part = part.strip().rstrip("%").strip()
+        if not part:
+            continue
+        if not part.isdigit():
+            return None
+        value = int(part)
+        if not round(MIN_SPEED * 100) <= value <= round(MAX_SPEED * 100):
+            return None
+        speeds.add(value)
+    return sorted(speeds) or None
 SKIPS = (1, 2, 5, 10, 15, 30, 60)
 RECENT = 10
 
@@ -178,8 +196,8 @@ class Window(QMainWindow):
         except rubberband.RubberBandError:
             self.stretching = False
             why = tr("The Rubber Band Library is not installed, so the speed stays at 1×.")
-            for widget in (self.speed_slider, self.speed_box, self.b_normal, self.pitch_box, self.b_pitch,
-                           self.b_formants):
+            for widget in (self.speed_slider, self.speed_box, self.b_normal, self.b_speeds, self.pitch_box,
+                           self.b_pitch, self.b_formants):
                 widget.setEnabled(False)
                 widget.setToolTip(why)
             for action in (self.a_slower, self.a_faster, self.a_normal, self.a_higher, self.a_lower,
@@ -278,9 +296,18 @@ class Window(QMainWindow):
         self.b_normal.setText("1×")
         self.b_normal.setToolTip(tr("Normal speed (N)"))
         self.b_normal.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.b_speeds = QToolButton(self)
+        self.b_speeds.setText(tr("Speeds"))
+        self.b_speeds.setToolTip(tr("Speeds chosen beforehand (50%, 75%, 100%…), which can be changed"))
+        self.b_speeds.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.b_speeds.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.speed_menu = QMenu(tr("Spee&d presets"), self)
+        self.speed_menu.aboutToShow.connect(self._fill_speed_menu)
+        self.b_speeds.setMenu(self.speed_menu)
         row.addWidget(self.speed_slider)
         row.addWidget(self.speed_box)
         row.addWidget(self.b_normal)
+        row.addWidget(self.b_speeds)
         row.addSpacing(8)
 
         row.addWidget(QLabel(tr("Pitch"), self))
@@ -351,7 +378,7 @@ class Window(QMainWindow):
         self.a_higher = a(tr("A se&mitone higher"), lambda: self.change_pitch(1.0), ["Ctrl+Up"])
         self.a_lower = a(tr("A semitone lo&wer"), lambda: self.change_pitch(-1.0), ["Ctrl+Down"])
         self.a_original_pitch = a(tr("Ori&ginal pitch"), lambda: self.set_pitch(0.0), ["Shift+N"])
-        self.a_formants = a(tr("Keep the &formants"), self.set_formants, checkable=True)
+        self.a_formants = a(tr("&Keep the formants"), self.set_formants, checkable=True)
         self.a_repeat = a(tr("&Repeat the selection"), self._set_repeat, ["L"], checkable=True)
         self.a_sel_start = a(tr("Select&ion starts here"), lambda: self.mark_selection(start=True), ["I"])
         self.a_sel_end = a(tr("Selection ends &here"), lambda: self.mark_selection(start=False), ["O"])
@@ -398,10 +425,15 @@ class Window(QMainWindow):
         play = bar.addMenu(tr("&Playback"))
         for action in (self.a_play, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
                        self.a_forward_1, self.a_forward, self.a_end, None,
-                       self.a_slower, self.a_faster, self.a_normal, None,
+                       self.a_slower, self.a_faster, self.a_normal, self.speed_menu, None,
                        self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, None,
                        self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, self.a_save_loop):
-            play.addSeparator() if action is None else play.addAction(action)
+            if action is None:
+                play.addSeparator()
+            elif isinstance(action, QMenu):
+                play.addMenu(action)
+            else:
+                play.addAction(action)
 
         # Oír y la cuenta previa, cada uno con su menú.
         self.hear_menu = bar.addMenu(tr("H&ear"))
@@ -885,6 +917,41 @@ class Window(QMainWindow):
             widget.setValue(value)
             widget.blockSignals(False)
         self.b_normal.setEnabled(speed != 1.0)
+
+    def speed_presets(self) -> list[int]:
+        """The speeds of the button Speeds, in percent."""
+        return parse_speeds(str(self.settings.value("speed/presets", ""))) or list(SPEED_PRESETS)
+
+    def _fill_speed_menu(self) -> None:
+        # Las velocidades, con la de ahora marcada si está entre ellas; y cómo cambiarlas.
+        menu = self.speed_menu
+        menu.clear()
+        now = round(self.player.speed * 100)
+        for percent in self.speed_presets():
+            action = menu.addAction(f"{percent}%")
+            action.setCheckable(True)
+            action.setChecked(percent == now)
+            action.setEnabled(self.stretching or percent == 100)
+            action.triggered.connect(lambda _=False, p=percent: self.set_speed(p / 100))
+        menu.addSeparator()
+        menu.addAction(tr("&Edit the speeds…"), self.edit_speed_presets)
+        menu.addAction(tr("&Restore the usual speeds"), self.restore_speed_presets)
+
+    def edit_speed_presets(self) -> None:
+        current = ", ".join(str(p) for p in self.speed_presets())
+        text, ok = QInputDialog.getText(self, tr("Speeds"), tr("The speeds, in percent, separated by commas "
+                                                               "(from 25 to 300):"), text=current)
+        if not ok:
+            return
+        speeds = parse_speeds(text)
+        if speeds is None:
+            QMessageBox.warning(self, tr("Speeds"), tr("Write whole numbers from 25 to 300, separated by commas: "
+                                                       "50, 75, 100, 125."))
+            return
+        self.settings.setValue("speed/presets", ", ".join(str(p) for p in speeds))
+
+    def restore_speed_presets(self) -> None:
+        self.settings.remove("speed/presets")
 
     def change_speed(self, delta: float) -> None:
         if self.stretching:

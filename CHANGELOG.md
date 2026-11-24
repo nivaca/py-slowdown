@@ -7,6 +7,12 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Speeds chosen beforehand**: the button Speeds, beside 1×, and Playback >
+  Speed presets list speeds in percent (at first 50, 60, 70, 75, 80, 90,
+  100, 110, 125 and 150), the one playing ticked; Edit the speeds changes
+  the list, Restore the usual speeds brings it back. The slider stays.
+- In each menu, no two entries share the letter of Alt any more, in either
+  language (Forward and Keep the formants did; a test checks them all).
 - **The settings of each recording in an XML file of its name**: when a
   file is closed, its position, speed, pitch, formants, way of hearing,
   selection, count-in, bookmarks and loops are written in `song.xml` (for

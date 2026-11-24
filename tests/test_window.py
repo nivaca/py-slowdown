@@ -753,3 +753,72 @@ def test_playback_quality(window, app, wav):
     assert window.player.quality == "high" and window.a_qualities["high"].isChecked()
     window.a_qualities["r2"].trigger()
     assert window.player.quality == "r2" and window.settings.value("quality") == "r2"
+
+
+def test_parse_speeds():
+    from py_slowdown.window import parse_speeds
+
+    assert parse_speeds("50, 75%, 100,125") == [50, 75, 100, 125]
+    assert parse_speeds("100 50; 50") == [50, 100]  # (en orden, cada una una vez)
+    assert parse_speeds("20, 100") is None and parse_speeds("301") is None  # (fuera de 25 a 300)
+    assert parse_speeds("75.5") is None and parse_speeds("fast") is None and parse_speeds(" , ") is None
+
+
+def test_speed_presets(window, app, wav, monkeypatch):
+    """The button Speeds: its speeds, the one playing ticked; one chosen is the speed; the list is changed, kept
+    and restored; the slider stays."""
+    from py_slowdown import window as window_module
+
+    loaded(window, app, wav)
+    assert window.b_speeds.menu() is window.speed_menu and window.speed_slider.isVisible()
+    playback = next(a.menu() for a in window.menuBar().actions() if a.text() == "&Playback")
+    assert window.speed_menu.menuAction() in playback.actions()  # (también en Reproducción)
+    window._fill_speed_menu()
+    speeds = [a for a in window.speed_menu.actions() if a.isCheckable()]
+    assert [a.text() for a in speeds] == ["50%", "60%", "70%", "75%", "80%", "90%", "100%", "110%", "125%", "150%"]
+    assert next(a for a in speeds if a.text() == "100%").isChecked()
+    next(a for a in speeds if a.text() == "75%").trigger()
+    assert window.player.speed == 0.75 and window.speed_slider.value() == 75
+    monkeypatch.setattr(window_module.QInputDialog, "getText", lambda *args, **kwargs: ("40, 85%, 120", True))
+    window.edit_speed_presets()
+    assert window.speed_presets() == [40, 85, 120]
+    window._fill_speed_menu()
+    assert [a.text() for a in window.speed_menu.actions() if a.isCheckable()] == ["40%", "85%", "120%"]
+    warned = []
+    monkeypatch.setattr(window_module.QInputDialog, "getText", lambda *args, **kwargs: ("10, 500", True))
+    monkeypatch.setattr(window_module.QMessageBox, "warning", lambda *args: warned.append(args))
+    window.edit_speed_presets()
+    assert warned and window.speed_presets() == [40, 85, 120]  # (lo que no sirve no se guarda)
+    window.restore_speed_presets()
+    assert window.speed_presets() == list(window_module.SPEED_PRESETS)
+
+
+@pytest.mark.parametrize("lang", ["en", "es"])
+def test_each_menu_letter_once(app, output, tmp_path, monkeypatch, lang):
+    """In each menu, in both languages, no two entries share the letter of Alt (the one after &)."""
+    import re
+
+    from PySide6.QtCore import QSettings
+
+    monkeypatch.setattr("py_slowdown.window.Output", type(output))
+    interface.use(lang)
+    try:
+        w = Window(player=Player(output), store=Store(tmp_path / "b.json"),
+                   settings=QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat))
+        w._fill_speed_menu()
+        menus = [("bar", w.menuBar())]
+        clashes = []
+        while menus:
+            name, menu = menus.pop()
+            letters: dict[str, list[str]] = {}
+            for action in menu.actions():
+                if action.menu() is not None:
+                    menus.append((action.text(), action.menu()))
+                found = re.search(r"&([^&])", action.text().replace("&&", ""))
+                if found:
+                    letters.setdefault(found.group(1).lower(), []).append(action.text())
+            clashes += [(name, texts) for texts in letters.values() if len(texts) > 1]
+        assert clashes == []
+        w.close()
+    finally:
+        interface.use("en")
