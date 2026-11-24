@@ -1,4 +1,4 @@
-# py-slowdown 0.2.0: descripción
+# py-slowdown 1.0.0: descripción
 
 ## Análisis
 

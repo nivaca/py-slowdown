@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-slowdown
-Version:        0.2.0
+Version:        1.0.0
 Release:        1%{?dist}
 Summary:        Play audio slower or faster without changing its pitch
 
@@ -97,6 +97,12 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*
 
 %changelog
+* Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.0.0-1
+- Version 1.0.0, the first stable version: the pitch in semitones; tap the
+  tempo; the count-in's offset, also set on the waveform, and heard on
+  Bluetooth earphones; the count-in's settings easy to reach; reopen the last
+  file when starting; the controls in two rows
+
 * Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.2.0-1
 - Version 0.2.0: a selection repeated without a gap; a count-in before
   playing; installers for Windows (Inno Setup) and macOS (a .dmg, Apple

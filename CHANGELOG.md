@@ -5,7 +5,9 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 1.0.0 — 2026-11-24
+
+The first stable version.
 
 - **The pitch, in semitones**: from 12 down to 12 up, by steps of one or in
   tenths (to tune a recording that is off pitch to an instrument), without
