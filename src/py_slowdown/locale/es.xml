@@ -877,4 +877,48 @@
     <en>Loop {start} – {end}: write its name</en>
     <tr>Bucle {start} – {end}: escriba su nombre</tr>
   </text>
+  <text>
+    <en>Action</en>
+    <tr>Acción</tr>
+  </text>
+  <text>
+    <en>Keys</en>
+    <tr>Teclas</tr>
+  </text>
+  <text>
+    <en>&amp;Restore the defaults</en>
+    <tr>&amp;Restaurar los de siempre</tr>
+  </text>
+  <text>
+    <en>Click the keys of an action and press the new ones; the button inside clears them. A foot pedal that sends keys works the same way.</en>
+    <tr>Haga clic en las teclas de una acción y oprima las nuevas; el botón de adentro las borra. Un pedal de pie que manda teclas sirve igual.</tr>
+  </text>
+  <text>
+    <en>Also: {keys}</en>
+    <tr>También: {keys}</tr>
+  </text>
+  <text>
+    <en>{keys} is given to two actions: {one} and {other}. Give it to only one.</en>
+    <tr>{keys} está en dos acciones: {one} y {other}. Déjela en una sola.</tr>
+  </text>
+  <text>
+    <en>Keyboard &amp;shortcuts…</en>
+    <tr>&amp;Atajos de teclado…</tr>
+  </text>
+  <text>
+    <en>Save the selection as a loop</en>
+    <tr>Guardar la selección como bucle</tr>
+  </text>
+  <text>
+    <en>Shift+L</en>
+    <tr>Mayús+L</tr>
+  </text>
+  <text>
+    <en>Change the shortcuts</en>
+    <tr>Cambiar los atajos</tr>
+  </text>
+  <text>
+    <en>Settings &gt; Keyboard shortcuts</en>
+    <tr>Configuración &gt; Atajos de teclado</tr>
+  </text>
 </interface>

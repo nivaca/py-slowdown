@@ -705,3 +705,42 @@ def test_settings_of_each_file(window, app, wav, tmp_path):
     assert window.player.hearing == ("mono", "no_bass") and window.b_hear.text() == "Hear: mono, no bass"
     assert window.selection == (1.0, 2.0) and window.a_repeat.isChecked() and window.player.loop == (1.0, 2.0)
     assert (window.count.on, window.count.bpm, window.count.offset) == (True, 88, 0.25)
+
+
+def test_keyboard_shortcuts(window, app, monkeypatch, tmp_path, output):
+    """Settings > Keyboard shortcuts: new keys for an action are used, kept, and there the next time; keys given to
+    two actions are refused; the defaults come back; Help shows the keys as they are."""
+    from PySide6.QtGui import QKeySequence
+
+    from py_slowdown import shortcuts
+
+    assert shortcuts.clashes(window.default_shortcuts) == []  # (las de siempre no chocan)
+    dialog = shortcuts.ShortcutsDialog(window.shortcut_actions, window.default_shortcuts, window)
+    dialog.edits["a_mark"].setKeySequence(QKeySequence("M"))
+    dialog.edits["a_tap"].setKeySequence(QKeySequence("F5"))
+    dialog.accept()
+    assert dialog.result() == 1
+    shortcuts.save(window.shortcut_actions, window.default_shortcuts, window.settings)
+    assert window.a_mark.shortcuts() == [QKeySequence("M")]  # (cambiada: solo la nueva)
+    assert window.a_slower.shortcuts() == [QKeySequence("Down"), QKeySequence("-")]  # (sin cambiar: las dos)
+    assert ("Add a bookmark", "M") in window.current_shortcut_rows()
+    assert window.settings.value("shortcuts/a_mark") in ("M", ["M"]) and window.settings.value("shortcuts/a_play") is None
+
+    # Otra ventana, con la misma configuración
+    monkeypatch.setattr("py_slowdown.window.Output", type(output))
+    from py_slowdown.engine import Player
+    from py_slowdown.window import Window
+
+    again = Window(player=Player(output), store=window.store, settings=window.settings)
+    assert again.a_tap.shortcuts() == [QKeySequence("F5")]
+    clash = shortcuts.ShortcutsDialog(again.shortcut_actions, again.default_shortcuts, again)
+    clash.edits["a_stop"].setKeySequence(QKeySequence("F5"))
+    warned = []
+    monkeypatch.setattr(shortcuts.QMessageBox, "warning", lambda *args: warned.append(args[2]))
+    clash.accept()
+    assert warned and "Tap the tempo" in warned[0] and again.a_stop.shortcuts() == [QKeySequence("S")]
+    clash.restore_defaults()
+    clash.accept()
+    shortcuts.save(again.shortcut_actions, again.default_shortcuts, again.settings)
+    assert again.a_tap.shortcuts() == [QKeySequence("T")] and again.settings.value("shortcuts/a_tap") is None
+    again.close()

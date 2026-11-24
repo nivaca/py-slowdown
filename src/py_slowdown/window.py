@@ -36,7 +36,7 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Loop, Store, export_text
-from . import export
+from . import export, shortcuts
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
@@ -90,9 +90,12 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Select with the mouse"), tr("Shift+drag")),
         (tr("Start / end of the selection at the position"), "I / O"),
         (tr("Clear the selection"), tr("Esc")),
+        (tr("Save the selection as a loop"), tr("Shift+L")),
         (tr("Count in before playing"), "C"),
         (tr("Tap the tempo (with the beat)"), "T"),
         (tr("Open a file"), "Ctrl+O"),
+        (tr("Export the audio"), "Ctrl+E"),
+        (tr("Change the shortcuts"), tr("Settings > Keyboard shortcuts")),
     ]
 
 
@@ -381,6 +384,14 @@ class Window(QMainWindow):
         self.wave.follow = self.a_follow.isChecked()
         self.a_shortcuts = a(tr("&Keyboard shortcuts"), self.show_shortcuts, ["F1"])
         self.a_about = a(tr("&About py-slowdown"), self.about)
+        self.a_edit_shortcuts = a(tr("Keyboard &shortcuts…"), self.edit_shortcuts)
+        # Las acciones con nombre (el del atributo), sus teclas de siempre, y las que el usuario eligió.
+        self.shortcut_actions = {name: action for name, action in vars(self).items()
+                                 if name.startswith("a_") and isinstance(action, QAction) and name != "a_count_options"}
+        for name, action in self.shortcut_actions.items():
+            action.setObjectName(name)
+        self.default_shortcuts = {name: shortcuts.keys_of(action) for name, action in self.shortcut_actions.items()}
+        shortcuts.load(self.shortcut_actions, self.settings)
 
     def _build_menus(self) -> None:
         bar = self.menuBar()
@@ -434,6 +445,7 @@ class Window(QMainWindow):
 
         settings = bar.addMenu(tr("&Settings"))
         settings.addAction(self.a_count_options)
+        settings.addAction(self.a_edit_shortcuts)
         settings.addAction(self.a_reopen)
         settings.addSeparator()
         skips = settings.addMenu(tr("&Skip length"))
@@ -1116,8 +1128,24 @@ class Window(QMainWindow):
         self.settings.setValue("interface", code)
         QMessageBox.information(self, APP, tr("The language changes when py-slowdown starts again."))
 
+    def edit_shortcuts(self) -> None:
+        dialog = shortcuts.ShortcutsDialog(self.shortcut_actions, self.default_shortcuts, self)
+        if dialog.exec():
+            shortcuts.save(self.shortcut_actions, self.default_shortcuts, self.settings)
+
+    def current_shortcut_rows(self) -> list[tuple[str, str]]:
+        """(what, keys) of each action with keys, as they are now (they can be changed), and what the mouse
+        does."""
+        rows = []
+        for action in self.shortcut_actions.values():
+            keys = [k.toString(shortcuts.NATIVE) for k in action.shortcuts() if not k.isEmpty()]
+            if keys:
+                rows.append((shortcuts.plain(action.text()), "   ".join(keys)))
+        rows += [(tr("Zoom around the pointer"), tr("Ctrl+wheel")), (tr("Select with the mouse"), tr("Shift+drag"))]
+        return rows
+
     def show_shortcuts(self) -> None:
-        rows = shortcut_rows()
+        rows = self.current_shortcut_rows()
         html = "<table cellspacing='4'>" + "".join(
             f"<tr><td>{what}</td><td>&nbsp;&nbsp;<b>{keys}</b></td></tr>" for what, keys in rows) + "</table>"
         QMessageBox.information(self, tr("Keyboard shortcuts"), html)

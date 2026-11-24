@@ -7,6 +7,12 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Keyboard shortcuts of one's own**: Settings > Keyboard shortcuts lists
+  every action with its keys; a click on the keys and the new ones change
+  them (a foot pedal that sends keys works the same way). Keys given to two
+  actions are refused, Restore the defaults brings back those of always,
+  and only the changed ones are kept. Help > Keyboard shortcuts shows the
+  keys as they are. The manual pages list Shift+L and Ctrl+E.
 - **Each file as it was played**: when a file is closed, its speed, pitch,
   formants, way of hearing, selection (and whether it was repeated) and,
   with the count-in on, the count-in's tempo and offset are kept with its

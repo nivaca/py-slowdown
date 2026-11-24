@@ -7,6 +7,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Atajos de teclado propios**: Configuración > Atajos de teclado muestra
+  cada acción con sus teclas; un clic en las teclas y las nuevas las
+  cambian (un pedal de pie que manda teclas sirve igual). Unas teclas en
+  dos acciones no se aceptan, Restaurar los de siempre los devuelve, y solo
+  se guardan los cambiados. Ayuda > Atajos de teclado muestra las teclas
+  como están. Las páginas de manual dicen Mayús+L y Ctrl+E.
 - **Cada archivo como se tocó**: al cerrar un archivo, su velocidad, su
   altura, los formantes, la manera de oír, la selección (y si se repetía)
   y, con la cuenta previa encendida, el tempo y el desfase de la cuenta se
