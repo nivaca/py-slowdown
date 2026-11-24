@@ -5,7 +5,11 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 1.1.0 — 2026-11-24
+
+For working on music: export what is heard, hear one part of the mix, keep
+loops and each file as it was played, change the keys; and files are read
+much faster.
 
 - **The whole waveform at once, the second time**: once a file is read,
   its waveform is kept in the cache folder (about 4 MB for an hour and a

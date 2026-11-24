@@ -5,7 +5,11 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Sin publicar
+## 1.1.0 — 2026-11-24
+
+Para trabajar con la música: exportar lo que se oye, oír una parte de la
+mezcla, guardar bucles y cada archivo como se tocó, cambiar las teclas; y
+los archivos se leen mucho más rápido.
 
 - **Toda la forma de onda enseguida, la segunda vez**: una vez leído un
   archivo, su forma de onda se guarda en la carpeta de caché (unos 4 MB por

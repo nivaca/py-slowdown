@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-slowdown
-Version:        1.0.0
+Version:        1.1.0
 Release:        1%{?dist}
 Summary:        Play audio slower or faster without changing its pitch
 
@@ -97,6 +97,14 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*
 
 %changelog
+* Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.1.0-1
+- Export the audio as it sounds (WAV, FLAC, MP3, Opus); hear one part of the mix
+  (a channel, the mix without its centre, only the bass, or all but the bass);
+  keep the formants; loops, selections kept with a name; each file as it was
+  played; keyboard shortcuts of one's own; the whole waveform at once the second
+  time; long files read in four parts at once, files read faster and kept in
+  half the space; the waveform fills the window when a file is opened
+
 * Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.0.0-1
 - Version 1.0.0, the first stable version: the pitch in semitones; tap the
   tempo; the count-in's offset, also set on the waveform, and heard on
