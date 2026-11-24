@@ -551,6 +551,16 @@ then the recording, on the next beat. Turn it on with
 While it counts, the waveform shows the beat in large figures
 (figure~\ref{fig:repeat_en}), and the position does not move.
 
+\index{count-in!offset}\index{offset of the recording}%
+The recording comes in on the beat after the last click if its first beat
+is exactly at the position. When it is not (a bookmark placed a little
+before the first beat, say), \menu{Recording offset}, in the same dialog,
+moves it: a negative value brings it in earlier, a positive one later, by
+that many seconds of the recording (from 2 earlier to 2 later, by
+hundredths). If the first beat is 0.2 seconds after the position, $-0.2$
+puts it on the beat, at any speed. It can come in earlier only up to the
+last click, which is never cut: the dialog says when more is asked for.
+
 \index{tap tempo}\index{tempo!tapped}%
 The tempo of a recording can be measured by tapping: while it plays,
 press \menu{Tap}, beside \menu{Count-in}, or the key \key{T}, with the

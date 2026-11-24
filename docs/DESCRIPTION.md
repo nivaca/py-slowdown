@@ -8,7 +8,7 @@ lectures and interviews, where one needs to hear a passage again and again
 at a speed one can follow; it follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twelve stages.
+in thirteen stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -366,10 +366,25 @@ the box of the tempo and its Tap button side by side left the label without
 the box its key leads to, so it showed its ampersand ("&Tempo"); the label
 now names its box.
 
+13. The recording off the beat
+------------------------------
+
+After the count, the recording comes in on the next beat only if its own
+first beat is exactly at the position, and often it is not: a bookmark a
+little before the first beat makes the music come in late. So the
+count-in has an offset, in seconds of the recording, from 2 earlier to 2
+later. Later is simple: the count is longer, by a faint hiss. Earlier
+means that the end of the count, the silence after its last click, is
+shortened, so the recording comes in sooner; it can go no further than the
+last click, which is never cut, and the dialog says so when more is asked
+for. Being in seconds of the recording, the offset is divided by the speed
+before it is heard: a first beat 0.2 seconds after the position, at half
+speed, comes 0.4 seconds later, and an offset of −0.2 is right at both.
+
 Testing
 -------
 
-The program has 105 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 108 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

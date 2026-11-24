@@ -518,7 +518,7 @@ class Window(QMainWindow):
         if self.player.playing:
             self.player.pause()
         elif self.count.on:
-            self.player.play(self.count.beats, self.count.tempo(self.player.speed))
+            self.player.play(self.count.beats, self.count.tempo(self.player.speed), self.count.offset)
         else:
             self.player.play()
         self._update_play_button()
@@ -563,6 +563,9 @@ class Window(QMainWindow):
             what = tr("{beats} clicks at {bpm} BPM, following the speed", beats=count.beats, bpm=count.bpm)
         else:
             what = tr("{beats} clicks at {bpm} BPM", beats=count.beats, bpm=count.bpm)
+        if count.offset:
+            signed = ("+" if count.offset > 0 else "−") + number(abs(count.offset))
+            what += tr("; the recording {offset} s off the beat", offset=signed)
         self.b_count.setToolTip(tr("Count in before playing (C): {what}. The arrow beside it changes them.",
                                    what=what))
 

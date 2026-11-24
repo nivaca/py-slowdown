@@ -20,6 +20,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   tenue, 0,4 s antes del primer golpe, y lo mantiene entre los golpes; los
   golpes son más llenos (60 ms, una nota y su octava). El pulso aparece en
   la forma de onda con el primer golpe.
+- **El desfase de la grabación después de la cuenta previa**: cuando el
+  primer pulso de la grabación no está justo en la posición, Desfase de la
+  grabación, en el diálogo de la cuenta previa, la hace entrar antes
+  (negativo) o después (positivo), hasta 2 segundos de la grabación, para
+  que entre en el pulso a cualquier velocidad; antes, solo hasta el último
+  golpe, que no se corta.
 - **Marcar el tempo**: el botón Marcar, junto a Cuenta previa, o la tecla T,
   pulsados con el pulso mientras suena la música, miden su tempo (el valor
   del medio de los intervalos entre los ocho últimos golpes; una pausa de

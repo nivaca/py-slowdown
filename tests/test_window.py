@@ -241,7 +241,7 @@ def test_count_in(window, app, wav, output, monkeypatch):
     assert window.b_count.isChecked() and window.count.on
     window.set_speed(0.5)
     window.toggle()
-    assert calls[-1] == (4, 50.0)  # cuatro golpes, 100 BPM a 0,5×
+    assert calls[-1] == (4, 50.0, 0.0)  # cuatro golpes, 100 BPM a 0,5×, sin desplazar la grabación
     assert CountIn.load(window.settings).on  # (se guarda)
     dialog = CountInDialog(CountIn(True, 3, 120, False), 0.5, window)
     assert "120" in dialog.note.text() and dialog.value() == CountIn(True, 3, 120, False)
@@ -400,3 +400,33 @@ def test_tap_in_the_dialog(app, monkeypatch):
         now[0] += 0.4
     assert dialog.bpm.value() == 150
     dialog.close()
+
+
+def test_count_in_offset_setting(window, app, wav, monkeypatch):
+    from py_slowdown.countin import CountIn, CountInDialog
+
+    loaded(window, app, wav)
+    dialog = CountInDialog(CountIn(True, 4, 120, True, -0.2), 1.0, window)
+    assert dialog.offset.value() == -0.2 and dialog.value().offset == -0.2
+    dialog.offset.setValue(-1.5)  # (más que lo que cabe antes del pulso a 120 BPM)
+    assert "at most" in dialog.note.text()
+    dialog.close()
+
+    class Accepting:
+        def __init__(self, *args):
+            pass
+
+        def exec(self):
+            return True
+
+        def value(self):
+            return CountIn(True, 4, 120, True, 0.15)
+
+    monkeypatch.setattr("py_slowdown.window.CountInDialog", Accepting)
+    window.a_count_options.trigger()
+    assert CountIn.load(window.settings).offset == 0.15  # (guardado)
+    assert "+0.15 s off the beat" in window.b_count.toolTip()
+    calls = []
+    monkeypatch.setattr(window.player, "play", lambda *args: calls.append(args))
+    window.toggle()
+    assert calls == [(4, 120.0, 0.15)]

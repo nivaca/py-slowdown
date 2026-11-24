@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
     QDialogButtonBox,
+    QDoubleSpinBox,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -24,7 +25,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from .engine import MAX_BEATS, MAX_BPM, MIN_BPM
+from .engine import MAX_BEATS, MAX_BPM, MIN_BPM, max_earlier
+
+MAX_OFFSET = 2.0  # segundos que la grabación puede entrar antes o después del pulso
 from .interface import tr
 
 
@@ -34,6 +37,7 @@ class CountIn:
     beats: int = 4
     bpm: int = 100
     follow: bool = True  # el tempo sigue la velocidad: 120 BPM a 0,5× se cuentan a 60
+    offset: float = 0.0  # segundos de la grabación: + entra después del pulso, - antes
 
     @classmethod
     def load(cls, settings: QSettings) -> CountIn:
@@ -43,16 +47,22 @@ class CountIn:
             except (TypeError, ValueError):
                 return default
 
+        try:
+            offset = min(MAX_OFFSET, max(-MAX_OFFSET, float(settings.value("countin/offset", 0.0))))
+        except (TypeError, ValueError):
+            offset = 0.0
         return cls(on=settings.value("countin/on", False, type=bool),
                    beats=number("countin/beats", 4, 1, MAX_BEATS),
                    bpm=number("countin/bpm", 100, MIN_BPM, MAX_BPM),
-                   follow=settings.value("countin/follow", True, type=bool))
+                   follow=settings.value("countin/follow", True, type=bool),
+                   offset=round(offset, 3))
 
     def save(self, settings: QSettings) -> None:
         settings.setValue("countin/on", self.on)
         settings.setValue("countin/beats", self.beats)
         settings.setValue("countin/bpm", self.bpm)
         settings.setValue("countin/follow", self.follow)
+        settings.setValue("countin/offset", self.offset)
 
     def tempo(self, speed: float) -> float:
         """The tempo of the clicks at SPEED."""
@@ -114,6 +124,14 @@ class CountInDialog(QDialog):
         self.follow = QCheckBox(tr("&Follow the speed"), self)
         self.follow.setChecked(count.follow)
         self.follow.setToolTip(tr("The tempo of the clicks changes with the speed: 120 BPM at 0.5× are counted at 60"))
+        self.offset = QDoubleSpinBox(self)
+        self.offset.setRange(-MAX_OFFSET, MAX_OFFSET)
+        self.offset.setSingleStep(0.05)
+        self.offset.setDecimals(2)
+        self.offset.setSuffix(" s")
+        self.offset.setValue(count.offset)
+        self.offset.setToolTip(tr("If the recording does not come in on the beat after the count: negative brings "
+                                  "it in earlier, positive later (seconds of the recording)"))
         self.note = QLabel(self)
         self.note.setWordWrap(True)
         self._speed = speed
@@ -130,6 +148,7 @@ class CountInDialog(QDialog):
         label.setBuddy(self.bpm)  # (con la casilla y el botón juntos, la etiqueta necesita saber a cuál lleva Alt+T)
         form.addRow(label, tempo)
         form.addRow("", self.follow)
+        form.addRow(tr("Recording &offset:"), self.offset)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel, self)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -138,7 +157,7 @@ class CountInDialog(QDialog):
         layout.addLayout(form)
         layout.addWidget(self.note)
         layout.addWidget(buttons)
-        for widget in (self.bpm, self.beats):
+        for widget in (self.bpm, self.beats, self.offset):
             widget.valueChanged.connect(self._explain)
         self.follow.toggled.connect(self._explain)
         self.on.toggled.connect(self._explain)
@@ -150,18 +169,27 @@ class CountInDialog(QDialog):
             self.bpm.setValue(recording_tempo(heard, self._speed, self.follow.isChecked()))
 
     def value(self) -> CountIn:
-        return CountIn(self.on.isChecked(), self.beats.value(), self.bpm.value(), self.follow.isChecked())
+        return CountIn(self.on.isChecked(), self.beats.value(), self.bpm.value(), self.follow.isChecked(),
+                       round(self.offset.value(), 3))
 
     def _explain(self) -> None:
         # Lo que se oirá a la velocidad de ahora, en palabras.
         count = self.value()
-        for widget in (self.beats, self.bpm, self.follow):
+        for widget in (self.beats, self.bpm, self.follow, self.offset, self.tap_button):
             widget.setEnabled(count.on)
         if not count.on:
             self.note.setText(tr("Playing starts at once."))
             return
-        self.note.setText(tr("At the speed now ({speed}×): {beats} clicks at {bpm} BPM, then the recording.",
-                             speed=number(self._speed), beats=count.beats, bpm=number(count.tempo(self._speed))))
+        text = tr("At the speed now ({speed}×): {beats} clicks at {bpm} BPM, then the recording.",
+                  speed=number(self._speed), beats=count.beats, bpm=number(count.tempo(self._speed)))
+        heard = count.offset / self._speed
+        if heard < 0:
+            # Antes del pulso, a lo sumo hasta el último golpe: si se pide más, se dice.
+            limit = max_earlier(44100, count.tempo(self._speed))
+            if -heard > limit:
+                text += " " + tr("At this tempo the recording can come in at most {seconds} s earlier.",
+                                 seconds=number(limit * self._speed))
+        self.note.setText(text)
 
 
 def number(value: float) -> str:

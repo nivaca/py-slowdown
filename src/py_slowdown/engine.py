@@ -86,14 +86,23 @@ MIN_BPM, MAX_BPM = 20, 300
 MAX_BEATS = 16
 
 
-def count_in(rate: int, channels: int, beats: int, bpm: float) -> Block:
+def max_earlier(rate: int, bpm: float) -> float:
+    """Seconds (heard) that the recording can come in before the beat after the count: up to the last click,
+    whose sound is not cut."""
+    bpm = min(max(MIN_BPM, float(bpm)), MAX_BPM)
+    return max(0.0, (round(rate * 60.0 / bpm) - int((CLICK + 0.01) * rate)) / rate)
+
+
+def count_in(rate: int, channels: int, beats: int, bpm: float, shift: float = 0.0) -> Block:
     """A count-in: BEATS clicks at BPM (the first one higher and louder), as a block that stays at the
-    position of the file while it is heard. The recording comes in on the beat after the last click."""
+    position of the file while it is heard. The recording comes in on the beat after the last click, or SHIFT
+    seconds (heard) later, or earlier if SHIFT is negative (no earlier than just after the last click)."""
     beats = min(max(1, int(beats)), MAX_BEATS)
     bpm = min(max(MIN_BPM, float(bpm)), MAX_BPM)
     lead = int(COUNT_LEAD * rate)
     beat = round(rate * 60.0 / bpm)
-    length = lead + beats * beat
+    shift_frames = max(round(shift * rate), -round(max_earlier(rate, bpm) * rate))
+    length = lead + beats * beat + shift_frames
     noise = np.random.default_rng(7).uniform(-1.0, 1.0, length).astype(np.float32)
     level = np.full(length, KEEP_LEVEL, np.float32)
     level[:lead] = WAKE_LEVEL
@@ -107,7 +116,8 @@ def count_in(rate: int, channels: int, beats: int, bpm: float) -> Block:
         tone = np.sin(2 * np.pi * pitch * t) + 0.35 * np.sin(2 * np.pi * 2 * pitch * t)
         click = (level_ / 1.35 * envelope * tone).astype(np.float32)
         start = lead + n * beat
-        frames[start:start + len(click)] += click[:, None]
+        end = min(start + len(click), length)
+        frames[start:end] += click[: end - start, None]
     return Block(frames, 0.0, 0.0, (lead, beat, beats))
 
 
@@ -415,8 +425,9 @@ class Player:
 
     # --- los mandos
 
-    def play(self, beats: int = 0, bpm: float = 0.0) -> None:
-        """Play; with BEATS and BPM, after a count-in of BEATS clicks at BPM."""
+    def play(self, beats: int = 0, bpm: float = 0.0, offset: float = 0.0) -> None:
+        """Play; with BEATS and BPM, after a count-in of BEATS clicks at BPM, the recording coming in OFFSET
+        seconds of the recording later (earlier, if negative) than the beat after the last click."""
         if self.audio is None:
             return
         if self.ended or (self._eof and not self._queue):
@@ -427,7 +438,8 @@ class Player:
                 self._queue.remove(block)
                 self._queued -= len(block.frames) - block.used
             if beats > 0 and bpm > 0:
-                block = count_in(self.audio.rate, self.audio.channels, beats, bpm)
+                # (segundos de la grabación: a 0,5× se oyen el doble)
+                block = count_in(self.audio.rate, self.audio.channels, beats, bpm, offset / self._speed)
                 block.start = self._position
                 self._queue.appendleft(block)
                 self._queued += len(block.frames)

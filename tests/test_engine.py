@@ -375,3 +375,36 @@ def test_pitch_changes_while_playing_without_a_click(audio):
     # El tono (0.05 a 220 Hz, o a 280 Hz a +4) cambia menos de 0.003 por muestra; un salto, mucho más
     jumps = np.abs(np.diff(heard))
     assert jumps.max() < 0.01
+
+
+def test_count_in_offset():
+    from py_slowdown.engine import count_in, max_earlier
+
+    plain = count_in(RATE, 2, 4, 120)
+    later = count_in(RATE, 2, 4, 120, 0.25)
+    earlier = count_in(RATE, 2, 4, 120, -0.2)
+    assert len(later.frames) - len(plain.frames) == RATE // 4  # (un cuarto de segundo más, de soplo)
+    assert len(plain.frames) - len(earlier.frames) == round(0.2 * RATE)
+    assert later.count == plain.count == earlier.count  # (los golpes, en el mismo lugar)
+    # No antes que el último golpe: a 120 BPM, a lo sumo medio segundo menos el golpe
+    limit = max_earlier(RATE, 120)
+    assert 0.4 < limit < 0.5
+    most = count_in(RATE, 2, 4, 120, -3.0)
+    assert len(plain.frames) - len(most.frames) == round(limit * RATE)
+    lead, beat, _beats = most.count
+    last = lead + 3 * beat
+    assert np.abs(most.frames[last:last + 400, 0]).max() > 0.2  # (el último golpe sigue entero)
+
+
+def test_player_offset_follows_the_speed(audio, output):
+    from py_slowdown.engine import count_in
+
+    player = Player(output)
+    player.load(audio)
+    try:
+        player.speed = 0.5
+        player.play(beats=2, bpm=120, offset=0.1)
+        block = player._queue[0]
+        assert len(block.frames) == len(count_in(RATE, 2, 2, 120).frames) + round(0.2 * RATE)  # (0,1 s, a 0,5×)
+    finally:
+        player.unload()

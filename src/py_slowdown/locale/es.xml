@@ -619,4 +619,20 @@
     <en>Tempo: {bpm} BPM ({taps} taps)</en>
     <tr>Tempo: {bpm} BPM ({taps} golpes)</tr>
   </text>
+  <text>
+    <en>If the recording does not come in on the beat after the count: negative brings it in earlier, positive later (seconds of the recording)</en>
+    <tr>Si la grabación no entra en el pulso que sigue a la cuenta: negativo la hace entrar antes, positivo después (segundos de la grabación)</tr>
+  </text>
+  <text>
+    <en>Recording &amp;offset:</en>
+    <tr>&amp;Desfase de la grabación:</tr>
+  </text>
+  <text>
+    <en>At this tempo the recording can come in at most {seconds} s earlier.</en>
+    <tr>A este tempo la grabación puede entrar a lo sumo {seconds} s antes.</tr>
+  </text>
+  <text>
+    <en>; the recording {offset} s off the beat</en>
+    <tr>; la grabación, {offset} s fuera del pulso</tr>
+  </text>
 </interface>
