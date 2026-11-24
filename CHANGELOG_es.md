@@ -7,6 +7,11 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Oír y Cuenta previa tienen sus propios menús**, en la barra de menús,
+  entre Reproducción y Marcadores: Oír tiene los canales y los filtros
+  (como su botón), y Cuenta previa tiene Contar antes de tocar, Marcar el
+  tempo y los ajustes de la cuenta previa, que ya no están en Reproducción
+  ni en Configuración.
 - **Calidad de la reproducción** (Configuración): la más alta, el motor R3
   de Rubber Band como hasta ahora; más liviana, R3 con una ventana corta,
   que necesita la mitad del procesador y tiene menos retraso, con algo

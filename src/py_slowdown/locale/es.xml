@@ -568,10 +568,6 @@
     <tr>Altura original (Mayús+N)</tr>
   </text>
   <text>
-    <en>&amp;Count-in…</en>
-    <tr>&amp;Cuenta previa…</tr>
-  </text>
-  <text>
     <en>{beats} clicks at {bpm} BPM, following the speed</en>
     <tr>{beats} golpes a {bpm} BPM, siguiendo la velocidad</tr>
   </text>
@@ -746,10 +742,6 @@
   <text>
     <en>Hear one channel, the two in one, the mix without its centre, only the bass, or all but the bass</en>
     <tr>Oír un canal, los dos en uno, la mezcla sin su centro, solo los graves, o todo menos los graves</tr>
-  </text>
-  <text>
-    <en>&amp;Hear</en>
-    <tr>&amp;Oír</tr>
   </text>
   <text>
     <en>At {speed}×</en>
@@ -944,5 +936,13 @@
   <text>
     <en>Playback &amp;quality</en>
     <tr>Calidad de la re&amp;producción</tr>
+  </text>
+  <text>
+    <en>H&amp;ear</en>
+    <tr>&amp;Oír</tr>
+  </text>
+  <text>
+    <en>&amp;Count-in</en>
+    <tr>Cuenta &amp;previa</tr>
   </text>
 </interface>

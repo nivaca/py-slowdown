@@ -377,7 +377,6 @@ class Window(QMainWindow):
         self.a_count = a(tr("&Count in before playing"), self._set_count_on, ["C"], checkable=True)
         self.a_count.setChecked(self.count.on)
         self.a_count_settings = a(tr("Co&unt-in settings…"), self.count_settings)
-        self.a_count_options = a(tr("&Count-in…"), self.count_settings)  # (el mismo, en Configuración)
         self.a_tap = a(tr("Tap the tempo"), self.tap_tempo, ["T"])
         self.a_reopen = a(tr("&Reopen the last file when starting"), self._set_reopen, checkable=True)
         self.a_reopen.setChecked(self.settings.value("reopen", False, type=bool))
@@ -396,7 +395,7 @@ class Window(QMainWindow):
         self.a_edit_shortcuts = a(tr("Keyboard &shortcuts…"), self.edit_shortcuts)
         # Las acciones con nombre (el del atributo), sus teclas de siempre, y las que el usuario eligió.
         self.shortcut_actions = {name: action for name, action in vars(self).items()
-                                 if name.startswith("a_") and isinstance(action, QAction) and name != "a_count_options"}
+                                 if name.startswith("a_") and isinstance(action, QAction)}
         for name, action in self.shortcut_actions.items():
             action.setObjectName(name)
         self.default_shortcuts = {name: shortcuts.keys_of(action) for name, action in self.shortcut_actions.items()}
@@ -413,7 +412,16 @@ class Window(QMainWindow):
         file.addSeparator()
         file.addAction(self.a_quit)
 
-        self.hear_menu = QMenu(tr("&Hear"), self)
+        play = bar.addMenu(tr("&Playback"))
+        for action in (self.a_play, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
+                       self.a_forward_1, self.a_forward, self.a_end, None,
+                       self.a_slower, self.a_faster, self.a_normal, None,
+                       self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, None,
+                       self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, self.a_save_loop):
+            play.addSeparator() if action is None else play.addAction(action)
+
+        # Oír y la cuenta previa, cada uno con su menú (también los abren sus botones).
+        self.hear_menu = bar.addMenu(tr("H&ear"))
         self.a_channels: dict[str, QAction] = {}
         self.a_filters: dict[str, QAction] = {}
         channel_names, filter_names = hearing_names()
@@ -425,22 +433,16 @@ class Window(QMainWindow):
                 action.triggered.connect(self._hearing_chosen)
                 group.addAction(action)
                 actions[value] = action
-            self.hear_menu.addSeparator()
+            if key is CHANNELS:
+                self.hear_menu.addSeparator()
         self.b_hear.setMenu(self.hear_menu)
-
-        play = bar.addMenu(tr("&Playback"))
-        for action in (self.a_play, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
-                       self.a_forward_1, self.a_forward, self.a_end, None,
-                       self.a_slower, self.a_faster, self.a_normal, None,
-                       self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, None,
-                       self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, self.a_save_loop, None,
-                       self.a_count, self.a_count_settings, self.a_tap):
-            play.addSeparator() if action is None else play.addAction(action)
-        play.addSeparator()
-        play.addMenu(self.hear_menu)
         channels = self.settings.value("hearing/channels", "both")
         filter_ = self.settings.value("hearing/filter", "none")
         self.set_hearing(channels if channels in CHANNELS else "both", filter_ if filter_ in FILTERS else "none")
+
+        count = bar.addMenu(tr("&Count-in"))
+        for action in (self.a_count, self.a_tap, None, self.a_count_settings):
+            count.addSeparator() if action is None else count.addAction(action)
 
         marks = bar.addMenu(tr("&Bookmarks"))
         for action in (self.a_mark, self.a_prev_mark, self.a_next_mark, None, self.a_export):
@@ -453,7 +455,6 @@ class Window(QMainWindow):
         view.addAction(self.dock.toggleViewAction())
 
         settings = bar.addMenu(tr("&Settings"))
-        settings.addAction(self.a_count_options)
         settings.addAction(self.a_edit_shortcuts)
         settings.addAction(self.a_reopen)
         settings.addSeparator()

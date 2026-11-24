@@ -419,8 +419,9 @@ def test_pitch_controls(window, app, wav):
 
 
 def test_count_in_settings_are_easy_to_reach(window, app, monkeypatch):
-    """The settings of the count-in: in the arrow of its button, in Playback and in Settings; the button's tooltip
-    says what they are now."""
+    """The count-in has its own menu (Count-in: count in, tap the tempo, its settings), and its settings are also in
+    the arrow of its button; Hear has its own menu too, the same that its button opens; the button's tooltip says
+    what the settings are now."""
     from PySide6.QtWidgets import QToolButton
 
     from py_slowdown.countin import CountIn
@@ -428,8 +429,11 @@ def test_count_in_settings_are_easy_to_reach(window, app, monkeypatch):
     assert window.b_count.popupMode() == QToolButton.ToolButtonPopupMode.MenuButtonPopup
     assert window.a_count_settings in window.b_count.menu().actions()
     menus = {a.text(): a.menu() for a in window.menuBar().actions()}
-    assert window.a_count_options in menus["&Settings"].actions()
-    assert window.a_count_settings in menus["&Playback"].actions()
+    assert list(menus) == ["&File", "&Playback", "H&ear", "&Count-in", "&Bookmarks", "&View", "&Settings", "&Help"]
+    assert menus["&Count-in"].actions()[:2] == [window.a_count, window.a_tap]
+    assert window.a_count_settings in menus["&Count-in"].actions()
+    assert window.a_count not in menus["&Playback"].actions() and window.a_count_settings not in menus["&Settings"].actions()
+    assert menus["H&ear"] is window.b_hear.menu() and window.a_filters["bass"] in menus["H&ear"].actions()
     assert "4 clicks at 100 BPM, following the speed" in window.b_count.toolTip()
 
     class Accepting:
@@ -443,7 +447,7 @@ def test_count_in_settings_are_easy_to_reach(window, app, monkeypatch):
             return CountIn(True, 3, 132, False)
 
     monkeypatch.setattr("py_slowdown.window.CountInDialog", Accepting)
-    window.a_count_options.trigger()
+    window.a_count_settings.trigger()
     assert window.count == CountIn(True, 3, 132, False) and window.b_count.isChecked()
     assert "3 clicks at 132 BPM." in window.b_count.toolTip()
     assert CountIn.load(window.settings) == CountIn(True, 3, 132, False)  # (guardados)
@@ -524,7 +528,7 @@ def test_count_in_offset_setting(window, app, wav, monkeypatch):
             return CountIn(True, 4, 120, True, 0.15)
 
     monkeypatch.setattr("py_slowdown.window.CountInDialog", Accepting)
-    window.a_count_options.trigger()
+    window.a_count_settings.trigger()
     assert CountIn.load(window.settings).offset == 0.15  # (guardado)
     assert "+0.15 s off the beat" in window.b_count.toolTip()
     calls = []

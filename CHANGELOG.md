@@ -7,6 +7,10 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Hear and Count-in have menus of their own**, in the menu bar, between
+  Playback and Bookmarks: Hear has the channels and the filters (as its
+  button), and Count-in has Count in before playing, Tap the tempo and the
+  count-in's settings, which are no longer in Playback and Settings.
 - **Playback quality** (Settings): Highest, Rubber Band's R3 engine as
   until now; Lighter, R3 with a short window, which needs half the
   processor and has less delay, with a little less detail in the low notes;

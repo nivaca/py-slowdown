@@ -544,6 +544,10 @@ The options of a stretcher are fixed when it is made, so a change makes a
 new one, from where the output has got to, as a change of speed from 1×
 does. Exports always use the highest, since they have no real time to keep.
 
+The menu Playback had grown long, so Hear and the count-in moved to menus of
+their own in the menu bar; the count-in's settings, which had been in three
+places, are now in its menu and under the arrow of its button.
+
 Testing
 -------
 
