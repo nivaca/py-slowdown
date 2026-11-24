@@ -73,7 +73,9 @@ and Rubber Band), so nothing else has to be installed:
 - **Linux**: an RPM for Fedora (also in Copr: `sudo dnf copr enable
   nivaca/py-slowdown` and `sudo dnf install py-slowdown`), which uses
   Fedora's Rubber Band, PortAudio and ffmpeg; a Debian package for Debian
-  12, Ubuntu 22.04 and later; and, for any Linux with glibc 2.34 or later,
+  12, Ubuntu 22.04 and later (also in the APT repository of my programs,
+  [github.com/nivaca/apt](https://github.com/nivaca/apt), so that `apt
+  upgrade` brings each new version); and, for any Linux with glibc 2.34 or later,
   an installer (`sh py-slowdown-VERSION-linux-x86_64.run`, for you alone,
   or with sudo for everyone, with a menu entry and an uninstaller) and an
   AppImage, which needs no installing.
