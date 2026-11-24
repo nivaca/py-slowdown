@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata of py-slowdown, for software centres. The RPM and the Debian package install it. -->
+<component type="desktop-application">
+  <id>io.github.nivaca.py-slowdown</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>py-slowdown</name>
+  <summary>Play audio slower or faster without changing its pitch</summary>
+  <summary xml:lang="es">Reproducir audio más lento o más rápido sin cambiar su altura</summary>
+  <developer id="io.github.nivaca">
+    <name>Nicolas Vaughan</name>
+  </developer>
+  <description>
+    <p>
+      py-slowdown plays a recording slower or faster without changing its pitch, for
+      transcribing lectures, interviews and dictations, and for learning music by ear. The
+      file is shown as a waveform, the usual controls move through it, and bookmarks keep the
+      places to come back to.
+    </p>
+    <p xml:lang="es">
+      py-slowdown reproduce una grabación más lenta o más rápida sin cambiarle la altura, para
+      transcribir clases, entrevistas y dictados, y para sacar música de oído. El archivo se ve
+      como una forma de onda, los mandos de siempre lo recorren y los marcadores guardan los
+      lugares a los que se quiere volver.
+    </p>
+    <ul>
+      <li>Speed from 0.25× to 3×, changed while it plays, by the R3 engine of the Rubber Band Library; at 1× the file is played as it is</li>
+      <li xml:lang="es">Velocidad de 0,25× a 3×, que se cambia mientras suena, con el motor R3 de la biblioteca Rubber Band; a 1× el archivo suena tal cual</li>
+      <li>MP3, M4A, MP4, FLAC, WAV, Ogg, Opus and the other formats FFmpeg reads</li>
+      <li xml:lang="es">MP3, M4A, MP4, FLAC, WAV, Ogg, Opus y los demás formatos que lee FFmpeg</li>
+      <li>Bookmarks with labels, kept for each file with the point where it was left</li>
+      <li xml:lang="es">Marcadores con nombre, que se guardan por archivo junto con el punto donde se dejó</li>
+      <li>An interface in English or Spanish</li>
+      <li xml:lang="es">Una interfaz en inglés o en español</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">py-slowdown.desktop</launchable>
+  <icon type="stock">py-slowdown</icon>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Player</category>
+  </categories>
+  <keywords>
+    <keyword>slow down</keyword>
+    <keyword>time stretch</keyword>
+    <keyword>transcription</keyword>
+    <keyword>waveform</keyword>
+    <keyword xml:lang="es">ralentizar</keyword>
+    <keyword xml:lang="es">transcripción</keyword>
+    <keyword xml:lang="es">forma de onda</keyword>
+  </keywords>
+  <url type="homepage">https://github.com/nivaca/py-slowdown</url>
+  <url type="bugtracker">https://github.com/nivaca/py-slowdown/issues</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>A recording at 0.75×, with two bookmarks</caption>
+      <image>https://raw.githubusercontent.com/nivaca/py-slowdown/main/docs/img/main_en.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-11-24"/>
+  </releases>
+</component>

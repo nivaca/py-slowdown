@@ -1,0 +1,103 @@
+# py-slowdown, which plays audio slower or faster without changing its pitch.
+# Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version. This program is distributed WITHOUT ANY
+# WARRANTY; see the LICENSE file, or <https://www.gnu.org/licenses/>.
+#
+# Build with packaging/build-rpm.sh, which makes the source tarball.
+
+Name:           py-slowdown
+Version:        0.1.0
+Release:        1%{?dist}
+Summary:        Play audio slower or faster without changing its pitch
+
+License:        GPL-3.0-or-later
+URL:            https://github.com/nivaca/py-slowdown
+Source0:        %{name}-%{version}.tar.gz
+
+BuildArch:      noarch
+
+BuildRequires:  python3-devel
+BuildRequires:  desktop-file-utils
+BuildRequires:  /usr/bin/appstreamcli
+# For %%check: the tests run the window (headless), stretch with Rubber Band,
+# and make and read audio files with ffmpeg (Fedora has no PyAV).
+BuildRequires:  python3-pytest
+BuildRequires:  python3-pyside6
+BuildRequires:  rubberband-libs >= 3
+BuildRequires:  /usr/bin/ffmpeg
+BuildRequires:  /usr/bin/ffprobe
+
+# numpy and sounddevice come from the package's metadata (pyproject.toml).
+# The window: Fedora's PySide6 (pyproject.toml names the PyPI wheel, pyside6-essentials).
+Requires:       python3-pyside6
+# The stretching (loaded with ctypes, so rpm cannot find this dependency itself)
+Requires:       rubberband-libs >= 3
+# The files are read by the ffmpeg program where PyAV is not installed, as here
+# (ffmpeg-free, or the ffmpeg of RPM Fusion).
+Requires:       /usr/bin/ffmpeg
+Requires:       /usr/bin/ffprobe
+Requires:       hicolor-icon-theme
+
+%description
+py-slowdown plays a recording slower or faster without changing its pitch,
+for transcribing lectures, interviews and dictations, and for learning music
+by ear. The speed goes from 0.25x to 3x, changed while it plays, with the R3
+engine of the Rubber Band Library; at 1x the file is played as it is. The
+file is shown as a waveform, with the usual controls, and bookmarks with
+labels keep the places to come back to, for each file, with the point where
+it was left.
+
+The window is in English or Spanish.
+
+%prep
+%autosetup -n %{name}-%{version}
+# (Fedora's PySide6 is python3-pyside6, which doesn't provide pyside6-essentials;
+# and Fedora has no PyAV: the ffmpeg program reads the files instead)
+sed -i -e '/"pyside6-essentials/d' -e '/"av>=/d' pyproject.toml
+
+%generate_buildrequires
+%pyproject_buildrequires
+
+%build
+%pyproject_wheel
+
+%install
+%pyproject_install
+%pyproject_save_files -l py_slowdown
+desktop-file-install --dir=%{buildroot}%{_datadir}/applications packaging/py-slowdown.desktop
+install -d %{buildroot}%{_datadir}/icons
+cp -pr src/py_slowdown/icons/linux/hicolor %{buildroot}%{_datadir}/icons/
+install -Dpm 0644 packaging/io.github.nivaca.py-slowdown.metainfo.xml \
+    %{buildroot}%{_metainfodir}/io.github.nivaca.py-slowdown.metainfo.xml
+install -Dpm 0644 packaging/man/py-slowdown.1 %{buildroot}%{_mandir}/man1/py-slowdown.1
+install -Dpm 0644 packaging/man/es/py-slowdown.1 %{buildroot}%{_mandir}/es/man1/py-slowdown.1
+
+%check
+desktop-file-validate %{buildroot}%{_datadir}/applications/py-slowdown.desktop
+appstreamcli validate --no-net %{buildroot}%{_metainfodir}/io.github.nivaca.py-slowdown.metainfo.xml
+export QT_QPA_PLATFORM=offscreen
+%pyproject_check_import
+# The whole test suite, on the installed package, with no settings of the
+# builder's and the window drawn offscreen.
+export HOME="$PWD/check-home"
+%pytest -q tests
+%{py3_test_envvars} %{buildroot}%{_bindir}/py-slowdown --version | grep -q '%{version}'
+
+%files -f %{pyproject_files}
+%doc README.md README_es.md docs/DESCRIPTION.md docs/DESCRIPCIÓN_es.md
+%{_bindir}/py-slowdown
+%{_datadir}/applications/py-slowdown.desktop
+%{_datadir}/icons/hicolor/*/apps/py-slowdown.*
+%{_metainfodir}/io.github.nivaca.py-slowdown.metainfo.xml
+%{_mandir}/man1/py-slowdown.1*
+%lang(es) %{_mandir}/es/man1/py-slowdown.1*
+
+%changelog
+* Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.1.0-1
+- First package: the speed from 0.25x to 3x with Rubber Band's R3 engine,
+  a waveform, the usual controls, bookmarks kept for each file, in English
+  and Spanish

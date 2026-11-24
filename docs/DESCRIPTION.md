@@ -8,14 +8,15 @@ lectures and interviews, where one needs to hear a passage again and again
 at a speed one can follow; it follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in four stages.
+in five stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
-Breakfast Quay (GPL 2 or later), through pylibrb (GPL 2); the files are
-read with PyAV (BSD), which brings FFmpeg (LGPL 2.1 or later); the sound
-reaches the sound card through sounddevice (MIT) and PortAudio (MIT); the
-window uses PySide6 (LGPL 3), and the numbers NumPy (BSD).
+Breakfast Quay (GPL 2 or later), through a binding of its own; the files
+are read with PyAV (BSD), which brings FFmpeg (LGPL 2.1 or later), or with
+the ffmpeg program; the sound reaches the sound card through sounddevice
+(MIT) and PortAudio (MIT); the window uses PySide6 (LGPL 3), and the
+numbers NumPy (BSD).
 
 Nicolas Vaughan is Associate Professor of Literature at the School of Arts
 and Humanities of the Universidad de los Andes, Bogotá, Colombia.
@@ -122,21 +123,71 @@ is not touched. The interface is written in English, and its Spanish
 translation is an XML file of texts, as in py-pdftools; the language
 follows the system's unless one is chosen in Settings.
 
+5. The licence, and the packages
+--------------------------------
+
+When the first version was done, a question was left about its licence.
+pylibrb declares "GPLv2" and ships the bare text of version 2, with no
+"or later" anywhere, not even in its source files. If it is GPL 2 only, it
+cannot be combined with a program under GPL 3 or later, and not with
+PySide6 either (LGPL 3, or as Fedora packages it, LGPL 3 or GPL 3). The
+Rubber Band Library itself has no such problem: its headers say "version 2
+of the License, or (at your option) any later version". So I kept the
+licence of all my programs, GPL 3 or later, and replaced pylibrb by a small
+binding of my own (`rubberband.py`), with ctypes, to the C interface of
+Rubber Band, which has all that the engine uses. It loads the library of
+the system (rubberband-libs in Fedora, librubberband2 in Debian and Ubuntu,
+rubberband in Homebrew), or a copy inside the package. The tests passed as
+they were, with the new binding.
+
+The release tooling is the same as py-pdftools': a signed RPM (also built
+on Copr), an AppImage, a Debian package made from it, the wheel, the
+source and a ZIP, every file signed with the project's key, with
+`SHA256SUMS`, a signed tag, and every signature checked with only the
+published key before anything is published. Two things were new. First,
+Fedora has no package of PyAV, so the files can also be read by the
+`ffmpeg` program (ffmpeg-free), through a pipe, with `ffprobe` for the
+duration; the RPM uses it, and the tests run with both. Second, the
+AppImage must run on systems older than the one where it is made, and
+Fedora's Rubber Band and PortAudio need glibc 2.43 and 2.38 (PortAudio
+also JACK and PipeWire). `tools/build-libs.py` compiles both from their
+sources, which it checks by their SHA-256, with zig's compiler for glibc
+2.28 and with the C++ library inside: Rubber Band from its single-file
+build, with its own FFT (it runs 12 to 19 times faster than real time,
+somewhat slower than with FFTW), and PortAudio with only ALSA, which it
+loads when it runs, and which PipeWire and PulseAudio serve. Since that
+Rubber Band is distributed in binary form, its source is published with
+each release, as the GPL asks.
+
+A test of the installer, run in a temporary home, went into my real data
+folder, because the shell had `XDG_DATA_HOME` set; the installer only
+removes what it made, so nothing was lost. The installer's own test, in
+`tests/`, gives it a home of its own and no `XDG_DATA_HOME`.
+
 Testing
 -------
 
-The program has 38 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 70 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
-themselves with PyAV, and check that the decoded samples are the written
-ones, also when a file is longer than it announces. They check that at 1×
-the output is the file itself, sample for sample; that at six speeds the
-output has the right length, keeps the pitch (a tone of 220 Hz stays at
-220 Hz) and keeps each click at its place; and that a seek while playing
-makes no click. The player is tested with a sound card that the tests
-drive themselves, and the window offscreen: opening a file, the controls,
-the speed, the bookmarks, the point where it was left, a file that is not
-audio, and the Spanish interface, whose file must have every text of the
-program and no other. Besides, the player was run on the real sound card
-at seven speeds, with no buffer underrun. The program has 20 files and
-about 3,100 lines.
+themselves, with PyAV and with the ffmpeg program, and check that the
+decoded samples are the written ones, also when a file is longer than it
+announces or is cut halfway. They check that at 1× the output is the file
+itself, sample for sample; that at six speeds the output has the right
+length, keeps the pitch (a tone of 220 Hz stays at 220 Hz) and keeps each
+click at its place; that a seek while playing makes no click; and the
+binding to Rubber Band, also when the library is missing. The player is
+tested with a sound card that the tests drive themselves, and the window
+offscreen: opening a file, the controls, the speed, the bookmarks, the
+point where it was left, a file that is not audio, the window without
+Rubber Band, and the Spanish interface, whose file must have every text of
+the program and no other. Other tests check the packaging: the versions
+agree, the licence, the desktop file, the metainfo, the spec, the manual
+pages, the icons, the signing key and the signing of a release (with a key
+made for the test). Besides, the player was run on the real sound card at
+seven speeds, with no buffer underrun, also through the PortAudio and the
+Rubber Band compiled for the AppImage; the AppImage was built and started
+with a file, the Debian package was built and its contents checked, the
+RPM was built (its tests need two Fedora packages not installed here), and
+the installer installed the program in a temporary home and removed it.
+The program has 48 files and about 6,800 lines (5,000 of them in Python).

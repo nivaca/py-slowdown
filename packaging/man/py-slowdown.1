@@ -1,0 +1,67 @@
+.TH PY-SLOWDOWN 1 "" "py-slowdown 0.1.0" "py-slowdown"
+.SH NAME
+py\-slowdown \- play audio slower or faster without changing its pitch
+.SH SYNOPSIS
+.B py\-slowdown
+[\-\-version] [FILE]
+.SH DESCRIPTION
+Play audio slower or faster without changing its pitch, with a waveform and bookmarks.
+.SH OPTIONS
+.TP
+.B FILE
+an audio or video file to open
+.TP
+.B \-h, \-\-help
+show this help and quit
+.TP
+.B \-\-version
+show the version and quit
+.SH KEYBOARD
+.TP
+.B Space
+Play or pause
+.TP
+.B S
+Stop and go back to the start
+.TP
+.B Home / End
+Go to the start / to the end
+.TP
+.B ← / →
+Back / forward (skip length)
+.TP
+.B Shift+← / Shift+→
+Back / forward one second
+.TP
+.B ↓ / ↑ − / +
+Slower / faster
+.TP
+.B N
+Normal speed
+.TP
+.B B
+Add a bookmark
+.TP
+.B Ctrl+← / Ctrl+→ PgUp / PgDn
+Previous / next bookmark
+.TP
+.B Ctrl++ / Ctrl+− / Ctrl+0
+Zoom in / out / whole file
+.TP
+.B Ctrl+wheel
+Zoom around the pointer
+.TP
+.B Ctrl+O
+Open a file
+.SH FILES
+.TP
+.I ~/.config/py\-slowdown/py\-slowdown.conf
+The settings: the window, the volume, the skip length, the language and the recent files.
+.TP
+.I ~/.local/share/py\-slowdown/bookmarks.json
+The bookmarks of each audio file, and the point where it was left ($XDG_DATA_HOME).
+.TP
+.I ~/.cache/py\-slowdown/
+The decoded samples of the file open, in an unnamed temporary file that goes with it.
+.SH AUTHOR
+Nicolas Vaughan <nicolasvaughan@proton.me>

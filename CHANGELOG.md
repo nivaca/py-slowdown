@@ -19,3 +19,10 @@ The first version.
   next; exported as text. They are kept for each file, with the point where
   it was left.
 - Interface in English and in Spanish.
+- Rubber Band through a binding of its own (rubberband.py), not pylibrb,
+  whose licence (GPL 2 only) cannot be combined with GPL 3 or later.
+- Files also read by the ffmpeg program where PyAV is missing (as in Fedora).
+- Packages: a signed RPM (and Copr), an AppImage and a Debian package that
+  carry their own Rubber Band and PortAudio (tools/build-libs.py), the wheel,
+  the source and a ZIP, all signed, with SHA256SUMS; an installer for Linux
+  and macOS; manual pages in English and Spanish.

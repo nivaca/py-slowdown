@@ -1,0 +1,67 @@
+.TH PY-SLOWDOWN 1 "" "py-slowdown 0.1.0" "py-slowdown"
+.SH NOMBRE
+py\-slowdown \- reproducir audio más lento o más rápido sin cambiar su altura
+.SH SINOPSIS
+.B py\-slowdown
+[\-\-version] [ARCHIVO]
+.SH DESCRIPCIÓN
+Reproduce audio más lento o más rápido sin cambiar su altura, con su forma de onda y marcadores.
+.SH OPCIONES
+.TP
+.B ARCHIVO
+un archivo de audio o de video para abrir
+.TP
+.B \-h, \-\-help
+muestra esta ayuda y termina
+.TP
+.B \-\-version
+muestra la versión y termina
+.SH TECLADO
+.TP
+.B Space
+Tocar o pausar
+.TP
+.B S
+Detener y volver al principio
+.TP
+.B Home / End
+Ir al principio / al final
+.TP
+.B ← / →
+Atrás / adelante (longitud del salto)
+.TP
+.B Shift+← / Shift+→
+Un segundo atrás / adelante
+.TP
+.B ↓ / ↑ − / +
+Más lento / más rápido
+.TP
+.B N
+Velocidad normal
+.TP
+.B B
+Añadir un marcador
+.TP
+.B Ctrl+← / Ctrl+→ PgUp / PgDn
+Marcador anterior / siguiente
+.TP
+.B Ctrl++ / Ctrl+− / Ctrl+0
+Acercar / alejar / todo el archivo
+.TP
+.B Ctrl+rueda
+Acercar alrededor del puntero
+.TP
+.B Ctrl+O
+Abrir un archivo
+.SH ARCHIVOS
+.TP
+.I ~/.config/py\-slowdown/py\-slowdown.conf
+La configuración: la ventana, el volumen, el salto, el idioma y los archivos recientes.
+.TP
+.I ~/.local/share/py\-slowdown/bookmarks.json
+Los marcadores de cada archivo de audio y el punto donde se dejó ($XDG_DATA_HOME).
+.TP
+.I ~/.cache/py\-slowdown/
+Las muestras decodificadas del archivo abierto, en un archivo temporal sin nombre que se va con él.
+.SH AUTOR
+Nicolas Vaughan <nicolasvaughan@proton.me>

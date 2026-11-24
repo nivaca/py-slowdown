@@ -9,6 +9,8 @@ back to.
 
 *Leer en español: [README_es.md](README_es.md).*
 
+![py-slowdown, a recording at 0.75× with two bookmarks](docs/img/main_en.png)
+
 What it does
 ------------
 
@@ -23,7 +25,8 @@ What it does
   going), and one second back or forward.
 - Speed from 0.25× to 3×, changed while it plays, with the pitch kept. The
   stretching is done by the [Rubber Band Library](https://breakfastquay.com/rubberband/),
-  with its R3 ("finer") engine, its highest quality. At 1× the file is
+  with its R3 ("finer") engine, its highest quality, called through a small
+  binding of py-slowdown's own. At 1× the file is
   played as it is, sample for sample, without going through Rubber Band.
 - Bookmarks at the playing position (B), or anywhere with a right click on
   the waveform; each can have a label. They are listed in a side panel,
@@ -50,21 +53,41 @@ Keyboard
 | Zoom in / out / whole file     | Ctrl++ / Ctrl+− / Ctrl+0         |
 | Open a file                    | Ctrl+O                           |
 
-Installing and running
-----------------------
+Installing
+----------
 
-py-slowdown needs Python 3.14 or later. On Linux it also needs PortAudio
-(`portaudio` on Fedora, `libportaudio2` on Debian and Ubuntu), which
-sounddevice uses to reach the sound card; the wheels of sounddevice for
-Windows and macOS include it. PyAV brings its own FFmpeg, and pylibrb its
-own Rubber Band.
+Each release, on [GitHub](https://github.com/nivaca/py-slowdown/releases)
+and [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases), has:
 
-From the source, with [uv](https://docs.astral.sh/uv/):
+- an RPM for Fedora (also in Copr: `sudo dnf copr enable nivaca/py-slowdown`
+  and `sudo dnf install py-slowdown`), which uses Fedora's Rubber Band,
+  PortAudio and ffmpeg;
+- an AppImage for any Linux with glibc 2.34 or later (Ubuntu 22.04,
+  Debian 12, Fedora 35 and later), which needs nothing installed: it
+  carries its own Python, Qt, FFmpeg, Rubber Band and PortAudio;
+- a Debian package for Debian 12, Ubuntu 22.04 and later, made from the
+  AppImage, which installs it in `/opt/py-slowdown`;
+- the wheel and the source, for installing with pip.
+
+Every file is signed with the key in `packaging/RPM-GPG-KEY-py-slowdown`
+(`FILE.asc`, and `SHA256SUMS` with its signature): `gpg --import
+RPM-GPG-KEY-py-slowdown`, then `gpg --verify FILE.asc FILE`.
+
+From the source, with Python 3.14 or later, `install/install.sh` installs it
+for one user on Linux or macOS, in an environment of its own, with a menu
+entry (`--uninstall` removes it). It needs the Rubber Band Library (version
+3 or later) and, on Linux, PortAudio from the system: `sudo dnf install
+rubberband-libs portaudio` on Fedora, `sudo apt install librubberband2
+libportaudio2` on Debian and Ubuntu, `brew install rubberband` on macOS.
+There is no Windows version yet.
+
+To run it from the source, with [uv](https://docs.astral.sh/uv/):
 
     uv run py-slowdown [FILE]
 
 The tests: `uv run python tools/test.py` (each file in a process of its
-own, at once), or `uv run pytest`.
+own, at once), or `uv run pytest`. How a release is made is told in
+[packaging/RELEASING.md](packaging/RELEASING.md).
 
 Where things are kept
 ---------------------
@@ -83,9 +106,10 @@ License
 -------
 
 py-slowdown is free software, under the GNU General Public License,
-version 3 or later (see [LICENSE](LICENSE)). It uses Rubber Band Library
-(GPL 2 or later) through pylibrb (GPL 2), PyAV (BSD) with FFmpeg (LGPL 2.1
-or later), PySide6 (LGPL 3), sounddevice (MIT) with PortAudio (MIT), and
-NumPy (BSD).
+version 3 or later (see [LICENSE](LICENSE)). It uses the Rubber Band
+Library (GPL 2 or later), PortAudio (MIT), PyAV (BSD) with FFmpeg (LGPL 2.1
+or later), PySide6 (LGPL 3), sounddevice (MIT) and NumPy (BSD), all of them
+compatible with that licence. The AppImage and the Debian package carry a
+Rubber Band compiled from its source, which is published with each release.
 
 Nicolas Vaughan &lt;nicolasvaughan@proton.me&gt;
