@@ -57,7 +57,9 @@ What it does
 - Remembers, for each file, its bookmarks, its loops, the point where it
   was left and how it was played (speed, pitch, way of hearing, selection,
   count-in), and goes on from there the next time, with its whole waveform
-  at once; it can also reopen the last file when it starts (Settings >
+  at once. All that is also written in an XML file with the recording's name
+  (`song.xml` for `song.mp3`), beside it or in a folder chosen, so that it
+  travels with the recording; it can also reopen the last file when it starts (Settings >
   Reopen the last file when starting).
 - The keyboard shortcuts can be changed (Settings > Keyboard shortcuts),
   also for a foot pedal that sends keys.
@@ -153,6 +155,9 @@ Documentation
 Where things are kept
 ---------------------
 
+- How each recording was played, with its bookmarks and loops, in an XML
+  file of its name (`song.xml`), beside it, or in the folder chosen in
+  Settings > Settings files of each recording (or not at all).
 - Bookmarks, loops, positions and how each file was played:
   `bookmarks.json`, by the full path of each audio
   file, in `~/.local/share/py-slowdown/` on Linux (`$XDG_DATA_HOME`),

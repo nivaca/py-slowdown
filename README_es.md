@@ -61,7 +61,9 @@ Lo que hace
 - Recuerda, por archivo, sus marcadores, sus bucles, el punto donde se dejó
   y cómo se tocó (velocidad, altura, manera de oír, selección, cuenta
   previa), y la vez siguiente sigue desde allí, con toda su forma de onda
-  enseguida; también puede reabrir el último archivo al empezar
+  enseguida. Todo eso se escribe además en un archivo XML con el nombre de la
+  grabación (`canción.xml` para `canción.mp3`), junto a ella o en una carpeta
+  elegida, de modo que viaja con la grabación; también puede reabrir el último archivo al empezar
   (Configuración > Reabrir el último archivo al empezar).
 - Los atajos de teclado se pueden cambiar (Configuración > Atajos de
   teclado), también para un pedal de pie que mande teclas.
@@ -160,6 +162,9 @@ Documentación
 Dónde se guarda todo
 --------------------
 
+- Cómo se tocó cada grabación, con sus marcadores y bucles, en un archivo
+  XML con su nombre (`canción.xml`), junto a ella, o en la carpeta elegida
+  en Configuración > Archivos de ajustes de cada grabación (o en ninguna).
 - Marcadores, bucles, posiciones y cómo se tocó cada archivo:
   `bookmarks.json`, por la ruta completa de cada
   archivo de audio, en `~/.local/share/py-slowdown/` en Linux

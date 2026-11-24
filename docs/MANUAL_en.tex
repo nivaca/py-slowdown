@@ -345,8 +345,8 @@ The waveform takes most of the window (figure~\ref{fig:window_en}). Above
 it is a ruler of times; the red line is the position, the point that is
 heard; what was already played is darker. The bookmarks are dashed lines,
 with their labels on top. Under the waveform are the controls and the
-time, and under them the speed, the pitch (with the button \menu{Formants}),
-the button \menu{Hear} and the volume; on the right, the panel of the
+time, and under them the speed, the pitch (with the button \menu{Formants})
+and the volume; on the right, the panel of the
 bookmarks and the loops, in two tabs, which can be closed, moved or left
 floating (\menu{View\then Bookmarks and loops} brings it back). The status bar says what is being read, and then the format of the
 file: its codec, its sample rate, mono or stereo, and its length.
@@ -480,16 +480,14 @@ pitch is moved.
 
 \index{hearing one part}\index{channels}\index{bass}\index{filters}%
 A part of a mix is heard better alone, or nearly so.
-The menu \menu{Hear}, in the menu bar, or the button \menu{Hear} beside the
-pitch, which opens the same menu (figure~\ref{fig:menu_hear_en}), chooses two
-things. The channels: both, as they were recorded; the left or the right
+The menu \menu{Hear}, in the menu bar (figure~\ref{fig:menu_hear_en}),
+chooses two things. The channels: both, as they were recorded; the left or the right
 only (old stereo recordings often put an instrument on one side); the two
 in one (mono); or the mix without its centre, the difference between the
 channels, which cancels what is in the middle of the mix, where the voice,
 the bass and the solo usually are, and leaves what is to the sides. And a
 filter: only the bass, below 250\,Hz, to follow the bass line, or
-everything but the bass. The button says what is heard (\menu{Hear: left,
-bass only}). A mono file has no channels to choose.
+everything but the bass. The menu marks what is heard. A mono file has no channels to choose.
 
 The filters cut sharply, by about 60\,dB beyond 250\,Hz, and leave what
 they let through as it was; they delay the sound by 20\,ms, which cannot
@@ -607,9 +605,8 @@ are kept for each file, with its bookmarks.
 Before the recording starts, the program can count, as a metronome does
 before a band comes in: a few clicks at a tempo, the first one higher, and
 then the recording, on the next beat. Turn it on with
-\menu{Count-in\then Count in before playing} (\key{C}), or the button
-\menu{Count-in}; it then counts each time playing starts (with
-\key{Space} or the button), not when the position moves while it plays.
+\menu{Count-in\then Count in before playing} (\key{C}); it then counts
+each time playing starts (with \key{Space} or the button), not when the position moves while it plays.
 While it counts, the waveform shows the beat in large figures
 (figure~\ref{fig:repeat_en}), and the position does not move.
 
@@ -634,7 +631,7 @@ takes the offset back to nothing.
 
 \index{tap tempo}\index{tempo!tapped}%
 The tempo of a recording can be measured by tapping: while it plays,
-press \menu{Tap}, beside \menu{Count-in}, or the key \key{T}, with the
+press the button \menu{Tap}, beside the repeat button, or the key \key{T}, with the
 beat, a few times. From the second tap on, the status bar says the tempo
 measured, and it becomes that of the count-in; the more taps, the steadier,
 since it is the middle value of the intervals between the last eight, so
@@ -652,10 +649,8 @@ clicks: many Bluetooth earphones and headphones mute themselves while they
 receive silence, and take a moment to wake, so that, without it, they
 swallowed the short clicks of the count.
 
-The arrow beside the button \menu{Count-in}, or \menu{Count-in\then
-Count-in settings} in the menu bar, open its settings
-(a right click on the button too), and the button's tooltip says what
-they are now. They set how many counts (from 1 to 16) and the tempo, in beats per minute
+\menu{Count-in\then Count-in settings} opens its settings, and, with the
+pointer over the items of that menu, the status bar says what they are now. They set how many counts (from 1 to 16) and the tempo, in beats per minute
 (from 20 to 300; figure~\ref{fig:countin_en}). With \menu{Follow the
 speed}, the tempo changes with the speed: a song at 120 BPM played at
 0.5\,× is counted at 60, as it will sound. The dialog says what will be
@@ -691,7 +686,8 @@ selection comes in and goes out on a ramp of 4\,ms, without a click.
 
 \index{settings}\index{language of the interface}\index{skip length}%
 The menu \menu{Settings} (figure~\ref{fig:menu_settings_en}) has the
-keyboard shortcuts, the playback quality, the skip length of \menu{Back} and \menu{Forward}, and the
+keyboard shortcuts, where the settings file of each recording goes
+(section~\ref{sec:each-file}), the playback quality, the skip length of \menu{Back} and \menu{Forward}, and the
 language of the interface. The language follows that of the system unless one is chosen;
 a new one is used when the program starts again. The program also
 remembers the size and place of the window and of its panel, the volume,
@@ -730,6 +726,26 @@ is not the usual is kept. When the file is opened again, all that comes
 back (the selection, once the file is read that far); a file with nothing
 kept is played as the one before it was.
 
+\index{XML file}\index{settings files}%
+All that is also written, when the file is closed, in an XML file with the
+same name as the recording: \texttt{song.xml} for \texttt{song.mp3}, in the
+same folder. Besides the position, the speed, the pitch, the formants, the
+way of hearing, the selection, the count-in, the bookmarks and the loops,
+it says where the recording is (its full path), its size and date, and
+when it was saved. It is plain text that other programs can read, and it
+travels with the recording: if both are moved or copied together, the
+next time the program finds everything there. When the recording is
+opened, its XML file comes first; if it has none, what the program keeps
+itself (section~\ref{sec:files-kept}). If \texttt{song.xml} already
+belongs to another file (\texttt{song.flac}, in the same folder), the XML
+file is \texttt{song.flac.xml}.
+
+\menu{Settings\then Settings files of each recording} chooses where they
+go: \menu{Beside the audio file} (at first), \menu{In a folder} (one asks
+which), or \menu{Not saved}. Where an XML file cannot be written (a
+folder that cannot be written in), the status bar says so, and nothing else
+changes.
+
 \section{The files it keeps}
 \label{sec:files-kept}
 
@@ -756,6 +772,8 @@ kept is played as the one before it was.
   cache} on Windows, and \texttt{\textasciitilde/Library/Caches/py-slowdown/}
   on macOS. While a long file is read in parts, each part has one more
   there until it is added.
+\item[The settings file of each recording], \texttt{NAME.xml}, beside it or
+  in the folder chosen (section~\ref{sec:each-file}).
 \item[The waveforms] of the last 200 files read, in the folder
   \texttt{peaks} of that same cache folder (about 4\,MB for an hour and a
   half): with them the whole waveform is there as soon as a file is opened

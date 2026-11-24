@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in eighteen stages.
+in nineteen stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -548,10 +548,32 @@ The menu Playback had grown long, so Hear and the count-in moved to menus of
 their own in the menu bar; the count-in's settings, which had been in three
 places, are now in its menu and under the arrow of its button.
 
+19. A file of settings beside each recording
+--------------------------------------------
+
+What the program kept of each file lived in its own `bookmarks.json`, by
+the full path of the recording, so that a recording moved or copied to
+another computer lost its bookmarks and its settings. So, when a file is
+closed, everything is also written in an XML file of the same name,
+`song.xml` for `song.mp3`, beside the recording or in a folder chosen in
+the settings: the position, the speed, the pitch, the way of hearing, the
+selection, the count-in, the bookmarks and the loops, with the full path,
+size and date of the recording. When a file is opened its XML comes first,
+found by its path or, if the recording was moved with it, by its name.
+Two recordings of the same name in one folder (`song.mp3` and `song.flac`)
+would want the same XML, so the second takes `song.flac.xml`; an XML of
+that name that is not the program's, or is damaged, is left alone. It is
+written whole or not at all, through a temporary file, and where it cannot
+be written the status bar says so and `bookmarks.json` keeps it anyway.
+
+With their menus in the menu bar, the buttons Count-in and Hear were no
+longer needed, and they went; what the count-in does now, which the button
+said, is now in the status bar over the items of its menu.
+
 Testing
 -------
 
-The program has 177 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 184 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -569,8 +591,9 @@ filters of Hear against a convolution, and that a change makes no click;
 the formants, by the resonance of a vowel; each quality, by its engine,
 its length, its pitch and its clicks; the export, its lengths, the
 places of its clicks and its formats; and the loops, the settings kept for
-each file, the keyboard shortcuts and the waveform kept for the next
-time. The player is
+each file, the XML file of each recording (moved with it, two of the same
+name, a folder chosen, a folder that cannot be written), the keyboard
+shortcuts and the waveform kept for the next time. The player is
 tested with a sound card that the tests drive themselves, and the window
 offscreen: opening a file, the controls, the speed, the bookmarks, the
 point where it was left, a file that is not audio, the window without
@@ -588,4 +611,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 73 files and about 14,500 lines (9,300 of them in Python).
+The program has 75 files and about 15,100 lines (9,800 of them in Python).

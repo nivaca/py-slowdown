@@ -37,7 +37,7 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Loop, Store, export_text
-from . import export, shortcuts
+from . import export, shortcuts, sidecar
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
@@ -237,20 +237,12 @@ class Window(QMainWindow):
         self.b_repeat.setAutoRaise(True)
         self.b_repeat.setToolTip(tr("Repeat the selection without a pause (L); Shift+drag on the waveform selects"))
         self.b_repeat.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.b_count = QToolButton(self)
-        self.b_count.setText(tr("Count-in"))
-        self.b_count.setCheckable(True)
-        self.b_count.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.b_count.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        # Un botón partido: el botón enciende o apaga la cuenta; la flecha de al lado abre sus ajustes.
-        self.b_count.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.b_tap = QToolButton(self)
         self.b_tap.setText(tr("Tap"))
         self.b_tap.setToolTip(tr("Tap with the beat of the music (T), a few times: the tempo of the count-in is "
                                  "measured"))
         self.b_tap.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         row.addWidget(self.b_repeat)
-        row.addWidget(self.b_count)
         row.addWidget(self.b_tap)
         row.addSpacing(12)
 
@@ -314,15 +306,6 @@ class Window(QMainWindow):
         row.addWidget(self.pitch_box)
         row.addWidget(self.b_pitch)
         row.addWidget(self.b_formants)
-        row.addSpacing(12)
-
-        self.b_hear = QToolButton(self)
-        self.b_hear.setText(tr("Hear"))
-        self.b_hear.setToolTip(tr("Hear one channel, the two in one, the mix without its centre, only the bass, or "
-                                  "all but the bass"))
-        self.b_hear.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.b_hear.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        row.addWidget(self.b_hear)
         row.addSpacing(12)
 
         speaker = QLabel(self)
@@ -392,7 +375,7 @@ class Window(QMainWindow):
         self.wave.follow = self.a_follow.isChecked()
         self.a_shortcuts = a(tr("&Keyboard shortcuts"), self.show_shortcuts, ["F1"])
         self.a_about = a(tr("&About py-slowdown"), self.about)
-        self.a_edit_shortcuts = a(tr("Keyboard &shortcuts…"), self.edit_shortcuts)
+        self.a_edit_shortcuts = a(tr("Keyboard s&hortcuts…"), self.edit_shortcuts)
         # Las acciones con nombre (el del atributo), sus teclas de siempre, y las que el usuario eligió.
         self.shortcut_actions = {name: action for name, action in vars(self).items()
                                  if name.startswith("a_") and isinstance(action, QAction)}
@@ -420,7 +403,7 @@ class Window(QMainWindow):
                        self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, self.a_save_loop):
             play.addSeparator() if action is None else play.addAction(action)
 
-        # Oír y la cuenta previa, cada uno con su menú (también los abren sus botones).
+        # Oír y la cuenta previa, cada uno con su menú.
         self.hear_menu = bar.addMenu(tr("H&ear"))
         self.a_channels: dict[str, QAction] = {}
         self.a_filters: dict[str, QAction] = {}
@@ -435,7 +418,6 @@ class Window(QMainWindow):
                 actions[value] = action
             if key is CHANNELS:
                 self.hear_menu.addSeparator()
-        self.b_hear.setMenu(self.hear_menu)
         channels = self.settings.value("hearing/channels", "both")
         filter_ = self.settings.value("hearing/filter", "none")
         self.set_hearing(channels if channels in CHANNELS else "both", filter_ if filter_ in FILTERS else "none")
@@ -458,6 +440,17 @@ class Window(QMainWindow):
         settings.addAction(self.a_edit_shortcuts)
         settings.addAction(self.a_reopen)
         settings.addSeparator()
+        files = settings.addMenu(tr("Settings &files of each recording"))
+        group = QActionGroup(self)
+        self.a_sidecar: dict[str, QAction] = {}
+        for mode, name in (("beside", tr("&Beside the audio file")), ("folder", tr("In a &folder…")),
+                           ("off", tr("&Not saved"))):
+            action = files.addAction(name)
+            action.setCheckable(True)
+            action.triggered.connect(lambda _=False, m=mode: self._sidecar_chosen(m))
+            group.addAction(action)
+            self.a_sidecar[mode] = action
+        self._show_sidecar_choice()
         qualities = settings.addMenu(tr("Playback &quality"))
         group = QActionGroup(self)
         self.a_qualities: dict[str, QAction] = {}
@@ -516,17 +509,10 @@ class Window(QMainWindow):
         self.wave.firstBeatRequested.connect(self.set_first_beat)
         self.b_repeat.toggled.connect(self.a_repeat.setChecked)
         self.a_repeat.toggled.connect(self.b_repeat.setChecked)
-        self.b_count.toggled.connect(self.a_count.setChecked)
-        self.a_count.toggled.connect(self.b_count.setChecked)
-        self.b_count.setChecked(self.count.on)
-        self.b_count.customContextMenuRequested.connect(lambda _pos: self.count_settings())
         self.b_tap.clicked.connect(self.tap_tempo)
         self.b_formants.toggled.connect(self.a_formants.setChecked)
         self.a_formants.toggled.connect(self.b_formants.setChecked)
         self.a_formants.setChecked(self.settings.value("formants", False, type=bool))
-        count_menu = QMenu(self.b_count)
-        count_menu.addAction(self.a_count_settings)
-        self.b_count.setMenu(count_menu)
         self._update_count_tip()
         self.panel.activated.connect(lambda row: self.seek(self.bookmarks[row].time))
         self.panel.addRequested.connect(self.add_bookmark)
@@ -571,15 +557,18 @@ class Window(QMainWindow):
         self.wave.set_audio(audio)
         self.selection = None
         self.wave.set_selection(None)
-        self.bookmarks = self.store.bookmarks(path)
+        # Lo que se guardó de este archivo: su XML, si lo hay (va con el archivo, aunque se mueva); si no, lo de
+        # bookmarks.json.
+        kept = self._read_sidecar(path)
+        self.bookmarks = kept.bookmarks if kept else self.store.bookmarks(path)
         self._show_bookmarks()
-        self.loops = self.store.loops(path)
+        self.loops = kept.loops if kept else self.store.loops(path)
         self.loop_panel.show_loops(self.loops)
         self.set_speed(self.player.speed)
         self.set_hearing(*self.player.hearing)
-        self._apply_file_settings(self.store.settings(path))
+        self._apply_file_settings(kept.settings if kept else self.store.settings(path))
         # Sigue donde se dejó, cuando el archivo esté decodificado hasta allí (_tick).
-        self._resume = self.store.position(path)
+        self._resume = kept.position if kept else self.store.position(path)
         self.setWindowTitle(f"{path.name} — {APP}")
         self.settings.setValue("folder", str(path.parent))
         self._remember(path)
@@ -607,6 +596,7 @@ class Window(QMainWindow):
             return
         self.store.set_position(self.audio.path, self._position_to_keep())
         self.store.set_settings(self.audio.path, self._file_settings())
+        self._write_sidecar()
         audio = self.audio
         self.player.unload()
         audio.close()
@@ -673,6 +663,55 @@ class Window(QMainWindow):
                 self._update_count_tip()
         except (TypeError, ValueError):
             pass  # (lo guardado no se entiende: queda lo que había)
+
+    # --- el XML de cada archivo (sidecar.py)
+
+    def _sidecar_place(self) -> tuple[bool, Path | None]:
+        """(whether the XML files are written, the folder where: None beside each audio file)."""
+        mode = self.settings.value("sidecar/mode", "beside")
+        if mode == "off":
+            return False, None
+        folder = self.settings.value("sidecar/folder", "")
+        if mode == "folder" and folder:
+            return True, Path(folder)
+        return True, None
+
+    def _read_sidecar(self, path: Path) -> sidecar.FileState | None:
+        on, folder = self._sidecar_place()
+        return sidecar.load(path, folder) if on else None
+
+    def _write_sidecar(self) -> None:
+        on, folder = self._sidecar_place()
+        if not on or self.audio is None:
+            return
+        state = sidecar.FileState(self._position_to_keep(), self._file_settings(), list(self.bookmarks),
+                                  list(self.loops))
+        try:
+            sidecar.save(self.audio.path, state, folder)
+        except OSError as error:
+            # (una carpeta de solo lectura, un disco lleno: bookmarks.json lo guarda de todos modos)
+            self.statusBar().showMessage(tr("Cannot write the settings file of {name}: {error}",
+                                            name=self.audio.path.name, error=error.strerror or error), 8000)
+
+    def _sidecar_chosen(self, mode: str) -> None:
+        if mode == "folder":
+            start = self.settings.value("sidecar/folder", "") or str(Path.home())
+            folder = QFileDialog.getExistingDirectory(self, tr("The folder of the settings files"), start)
+            if not folder:
+                self._show_sidecar_choice()  # (cancelado: queda lo de antes)
+                return
+            self.settings.setValue("sidecar/folder", folder)
+        self.settings.setValue("sidecar/mode", mode)
+        self._show_sidecar_choice()
+
+    def _show_sidecar_choice(self) -> None:
+        on, folder = self._sidecar_place()
+        mode = "off" if not on else ("folder" if folder else "beside")
+        self.a_sidecar[mode].setChecked(True)
+        if folder:
+            self.a_sidecar["folder"].setText(tr("In a &folder ({folder})…", folder=str(folder)))
+        else:
+            self.a_sidecar["folder"].setText(tr("In a &folder…"))
 
     def _position_to_keep(self) -> float:
         # At the end, or nearly, the next time starts from the beginning.
@@ -771,7 +810,7 @@ class Window(QMainWindow):
         self.statusBar().showMessage(message, 8000)
 
     def _update_count_tip(self) -> None:
-        # Lo que la cuenta hace ahora, a la vista al pasar sobre el botón.
+        # Lo que la cuenta hace ahora: la barra de estado lo dice al pasar sobre sus acciones, en el menú.
         count = self.count
         if count.follow:
             what = tr("{beats} clicks at {bpm} BPM, following the speed", beats=count.beats, bpm=count.bpm)
@@ -780,8 +819,9 @@ class Window(QMainWindow):
         if count.offset:
             signed = ("+" if count.offset > 0 else "−") + number(abs(count.offset))
             what += tr("; the recording {offset} s off the beat", offset=signed)
-        self.b_count.setToolTip(tr("Count in before playing (C): {what}. The arrow beside it changes them.",
-                                   what=what))
+        tip = tr("Count in before playing (C): {what}.", what=what)
+        for action in (self.a_count, self.a_count_settings):
+            action.setStatusTip(tip)
 
     def set_selection(self, selection: tuple[float, float] | None) -> None:
         """The selection (start and end, in seconds), or none; it is repeated if Repeat is on."""
@@ -880,7 +920,6 @@ class Window(QMainWindow):
         self.player.hearing = (channels, filter_)
         self.a_channels[channels].setChecked(True)
         self.a_filters[filter_].setChecked(True)
-        self.b_hear.setText(hearing_short(channels, filter_))
         self.settings.setValue("hearing/channels", channels)
         self.settings.setValue("hearing/filter", filter_)
 
@@ -1115,7 +1154,7 @@ class Window(QMainWindow):
         channels, filter_ = player.hearing
         plain = (channels, filter_) == ("both", "none")
         dialog = ExportDialog(self, self.selection, player.speed, player.pitch, player.formants,
-                              None if plain else self.b_hear.text(),
+                              None if plain else hearing_short(channels, filter_),
                               self.settings.value("export/format", "wav"))
         if not dialog.exec():
             return

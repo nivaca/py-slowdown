@@ -7,6 +7,18 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Los ajustes de cada grabación en un archivo XML de su nombre**: al
+  cerrar un archivo, su posición, velocidad, altura, formantes, manera de
+  oír, selección, cuenta previa, marcadores y bucles se escriben en
+  `canción.xml` (para `canción.mp3`), con la ruta completa, el tamaño y la
+  fecha de la grabación. Viaja con la grabación: si se mueven o se copian
+  juntos, todo vuelve; al abrir un archivo, manda su XML. Si `canción.xml`
+  es de otro archivo, es `canción.flac.xml`. Configuración > Archivos de
+  ajustes de cada grabación: junto al archivo de audio (al principio), en
+  una carpeta, o no se guardan.
+- **Sin los botones Cuenta previa y Oír**: bastan sus menús; el botón
+  Marcar se queda. Lo que hace ahora la cuenta previa lo dice la barra de
+  estado, con el puntero sobre las acciones de su menú.
 - **Oír y Cuenta previa tienen sus propios menús**, en la barra de menús,
   entre Reproducción y Marcadores: Oír tiene los canales y los filtros
   (como su botón), y Cuenta previa tiene Contar antes de tocar, Marcar el

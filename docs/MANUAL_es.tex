@@ -351,7 +351,7 @@ Encima tiene una regla de tiempos; la línea roja es la posición, el punto
 que se oye; lo ya tocado se ve más oscuro. Los marcadores son líneas de
 trazos, con su nombre arriba. Debajo de la forma de onda están los mandos y
 el tiempo, y debajo de ellos la velocidad, la altura (con el botón
-\menu{Formantes}), el botón \menu{Oír} y el volumen; a la derecha, el panel
+\menu{Formantes}) y el volumen; a la derecha, el panel
 de los marcadores y los bucles, en dos pestañas, que se puede cerrar, mover
 o dejar flotando (\menu{Ver\then Marcadores y bucles} lo vuelve a
 mostrar). La barra de estado dice
@@ -491,16 +491,14 @@ importa cuando la altura se mueve.
 
 \index{oir una parte@oír una parte}\index{canales}\index{graves}\index{filtros}%
 Una parte de una mezcla se oye mejor sola, o casi. El menú \menu{Oír}, en
-la barra de menús, o el botón \menu{Oír} junto a la altura, que abre el
-mismo menú
-(figura~\ref{fig:menu_hear_es}), elige dos cosas. Los canales: los dos,
+la barra de menús (figura~\ref{fig:menu_hear_es}), elige dos cosas. Los canales: los dos,
 como se grabaron; solo el izquierdo o solo el derecho (las grabaciones
 estéreo antiguas suelen poner un instrumento a un lado); los dos en uno
 (mono); o la mezcla sin su centro, la diferencia entre los canales, que
 anula lo que está en el medio de la mezcla, donde suelen estar la voz, el
 bajo y el solo, y deja lo que está a los lados. Y un filtro: solo los
 graves, debajo de 250\,Hz, para seguir la línea del bajo, o todo menos los
-graves. El botón dice lo que se oye (\menu{Oír: izquierdo, solo graves}).
+graves. El menú marca lo que se oye.
 Un archivo mono no tiene canales que elegir.
 
 Los filtros cortan neto, unos 60\,dB más allá de 250\,Hz, y dejan lo que
@@ -622,9 +620,8 @@ cada archivo, con sus marcadores.
 Antes de que empiece la grabación, el programa puede contar, como un
 metrónomo antes de que entre una banda: unos golpes a un tempo, el primero
 más agudo, y luego la grabación, en el pulso siguiente. Se activa con
-\menu{Cuenta previa\then Contar antes de tocar} (\key{C}), o con el botón
-\menu{Cuenta previa}; desde entonces cuenta cada vez que empieza a tocar
-(con \key{Espacio} o con el botón), no cuando la posición cambia mientras
+\menu{Cuenta previa\then Contar antes de tocar} (\key{C}); desde entonces
+cuenta cada vez que empieza a tocar (con \key{Espacio} o con el botón), no cuando la posición cambia mientras
 suena. Mientras cuenta, la forma de onda muestra el pulso en grande
 (figura~\ref{fig:repeat_es}), y la posición no se mueve.
 
@@ -650,7 +647,7 @@ el primer pulso en la posición} quita el desfase.
 
 \index{marcar el tempo}\index{tempo!marcado}%
 El tempo de una grabación se puede medir marcándolo: mientras suena, se
-pulsa \menu{Marcar}, junto a \menu{Cuenta previa}, o la tecla \key{T},
+pulsa el botón \menu{Marcar}, junto al de repetir, o la tecla \key{T},
 con el pulso, unas cuantas veces. Desde el segundo golpe, la barra de
 estado dice el tempo medido, que pasa a ser el de la cuenta previa; cuantos
 más golpes, más estable, porque es el valor del medio de los intervalos
@@ -669,10 +666,9 @@ golpes: muchos auriculares Bluetooth se silencian mientras reciben
 silencio, y tardan un momento en despertar, de modo que, sin él, se
 tragaban los golpes cortos de la cuenta.
 
-La flecha junto al botón \menu{Cuenta previa}, o \menu{Cuenta
-previa\then Ajustes de la cuenta previa} en la barra de menús, abren sus
-ajustes (también un clic derecho sobre el botón), y la etiqueta
-del botón dice cuáles son ahora. Fijan cuántos golpes (de 1 a 16) y el tempo, en pulsos por
+\menu{Cuenta previa\then Ajustes de la cuenta previa} abre sus ajustes, y,
+con el puntero sobre las acciones de ese menú, la barra de estado dice
+cuáles son ahora. Fijan cuántos golpes (de 1 a 16) y el tempo, en pulsos por
 minuto (de 20 a 300; figura~\ref{fig:countin_es}). Con \menu{Seguir la
 velocidad}, el tempo cambia con la velocidad: una canción a 120 BPM tocada
 a 0,5\,× se cuenta a 60, como va a sonar. El diálogo dice lo que se oirá a
@@ -707,7 +703,8 @@ muestra; una selección entra y sale en una rampa de 4\,ms, sin chasquido.
 
 \index{configuracion@configuración}\index{idioma de la interfaz}\index{longitud del salto}%
 El menú \menu{Configuración} (figura~\ref{fig:menu_settings_es}) tiene los
-atajos de teclado, la calidad de la reproducción, la longitud del salto de \menu{Atrás} y \menu{Adelante} y el
+atajos de teclado, dónde va el archivo de ajustes de cada grabación
+(sección~\ref{sec:cada-archivo}), la calidad de la reproducción, la longitud del salto de \menu{Atrás} y \menu{Adelante} y el
 idioma de la interfaz. El idioma sigue al del sistema, salvo que se elija uno; uno nuevo
 se usa cuando el programa vuelve a abrirse. El programa recuerda además el
 tamaño y el lugar de la ventana y de su panel, el volumen, si la vista
@@ -746,6 +743,26 @@ lo de siempre. Al abrir de nuevo el archivo, todo eso vuelve (la selección,
 cuando el archivo está leído hasta allí); un archivo sin nada guardado se
 toca como el anterior.
 
+\index{archivo XML}\index{archivos de ajustes}%
+Todo eso se escribe además, al cerrar el archivo, en un archivo XML con el
+mismo nombre que la grabación: \texttt{canción.xml} para
+\texttt{canción.mp3}, en la misma carpeta. Además de la posición, la
+velocidad, la altura, los formantes, la manera de oír, la selección, la
+cuenta previa, los marcadores y los bucles, dice dónde está la grabación (su
+ruta completa), su tamaño y su fecha, y cuándo se guardó. Es texto simple,
+que otros programas pueden leer, y viaja con la grabación: si se mueven o
+se copian juntos, la vez siguiente el programa encuentra todo allí. Al abrir
+la grabación, manda su archivo XML; si no tiene, lo que el programa guarda
+por su cuenta (sección~\ref{sec:archivos}). Si \texttt{canción.xml} ya es
+de otro archivo (\texttt{canción.flac}, en la misma carpeta), el XML se
+llama \texttt{canción.flac.xml}.
+
+\menu{Configuración\then Archivos de ajustes de cada grabación} elige dónde
+van: \menu{Junto al archivo de audio} (al principio), \menu{En una carpeta}
+(se pregunta cuál) o \menu{No se guardan}. Donde un archivo XML no se puede
+escribir (una carpeta en la que no se puede escribir), la barra de estado lo
+dice, y nada más cambia.
+
 \section{Los archivos que guarda}
 \label{sec:archivos}
 
@@ -772,6 +789,8 @@ toca como el anterior.
   cache} en Windows y \texttt{\textasciitilde/Library/Caches/py-slowdown/} en
   macOS. Mientras un archivo largo se lee por partes, cada parte tiene otro
   allí hasta que se añade.
+\item[El archivo de ajustes de cada grabación], \texttt{NOMBRE.xml}, junto a
+  ella o en la carpeta elegida (sección~\ref{sec:cada-archivo}).
 \item[Las formas de onda] de los últimos 200 archivos leídos, en la carpeta
   \texttt{peaks} de esa misma carpeta de caché (unos 4\,MB por hora y
   media): con ellas toda la forma de onda está apenas se vuelve a abrir un

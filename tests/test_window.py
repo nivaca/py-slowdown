@@ -238,7 +238,7 @@ def test_count_in(window, app, wav, output, monkeypatch):
     window.toggle()
     assert calls == [()]  # sin cuenta previa
     window.a_count.trigger()
-    assert window.b_count.isChecked() and window.count.on
+    assert window.a_count.isChecked() and window.count.on
     window.set_speed(0.5)
     window.toggle()
     assert calls[-1] == (4, 50.0, 0.0)  # cuatro golpes, 100 BPM a 0,5×, sin desplazar la grabación
@@ -422,19 +422,16 @@ def test_count_in_settings_are_easy_to_reach(window, app, monkeypatch):
     """The count-in has its own menu (Count-in: count in, tap the tempo, its settings), and its settings are also in
     the arrow of its button; Hear has its own menu too, the same that its button opens; the button's tooltip says
     what the settings are now."""
-    from PySide6.QtWidgets import QToolButton
-
     from py_slowdown.countin import CountIn
 
-    assert window.b_count.popupMode() == QToolButton.ToolButtonPopupMode.MenuButtonPopup
-    assert window.a_count_settings in window.b_count.menu().actions()
+    assert not hasattr(window, "b_count") and not hasattr(window, "b_hear") and hasattr(window, "b_tap")
     menus = {a.text(): a.menu() for a in window.menuBar().actions()}
     assert list(menus) == ["&File", "&Playback", "H&ear", "&Count-in", "&Bookmarks", "&View", "&Settings", "&Help"]
     assert menus["&Count-in"].actions()[:2] == [window.a_count, window.a_tap]
     assert window.a_count_settings in menus["&Count-in"].actions()
     assert window.a_count not in menus["&Playback"].actions() and window.a_count_settings not in menus["&Settings"].actions()
-    assert menus["H&ear"] is window.b_hear.menu() and window.a_filters["bass"] in menus["H&ear"].actions()
-    assert "4 clicks at 100 BPM, following the speed" in window.b_count.toolTip()
+    assert menus["H&ear"] is window.hear_menu and window.a_filters["bass"] in menus["H&ear"].actions()
+    assert "4 clicks at 100 BPM, following the speed" in window.a_count.statusTip()
 
     class Accepting:
         def __init__(self, *args):
@@ -448,8 +445,8 @@ def test_count_in_settings_are_easy_to_reach(window, app, monkeypatch):
 
     monkeypatch.setattr("py_slowdown.window.CountInDialog", Accepting)
     window.a_count_settings.trigger()
-    assert window.count == CountIn(True, 3, 132, False) and window.b_count.isChecked()
-    assert "3 clicks at 132 BPM." in window.b_count.toolTip()
+    assert window.count == CountIn(True, 3, 132, False) and window.a_count.isChecked()
+    assert "3 clicks at 132 BPM." in window.a_count_settings.statusTip()
     assert CountIn.load(window.settings) == CountIn(True, 3, 132, False)  # (guardados)
 
 
@@ -487,7 +484,7 @@ def test_tap_in_the_window(window, app, wav, monkeypatch):
         now[0] += 1.0  # 60 BPM heard, at half speed
     assert window.count.bpm == 120  # (el de la grabación: la cuenta sigue la velocidad)
     assert "60 BPM heard" in window.statusBar().currentMessage()
-    assert "2 clicks" not in window.b_count.toolTip() and "120 BPM" in window.b_count.toolTip()
+    assert "2 clicks" not in window.a_count.statusTip() and "120 BPM" in window.a_count.statusTip()
     window.b_tap.click()
     assert window.count.bpm == 120
 
@@ -530,7 +527,7 @@ def test_count_in_offset_setting(window, app, wav, monkeypatch):
     monkeypatch.setattr("py_slowdown.window.CountInDialog", Accepting)
     window.a_count_settings.trigger()
     assert CountIn.load(window.settings).offset == 0.15  # (guardado)
-    assert "+0.15 s off the beat" in window.b_count.toolTip()
+    assert "+0.15 s off the beat" in window.a_count.statusTip()
     calls = []
     monkeypatch.setattr(window.player, "play", lambda *args: calls.append(args))
     window.toggle()
@@ -609,11 +606,11 @@ def test_hearing_in_the_window(window, app, wav, tmp_path):
     window.a_channels["left"].trigger()
     window.a_filters["bass"].trigger()
     assert window.player.hearing == ("left", "bass")
-    assert window.b_hear.text() == "Hear: left, bass only"
+    assert window.a_channels["left"].isChecked() and window.a_filters["bass"].isChecked()
     assert window.settings.value("hearing/channels") == "left"
     window.a_channels["both"].trigger()
     window.a_filters["none"].trigger()
-    assert window.b_hear.text() == "Hear"
+    assert window.a_channels["both"].isChecked()
     from conftest import tone, write
 
     mono = tmp_path / "mono.wav"
@@ -706,7 +703,7 @@ def test_settings_of_each_file(window, app, wav, tmp_path):
     loaded(window, app, wav)
     window._tick()
     assert (window.player.speed, window.player.pitch, window.player.formants) == (0.6, -3.0, True)
-    assert window.player.hearing == ("mono", "no_bass") and window.b_hear.text() == "Hear: mono, no bass"
+    assert window.player.hearing == ("mono", "no_bass") and window.a_channels["mono"].isChecked()
     assert window.selection == (1.0, 2.0) and window.a_repeat.isChecked() and window.player.loop == (1.0, 2.0)
     assert (window.count.on, window.count.bpm, window.count.offset) == (True, 88, 0.25)
 

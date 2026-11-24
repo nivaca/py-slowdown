@@ -7,6 +7,18 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **The settings of each recording in an XML file of its name**: when a
+  file is closed, its position, speed, pitch, formants, way of hearing,
+  selection, count-in, bookmarks and loops are written in `song.xml` (for
+  `song.mp3`), with the recording's full path, size and date. It travels
+  with the recording: moved or copied together, everything comes back; when
+  a file is opened, its XML comes first. If `song.xml` belongs to another
+  file, it is `song.flac.xml`. Settings > Settings files of each recording:
+  beside the audio file (at first), in a folder, or not saved.
+- **No Count-in and Hear buttons**: their menus are enough; the Tap button
+  stays. What the count-in does now is shown in the status bar, with the
+  pointer over the items of its menu. Settings > Keyboard shortcuts has its
+  own letter (H): S was also Skip length's.
 - **Hear and Count-in have menus of their own**, in the menu bar, between
   Playback and Bookmarks: Hear has the channels and the filters (as its
   button), and Count-in has Count in before playing, Tap the tempo and the

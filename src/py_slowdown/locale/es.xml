@@ -576,10 +576,6 @@
     <tr>{beats} golpes a {bpm} BPM</tr>
   </text>
   <text>
-    <en>Count in before playing (C): {what}. The arrow beside it changes them.</en>
-    <tr>Contar antes de tocar (C): {what}. La flecha de al lado los cambia.</tr>
-  </text>
-  <text>
     <en>T&amp;ap</en>
     <tr>&amp;Marcar</tr>
   </text>
@@ -740,10 +736,6 @@
     <tr>Oír</tr>
   </text>
   <text>
-    <en>Hear one channel, the two in one, the mix without its centre, only the bass, or all but the bass</en>
-    <tr>Oír un canal, los dos en uno, la mezcla sin su centro, solo los graves, o todo menos los graves</tr>
-  </text>
-  <text>
     <en>At {speed}×</en>
     <tr>A {speed}×</tr>
   </text>
@@ -894,7 +886,7 @@
     <tr>{keys} está en dos acciones: {one} y {other}. Déjela en una sola.</tr>
   </text>
   <text>
-    <en>Keyboard &amp;shortcuts…</en>
+    <en>Keyboard s&amp;hortcuts…</en>
     <tr>&amp;Atajos de teclado…</tr>
   </text>
   <text>
@@ -944,5 +936,37 @@
   <text>
     <en>&amp;Count-in</en>
     <tr>Cuenta &amp;previa</tr>
+  </text>
+  <text>
+    <en>Cannot write the settings file of {name}: {error}</en>
+    <tr>No se puede escribir el archivo de ajustes de {name}: {error}</tr>
+  </text>
+  <text>
+    <en>The folder of the settings files</en>
+    <tr>La carpeta de los archivos de ajustes</tr>
+  </text>
+  <text>
+    <en>In a &amp;folder ({folder})…</en>
+    <tr>En una &amp;carpeta ({folder})…</tr>
+  </text>
+  <text>
+    <en>In a &amp;folder…</en>
+    <tr>En una &amp;carpeta…</tr>
+  </text>
+  <text>
+    <en>Settings &amp;files of each recording</en>
+    <tr>Archivos de a&amp;justes de cada grabación</tr>
+  </text>
+  <text>
+    <en>&amp;Beside the audio file</en>
+    <tr>&amp;Junto al archivo de audio</tr>
+  </text>
+  <text>
+    <en>&amp;Not saved</en>
+    <tr>&amp;No se guardan</tr>
+  </text>
+  <text>
+    <en>Count in before playing (C): {what}.</en>
+    <tr>Contar antes de tocar (C): {what}.</tr>
   </text>
 </interface>
