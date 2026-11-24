@@ -75,6 +75,21 @@ def test_kept_in_16_bits(wav, decoder):
     loud.close()
 
 
+def test_peaks_of_16_bit_samples():
+    """The readers give 16-bit samples: their peaks, found in the integers, are those of the same samples as floats."""
+    rng = np.random.default_rng(5)
+    ints = rng.integers(-32768, 32768, (BUCKET * 7 + 30, 2)).astype(np.int16)
+    floats = ints.astype(np.float32) / 32768
+    a, b = Peaks(10), Peaks(10)
+    for start in range(0, len(ints), 500):
+        a.add(ints[start:start + 500])
+        b.add(floats[start:start + 500])
+    a.finish()
+    b.finish()
+    assert a.count == b.count == 8
+    assert np.array_equal(a.lo[:8], b.lo[:8]) and np.array_equal(a.hi[:8], b.hi[:8])
+
+
 def test_mono_and_resampled(tmp_path, decoder):
     path = tmp_path / "mono.flac"
     write(path, tone(2.0, channels=1))

@@ -423,10 +423,23 @@ other files lose what is below about -96 dB, less than the noise of any
 recording. What goes past full scale, as some decoded MP3s do, is clipped,
 as the sound card would clip it anyway.
 
+Opening a file was still slow, and when I measured it, the decoding itself
+was less than half of the time. An MP3 comes from FFmpeg in pieces of 1152
+frames or fewer, about 69,000 for 30 minutes, and each piece was converted
+to an array, turned into 16 bits by NumPy, written to the temporary file
+and added to the peaks, one by one, in Python. Now FFmpeg's resampler gives
+16-bit samples itself (it rounds and clips as the program did: not one
+sample differed in 30 minutes of MP3), the readers gather the pieces in
+blocks of 32,768 frames before handing them over, the peaks are found in
+the integers, and PyAV decodes in several threads where the codec allows
+it. A file of 30 minutes is read in 1.3 seconds instead of 2.2 as MP3, and
+in 0.3 instead of 1.2 as FLAC; with the ffmpeg program, as in the RPM, the
+MP3 takes 1.1 seconds instead of 2.0.
+
 Testing
 -------
 
-The program has 114 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 115 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

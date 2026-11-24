@@ -1,7 +1,7 @@
 """El audio de un archivo, decodificado.
 
 Audio abre un archivo (MP3, MP4, M4A, FLAC, WAV, Ogg, Opus... lo que FFmpeg lea,
-mediante PyAV o, donde PyAV no está, con el programa ffmpeg) y lo decodifica en un hilo aparte, a muestras float32 entrelazadas
+mediante PyAV o, donde PyAV no está, con el programa ffmpeg) y lo decodifica en un hilo aparte, a muestras de 16 bits entrelazadas
 (cuadros × canales; uno o dos canales: los demás se mezclan en estéreo). Las
 muestras van, en 16 bits, a un archivo temporal sin nombre, mapeado en memoria:
 una grabación de dos horas en estéreo ocupa unos 1,3 GB (el doble en float32), y así el
@@ -31,6 +31,10 @@ BUCKET = 256
 # las da como s / 32768), y las demás pierden lo que está debajo de unos -96 dB, menos que el ruido de una
 # grabación; lo que pase de 1.0 (algunos MP3 decodificados) se recorta, como lo recortaría la tarjeta de sonido.
 SCALE = 32768.0
+
+# Cuadros que los lectores juntan antes de entregarlos: el MP3 llega en trozos de 1152 cuadros o menos, y guardar
+# cada uno por separado (el archivo temporal, los picos) costaba más que decodificarlo.
+BATCH = 32768
 
 # Extensiones que el diálogo Abrir ofrece; FFmpeg lee muchas más, y cualquier archivo se puede intentar.
 EXTENSIONS = (
@@ -70,8 +74,8 @@ class Peaks:
 
     def add(self, frames: np.ndarray) -> None:
         """Take FRAMES (n × channels), in order, after the ones added before."""
-        if self._rest.shape[1] != frames.shape[1]:
-            self._rest = np.zeros((0, frames.shape[1]), np.float32)
+        if self._rest.shape[1] != frames.shape[1] or self._rest.dtype != frames.dtype:
+            self._rest = np.zeros((0, frames.shape[1]), frames.dtype)
         if self._rest.shape[0]:
             frames = np.concatenate([self._rest, frames])
         whole = frames.shape[0] // BUCKET
@@ -87,6 +91,9 @@ class Peaks:
             self._rest = self._rest[:0]
 
     def _store(self, lo: np.ndarray, hi: np.ndarray) -> None:
+        if lo.dtype == np.int16:
+            # Muestras de 16 bits: el mínimo y el máximo se buscan en los enteros, y solo ellos se convierten.
+            lo, hi = lo * np.float32(1 / SCALE), hi * np.float32(1 / SCALE)
         end = self.count + lo.size
         if end > self.lo.size:
             # Longer than the announced duration: grow, with room to spare.
@@ -141,17 +148,28 @@ class _PyAV:
             self.seconds = None
 
     def samples(self, rate: int, channels: int, stop: threading.Event):
-        """The samples, converted to RATE and CHANNELS, as arrays of frames × channels."""
+        """The samples, converted to RATE and CHANNELS, as 16-bit arrays of frames × channels."""
         av = self._av
-        resampler = av.AudioResampler(format="flt", layout="mono" if channels == 1 else "stereo", rate=rate)
+        # FFmpeg mismo convierte a 16 bits (redondea y recorta como Audio lo haría), y en varios hilos si el
+        # códec lo permite (el FLAC se lee así en un tercio del tiempo).
+        self._stream.thread_type = "AUTO"
+        resampler = av.AudioResampler(format="s16", layout="mono" if channels == 1 else "stereo", rate=rate)
+        pending: list[np.ndarray] = []
+        size = 0
         try:
             for frame in self._container.decode(self._stream):
                 if stop.is_set():
                     return
                 for out in resampler.resample(frame):
-                    yield out.to_ndarray().reshape(-1, channels)
+                    pending.append(out.to_ndarray().reshape(-1, channels))
+                    size += pending[-1].shape[0]
+                if size >= BATCH:
+                    yield np.concatenate(pending)
+                    pending, size = [], 0
             for out in resampler.resample(None):
-                yield out.to_ndarray().reshape(-1, channels)
+                pending.append(out.to_ndarray().reshape(-1, channels))
+            if pending:
+                yield np.concatenate(pending)
         except av.FFmpegError as error:
             raise AudioError(str(error)) from error
         finally:
@@ -161,7 +179,7 @@ class _PyAV:
 class _FFmpeg:
     """A file read by the ffmpeg program (and described by ffprobe)."""
 
-    CHUNK = 8192  # cuadros por lectura
+    CHUNK = BATCH  # cuadros por lectura
 
     def __init__(self, path: Path):
         self.path = path
@@ -190,11 +208,11 @@ class _FFmpeg:
             self.seconds = None
 
     def samples(self, rate: int, channels: int, stop: threading.Event):
-        # Lo que ffmpeg escribe: float32 entrelazado, ya en la frecuencia y los canales pedidos.
+        # Lo que ffmpeg escribe: enteros de 16 bits entrelazados, ya en la frecuencia y los canales pedidos.
         command = ["ffmpeg", "-nostdin", "-v", "error", "-i", str(self.path), "-map", "0:a:0",
-                   "-f", "f32le", "-acodec", "pcm_f32le", "-ac", str(channels), "-ar", str(rate), "pipe:1"]
+                   "-f", "s16le", "-acodec", "pcm_s16le", "-ac", str(channels), "-ar", str(rate), "pipe:1"]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        size = self.CHUNK * channels * 4
+        size = self.CHUNK * channels * 2
         rest = b""
         try:
             while not stop.is_set():
@@ -202,10 +220,10 @@ class _FFmpeg:
                 if not data:
                     break
                 data = rest + data
-                whole = len(data) // (channels * 4) * channels * 4
+                whole = len(data) // (channels * 2) * channels * 2
                 rest = data[whole:]
                 if whole:
-                    yield np.frombuffer(data[:whole], np.float32).reshape(-1, channels)
+                    yield np.frombuffer(data[:whole], "<i2").reshape(-1, channels)
         finally:
             if stop.is_set():
                 process.kill()
@@ -303,9 +321,12 @@ class Audio:
         end = self.decoded + samples.shape[0]
         if end > self._data.shape[0]:
             self._grow(end)
-        scaled = np.rint(samples * SCALE)
-        np.clip(scaled, -SCALE, SCALE - 1, out=scaled)
-        self._data[self.decoded:end] = scaled
+        if samples.dtype != np.int16:
+            # (muestras en coma flotante: los lectores dan enteros, pero un float se acepta igual)
+            scaled = np.rint(samples * SCALE)
+            np.clip(scaled, -SCALE, SCALE - 1, out=scaled)
+            samples = scaled.astype(np.int16)
+        self._data[self.decoded:end] = samples
         self.peaks.add(samples)
         self.decoded = end
 

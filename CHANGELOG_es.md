@@ -22,6 +22,11 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   bits, no en coma flotante de 32 (1,3 GB para dos horas en estéreo, no
   2,5 GB). Un archivo de 16 bits se guarda muestra por muestra; lo que pase
   del máximo se recorta.
+- **Los archivos se abren más rápido**: FFmpeg da ya las muestras en 16
+  bits, se guardan en bloques y no en trozos de mil cuadros, y PyAV
+  decodifica en varios hilos donde el códec lo permite. Un archivo de 30
+  minutos se lee en 1,3 s y no en 2,2 si es MP3, y en 0,3 s y no en 1,2 si
+  es FLAC.
 
 ## 1.0.0 — 2026-11-24
 

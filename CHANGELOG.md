@@ -20,6 +20,11 @@ Debian package, the RPM, the wheel and the source, are on
 - **Half the space for the decoded samples**: they are kept in 16 bits, not
   in 32-bit floats (1.3 GB for two hours of stereo, not 2.5 GB). A 16-bit
   file is kept sample for sample; what goes past full scale is clipped.
+- **Files open faster**: FFmpeg gives the samples in 16 bits itself, they
+  are stored in blocks instead of in pieces of a thousand frames, and PyAV
+  decodes in several threads where the codec allows it. A file of 30
+  minutes is read in 1.3 s instead of 2.2 as MP3, and in 0.3 s instead of
+  1.2 as FLAC.
 
 ## 1.0.0 — 2026-11-24
 
