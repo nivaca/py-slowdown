@@ -37,7 +37,7 @@ printf 'png' > squashfs-root/usr/share/icons/hicolor/48x48/apps/py-slowdown.png
 """
 
 
-@pytest.mark.skipif(sys.platform == "win32" or not shutil.which("sha256sum"), reason="the .run is for Linux")
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="the .run is for Linux")
 def test_the_run_installs_and_uninstalls(tmp_path):
     run_tool = tool("bundle-run")
     fake = tmp_path / "fake.AppImage"
@@ -74,7 +74,7 @@ def test_the_run_installs_and_uninstalls(tmp_path):
     assert (home / "data" / "py-slowdown" / "bookmarks.json").is_file()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="the .run is for Linux")
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="the .run is for Linux")
 def test_a_damaged_run_says_so(tmp_path):
     run_tool = tool("bundle-run")
     fake = tmp_path / "fake.AppImage"
