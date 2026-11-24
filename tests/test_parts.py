@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 import pytest
-from conftest import RATE, write
+from conftest import RATE, can_write, write
 
 from py_slowdown import audio as audio_module
 from py_slowdown import parts
@@ -51,6 +51,8 @@ def same(a: Audio, b: Audio) -> bool:
 def test_parts_are_the_straight_reading(tmp_path, suffix, decoder, small_parts, monkeypatch):
     """Each later part, read by a process of its own, is put after the one before where the second before it
     agrees sample for sample: the whole is the straight reading, sample for sample, peaks and all."""
+    if not can_write(suffix):
+        pytest.skip(f"nothing here writes {suffix}")
     rate = 48000 if suffix == ".opus" else RATE
     path = tmp_path / f"music{suffix}"
     write(path, music(SECONDS, rate), rate=rate)

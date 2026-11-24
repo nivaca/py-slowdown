@@ -30,6 +30,23 @@ CODECS = {".wav": "pcm_s16le", ".flac": "flac", ".mp3": "libmp3lame", ".m4a": "a
           ".ogg": "libvorbis"}
 
 
+def can_write(suffix: str) -> bool:
+    """Whether a file of SUFFIX can be made here: with PyAV, or with the ffmpeg program (Homebrew's, on macOS,
+    has no Vorbis encoder)."""
+    codec = CODECS[suffix]
+    try:
+        import av
+
+        av.codec.Codec(codec, "w")
+        return True
+    except Exception:  # noqa: BLE001 (sin PyAV, o sin ese códec)
+        pass
+    if not shutil.which("ffmpeg"):
+        return False
+    encoders = subprocess.run(["ffmpeg", "-hide_banner", "-encoders"], capture_output=True, text=True).stdout
+    return f" {codec} " in encoders
+
+
 def write(path, samples: np.ndarray, rate: int = RATE) -> None:
     """Write SAMPLES (frames × channels) to PATH, with the codec its extension asks for.
 
