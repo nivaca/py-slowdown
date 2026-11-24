@@ -32,6 +32,11 @@ What it does
   the waveform; each can have a label. They are listed in a side panel,
   drawn on the waveform, and can be exported as a text file. Ctrl+← and
   Ctrl+→ go to the previous and next bookmark.
+- Repeats a selection without end and without a gap (Shift+drag on the
+  waveform, or I and O, then L): the end of the passage runs into its
+  start through a short fade, at any speed.
+- Counts in before playing, as a metronome (C): the number of clicks and
+  the tempo are chosen, and the tempo can follow the speed.
 - Remembers, for each file, its bookmarks and the point where it was left,
   and goes on from there the next time.
 - Interface in English and in Spanish (Settings > Language).
@@ -51,6 +56,10 @@ Keyboard
 | Add a bookmark                 | B                                |
 | Previous / next bookmark       | Ctrl+← / Ctrl+→, PgUp / PgDn     |
 | Zoom in / out / whole file     | Ctrl++ / Ctrl+− / Ctrl+0         |
+| Repeat the selection           | L                                |
+| Select                         | Shift+drag, or I and O           |
+| Clear the selection            | Esc                              |
+| Count in before playing        | C                                |
 | Open a file                    | Ctrl+O                           |
 
 Installing

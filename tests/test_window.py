@@ -191,3 +191,71 @@ class SimpleParser:
 
     def parse_args(self, argv):
         self.seen.append(argv)
+
+
+def test_selection_and_repeat(window, app, wav):
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtTest import QTest
+
+    loaded(window, app, wav)
+    assert not window.a_repeat.isChecked() and window.player.loop is None
+    window.set_selection((3.0, 2.0))  # (en cualquier orden)
+    assert window.selection == (2.0, 3.0) and window.wave.selection == (2.0, 3.0)
+    assert window.player.loop is None  # seleccionada, pero sin repetir
+    window.a_repeat.trigger()
+    assert window.b_repeat.isChecked() and window.player.loop == pytest.approx((2.0, 3.0))
+    window.set_selection(None)
+    assert window.player.loop is None and window.wave.selection is None
+    # I y O ponen el principio y el final en la posición
+    window.seek(1.0)
+    window.a_sel_start.trigger()
+    window.seek(4.0)
+    window.a_sel_end.trigger()
+    assert window.selection == pytest.approx((1.0, 4.0)) and window.player.loop == pytest.approx((1.0, 4.0))
+    window.a_sel_clear.trigger()
+    assert window.selection is None
+    # Mayús+arrastrar sobre la forma de onda
+    wave = window.wave
+    x0, x1 = round(wave.x_of(2.0)), round(wave.x_of(5.0))
+    y = wave.height() // 2
+    QTest.mousePress(wave, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.ShiftModifier, QPoint(x0, y))
+    QTest.mouseMove(wave, QPoint(x1, y))
+    QTest.mouseRelease(wave, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.ShiftModifier, QPoint(x1, y))
+    assert window.selection == pytest.approx((2.0, 5.0), abs=0.05)
+    window.a_repeat.trigger()
+    assert window.player.loop is None and window.selection is not None  # (la selección queda, sin repetir)
+    window.close_file()
+    assert window.selection is None
+
+
+def test_count_in(window, app, wav, output, monkeypatch):
+    from py_slowdown.countin import CountIn, CountInDialog
+
+    loaded(window, app, wav)
+    calls = []
+    monkeypatch.setattr(window.player, "play", lambda *args: calls.append(args))
+    window.toggle()
+    assert calls == [()]  # sin cuenta previa
+    window.a_count.trigger()
+    assert window.b_count.isChecked() and window.count.on
+    window.set_speed(0.5)
+    window.toggle()
+    assert calls[-1] == (4, 50.0)  # cuatro golpes, 100 BPM a 0,5×
+    assert CountIn.load(window.settings).on  # (se guarda)
+    dialog = CountInDialog(CountIn(True, 3, 120, False), 0.5, window)
+    assert "120" in dialog.note.text() and dialog.value() == CountIn(True, 3, 120, False)
+    dialog.on.setChecked(False)
+    assert not dialog.bpm.isEnabled()
+    dialog.close()
+
+
+def test_count_shown_on_the_waveform(window, app, wav, output):
+    loaded(window, app, wav)
+    window.a_count.setChecked(True)
+    window.toggle()
+    window._tick()
+    assert window.wave.count == 1
+    window.grab()  # (se dibuja)
+    window.toggle()
+    window._tick()
+    assert window.wave.count is None

@@ -17,6 +17,15 @@ Debian package, the RPM, the wheel and the source, are on
 - **An installer for any Linux** (`.run`), made from the AppImage: for the
   user, or with sudo for everyone, with the command, the menu entry, the
   icons, the manual pages and an uninstaller.
+- **Repeat a selection, without a gap**: Shift+drag on the waveform, I and
+  O at the position, or "Select from here to the next bookmark"; then
+  Playback > Repeat the selection (L), or its button. The end of the
+  selection fades into what precedes its start in a hundredth of a second,
+  before the stretching, so the passage sounds as one stream at any speed.
+- **Count-in before playing** (Playback > Count in before playing, C, or its
+  button): 1 to 16 clicks at 20 to 300 BPM, the first one higher, then the
+  recording; the tempo can follow the speed (120 BPM at 0.5× counted at
+  60); the waveform shows the beat in large figures.
 - **Files opened from the Finder** (Open With, or dropped on the icon in the
   Dock) are opened by the window.
 - **The bookmarks and the decoded sound in the folders of each system**:

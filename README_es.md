@@ -34,6 +34,11 @@ Lo que hace
   listan en un panel lateral, se dibujan sobre la forma de onda y se pueden
   exportar a un archivo de texto. Ctrl+← y Ctrl+→ van al marcador anterior
   y al siguiente.
+- Repite una selección sin fin y sin pausa (Mayús+arrastrar sobre la
+  forma de onda, o I y O, y luego L): el final del pasaje entra en su
+  principio con un fundido breve, a cualquier velocidad.
+- Cuenta antes de tocar, como un metrónomo (C): se eligen cuántos golpes
+  y el tempo, que puede seguir la velocidad.
 - Recuerda, por archivo, sus marcadores y el punto donde se dejó, y la vez
   siguiente sigue desde allí.
 - Interfaz en inglés y en español (Configuración > Idioma).
@@ -53,6 +58,10 @@ Teclado
 | Añadir un marcador                | B                                |
 | Marcador anterior / siguiente     | Ctrl+← / Ctrl+→, RePág / AvPág   |
 | Acercar / alejar / todo           | Ctrl++ / Ctrl+− / Ctrl+0         |
+| Repetir la selección              | L                                |
+| Seleccionar                       | Mayús+arrastrar, o I y O         |
+| Quitar la selección               | Esc                              |
+| Contar antes de tocar             | C                                |
 | Abrir un archivo                  | Ctrl+O                           |
 
 Instalación

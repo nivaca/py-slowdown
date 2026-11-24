@@ -48,16 +48,43 @@ def clamp_speed(speed: float) -> float:
 class Block:
     """Output frames, and where they come from in the file."""
 
-    __slots__ = ("frames", "start", "step", "used")
+    __slots__ = ("count", "frames", "start", "step", "used")
 
-    def __init__(self, frames: np.ndarray, start: float, step: float):
+    def __init__(self, frames: np.ndarray, start: float, step: float, count: tuple[int, int, int] | None = None):
         self.frames = frames  # n × canales, float32
         self.start = start  # cuadro del archivo donde empieza
-        self.step = step  # cuadros del archivo por cuadro de salida (la velocidad)
+        self.step = step  # cuadros del archivo por cuadro de salida (la velocidad); 0 en la cuenta previa
         self.used = 0  # cuadros ya tocados
+        self.count = count  # (silencio inicial, cuadros por pulso, pulsos) si es una cuenta previa
 
     def position(self) -> float:
         return self.start + self.used * self.step
+
+
+LOOP_FADE = 0.01  # segundos del fundido con que el final de una selección repetida entra en su principio
+MIN_LOOP = 0.1  # segundos: una selección más corta no se repite
+COUNT_LEAD = 0.06  # segundos de silencio antes del primer pulso: la rampa de arranque no lo recorta
+CLICK = 0.035  # duración de cada golpe de la cuenta
+MIN_BPM, MAX_BPM = 20, 300
+MAX_BEATS = 16
+
+
+def count_in(rate: int, channels: int, beats: int, bpm: float) -> Block:
+    """A count-in: BEATS clicks at BPM (the first one higher and louder), as a block that stays at the
+    position of the file while it is heard. The recording comes in on the beat after the last click."""
+    beats = min(max(1, int(beats)), MAX_BEATS)
+    bpm = min(max(MIN_BPM, float(bpm)), MAX_BPM)
+    lead = int(COUNT_LEAD * rate)
+    beat = round(rate * 60.0 / bpm)
+    frames = np.zeros((lead + beats * beat, channels), np.float32)
+    t = np.arange(int(CLICK * rate)) / rate
+    envelope = np.exp(-t / 0.008)
+    for n in range(beats):
+        pitch, level = (1760.0, 0.5) if n == 0 else (1320.0, 0.35)
+        click = (level * envelope * np.sin(2 * np.pi * pitch * t)).astype(np.float32)
+        start = lead + n * beat
+        frames[start:start + len(click)] += click[:, None]
+    return Block(frames, 0.0, 0.0, (lead, beat, beats))
 
 
 class Renderer:
@@ -73,6 +100,40 @@ class Renderer:
         self._final = False  # the stretcher was given the end of the file
         self._discard = 0  # output frames to drop (the stretcher's delay)
         self._seam = True  # the next block starts after a cut
+        self.loop: tuple[int, int] | None = None  # (start, end) of the selection repeated, in frames
+        self._xfade = max(16, int(LOOP_FADE * audio.rate))  # cuadros del fundido entre el final y el principio
+
+    def set_loop(self, loop: tuple[int, int] | None) -> None:
+        """Repeat the frames from START to END without a gap (None: no longer)."""
+        self.loop = loop
+
+    def _read(self, start: int, frames: int) -> np.ndarray:
+        """FRAMES frames of the file from START, as they are heard: with a selection repeated, they stop at its
+        end, and the last moments of it fade into those before its start, so that the end runs into the start
+        with no click and no gap (the caller goes on from the start)."""
+        audio = self.audio
+        loop = self.loop if self.loop and start < self.loop[1] else None
+        if loop:
+            frames = min(frames, loop[1] - start)
+        data = np.array(audio.frames(start, start + frames), dtype=np.float32)
+        if loop and len(data):
+            begin, end = loop
+            x = self._xfade
+            lo, hi = max(start, end - x), start + len(data)
+            if hi > lo:
+                # Fundido de igual potencia: el final se apaga mientras sube lo que precede al principio.
+                k = (np.arange(lo, hi) - (end - x) + 0.5) / x
+                fade_in = np.sin(k * np.pi / 2).astype(np.float32)[:, None]
+                fade_out = np.cos(k * np.pi / 2).astype(np.float32)[:, None]
+                first = lo - end + begin  # (de begin - x a begin)
+                other = np.zeros((hi - lo, data.shape[1]), np.float32)
+                got = audio.frames(max(0, first), first + (hi - lo))
+                other[len(other) - len(got):] = got
+                data[lo - start:] = data[lo - start:] * fade_out + other * fade_in
+        return data
+
+    def _wraps(self, before: float, after: float) -> bool:
+        return bool(self.loop) and before < self.loop[1] <= after + 0.5
 
     def seek(self, frame: float) -> None:
         self.pos = float(min(max(0.0, frame), max(0, self.audio.length)))
@@ -118,8 +179,10 @@ class Renderer:
         audio = self.audio
         if start >= audio.decoded:
             return None if audio.done else Block(np.zeros((0, audio.channels), np.float32), start, 1.0)
-        data = np.array(audio.frames(start, start + frames), dtype=np.float32)
+        data = self._read(start, frames)
         self.pos = start + len(data)
+        if self._wraps(start, self.pos):
+            self.pos = float(self.loop[0])
         return Block(data, start, 1.0)
 
     def _restart(self) -> None:
@@ -155,12 +218,16 @@ class Renderer:
         st = self._stretcher
         while st.available() < frames + self._discard and not self._final:
             need = max(st.get_samples_required(), 256)
-            chunk = audio.frames(self._feed, self._feed + need)
-            last = audio.done and self._feed + len(chunk) >= audio.decoded
+            chunk = self._read(self._feed, need)
+            looping = bool(self.loop) and self._feed < self.loop[1]
+            last = not looping and audio.done and self._feed + len(chunk) >= audio.decoded
             if not len(chunk) and not last:
                 break  # todavía se decodifica
             st.process(np.ascontiguousarray(chunk.T), last)
+            fed = self._feed
             self._feed += len(chunk)
+            if self._wraps(fed, self._feed):
+                self._feed = self.loop[0]  # (sin corte: el estirador recibe la selección una vez tras otra)
             self._final = last
         available = st.available()
         if available <= 0:
@@ -174,9 +241,15 @@ class Renderer:
             available -= drop
             if available <= 0:
                 return Block(np.zeros((0, audio.channels), np.float32), self.pos, self.speed)
+        if self.loop and self.pos < self.loop[1]:
+            # Un bloque no pasa del final de la selección: el que sigue empieza en su principio.
+            frames = max(1, min(frames, int(np.ceil((self.loop[1] - self.pos) / self.speed))))
         out = st.retrieve(min(frames, available)).T.copy()
         block = Block(out, self.pos, self.speed)
+        before = self.pos
         self.pos = min(self.pos + len(out) * self.speed, float(audio.decoded))
+        if self._wraps(before, self.pos):
+            self.pos = float(self.loop[0])
         return block
 
 
@@ -255,6 +328,7 @@ class Player:
         self.playing = False
         self.ended = False  # llegó al final; la ventana lo lee y lo apaga
         self.volume = 1.0
+        self.loop: tuple[float, float] | None = None  # the selection repeated, in seconds
         self._speed = 1.0
         self._lock = threading.Lock()
         self._wake = threading.Condition(self._lock)
@@ -274,6 +348,7 @@ class Player:
         self.audio = audio
         self._renderer = Renderer(audio)
         self._renderer.set_speed(self._speed)
+        self.loop = None
         self._position = 0.0
         self._queue.clear()
         self._queued = 0
@@ -297,13 +372,55 @@ class Player:
 
     # --- los mandos
 
-    def play(self) -> None:
+    def play(self, beats: int = 0, bpm: float = 0.0) -> None:
+        """Play; with BEATS and BPM, after a count-in of BEATS clicks at BPM."""
         if self.audio is None:
             return
         if self.ended or (self._eof and not self._queue):
             self.seek(0.0)
+        with self._lock:
+            # Lo que quede de una cuenta anterior (una pausa en medio de ella) no se oye.
+            for block in [b for b in self._queue if b.count]:
+                self._queue.remove(block)
+                self._queued -= len(block.frames) - block.used
+            if beats > 0 and bpm > 0:
+                block = count_in(self.audio.rate, self.audio.channels, beats, bpm)
+                block.start = self._position
+                self._queue.appendleft(block)
+                self._queued += len(block.frames)
         self.ended = False
         self.playing = True
+
+    def set_loop(self, loop: tuple[float, float] | None) -> None:
+        """Repeat the part of the file from START to END seconds, without a gap, while it plays (None: no
+        longer). The position goes into it, unless it is there already."""
+        self.loop = None
+        frames = None
+        if loop and self.audio is not None:
+            rate = self.audio.rate
+            start, end = sorted(loop)
+            a, b = int(max(0.0, start) * rate), int(min(end * rate, self.audio.decoded))
+            if b - a >= MIN_LOOP * rate:
+                frames = (a, b)
+                self.loop = (a / rate, b / rate)
+        if self.audio is None:
+            return
+        here = self.position
+        with self._lock:
+            self._requests.append(("loop", frames))
+            self._wake.notify_all()
+        # Lo que ya está en la cola se hizo sin la selección: se rehace desde donde suena (o desde su principio).
+        inside = frames is not None and frames[0] <= here * self.audio.rate < frames[1]
+        self.seek(here if frames is None or inside else frames[0] / self.audio.rate)
+
+    def counting(self) -> tuple[int, int] | None:
+        """(the beat that sounds, of how many) while a count-in is heard; None otherwise."""
+        with self._lock:
+            block = self._queue[0] if self._queue else None
+            if not self.playing or block is None or not block.count:
+                return None
+            lead, beat, beats = block.count
+            return min(beats, max(0, block.used - lead) // beat + 1), beats
 
     def pause(self) -> None:
         self.playing = False
@@ -348,7 +465,11 @@ class Player:
         if self.playing and self._queue:
             # What left the queue is heard only after the latency of the sound card.
             frame -= self.output.latency * self.audio.rate * self._queue[0].step
-        return max(0.0, frame / self.audio.rate)
+        seconds = max(0.0, frame / self.audio.rate)
+        if self.loop and self.loop[0] - 0.25 < seconds < self.loop[0]:
+            # (justo después del salto al principio de la selección, la latencia lo dejaría un poco antes)
+            seconds = self.loop[0]
+        return seconds
 
     @property
     def duration(self) -> float:
@@ -370,6 +491,8 @@ class Player:
                     renderer.seek(value)
                 elif kind == "speed":
                     renderer.set_speed(value)
+                elif kind == "loop":
+                    renderer.set_loop(value)
             block, seam = renderer.render()
             with self._lock:
                 if any(kind == "seek" for kind, _value in self._requests):

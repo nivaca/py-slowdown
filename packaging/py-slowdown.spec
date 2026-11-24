@@ -98,7 +98,8 @@ export HOME="$PWD/check-home"
 
 %changelog
 * Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.2.0-1
-- Version 0.2.0: installers for Windows (Inno Setup) and macOS (a .dmg, Apple
+- Version 0.2.0: a selection repeated without a gap; a count-in before
+  playing; installers for Windows (Inno Setup) and macOS (a .dmg, Apple
   Silicon and Intel), and a .run for any Linux; files opened from the Finder;
   the bookmarks and the cache in the folders of each system
 

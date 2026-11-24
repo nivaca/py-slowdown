@@ -4,9 +4,10 @@ Waveform dibuja el mínimo y el máximo de cada columna de píxeles: con los pic
 que Audio calculó (Peaks) cuando la vista es amplia, y con las muestras mismas
 cuando se acerca más que un grupo de picos por píxel. La parte ya tocada va en
 otro color; encima, una regla de tiempos, la línea de la posición y los
-marcadores con su nombre. Un clic lleva la posición allí; arrastrar la sigue;
+marcadores con su nombre, y la selección que se repite. Un clic lleva la
+posición allí; arrastrar la sigue; Mayús+arrastrar hace una selección;
 Ctrl+rueda acerca o aleja la vista alrededor del puntero, y la rueda sola la
-corre. WaveformView le pone una barra de desplazamiento debajo.
+corre. Durante la cuenta previa, el pulso se ve en grande. WaveformView le pone una barra de desplazamiento debajo.
 """
 
 from __future__ import annotations
@@ -73,6 +74,7 @@ class Waveform(QWidget):
     addBookmarkRequested = Signal(float)
     removeBookmarkRequested = Signal(int)
     renameBookmarkRequested = Signal(int)
+    selectionChanged = Signal(object)  # (start, end) in seconds, or None
     viewChanged = Signal()
 
     def __init__(self, parent=None):
@@ -83,7 +85,11 @@ class Waveform(QWidget):
         self.start = 0.0  # primer cuadro visible
         self.fpp = 0.0  # frames per pixel; 0: the whole file fits
         self.follow = True
+        self.selection: tuple[float, float] | None = None  # seconds
+        self.repeating = False  # whether the selection is repeated (it is drawn stronger)
+        self.count: int | None = None  # the beat of a count-in, drawn big
         self._dragging = False
+        self._selecting: float | None = None  # where a Shift+drag began
         self._cache_key = None
         self._cache: tuple[np.ndarray, np.ndarray] | None = None
         self.setMinimumHeight(120)
@@ -200,6 +206,7 @@ class Waveform(QWidget):
             "played": played,
             "cursor": QColor("#ff5a3c") if dark else QColor("#d62d0f"),
             "mark": QColor("#f2b134") if dark else QColor("#b8730a"),
+            "select": QColor("#4cc38a") if dark else QColor("#1f8a5b"),
         }
 
     def paintEvent(self, _event) -> None:
@@ -216,11 +223,46 @@ class Waveform(QWidget):
         top = RULER + FLAG
         self._paint_ruler(painter, colors, w)
         self._paint_wave(painter, colors, w, top, h - top)
+        self._paint_selection(painter, colors, h)  # (encima de la onda, transparente: la tiñe)
         self._paint_marks(painter, colors, h)
         x = self.x_of(self.position)
         painter.setPen(QPen(colors["cursor"], 2))
         painter.drawLine(QPointF(x, RULER), QPointF(x, h))
+        if self.count is not None:
+            # El pulso de la cuenta previa, grande, en el centro.
+            font = painter.font()
+            font.setPixelSize(max(24, int((h - RULER) * 0.45)))
+            font.setBold(True)
+            painter.setFont(font)
+            shade = QColor(colors["cursor"])
+            shade.setAlpha(170)
+            painter.setPen(shade)
+            painter.drawText(QRectF(0, RULER, w, h - RULER), Qt.AlignmentFlag.AlignCenter, str(self.count))
         painter.end()
+
+    def set_count(self, beat: int | None) -> None:
+        if beat != self.count:
+            self.count = beat
+            self.update()
+
+    def set_selection(self, selection: tuple[float, float] | None, repeating: bool | None = None) -> None:
+        self.selection = selection
+        if repeating is not None:
+            self.repeating = repeating
+        self.update()
+
+    def _paint_selection(self, painter: QPainter, colors, h: int) -> None:
+        if not self.selection:
+            return
+        x0, x1 = (self.x_of(t) for t in self.selection)
+        band = QColor(colors["select"])
+        band.setAlpha(90 if self.repeating else 45)
+        painter.fillRect(QRectF(x0, RULER, x1 - x0, h - RULER), band)
+        edge = QColor(colors["select"])
+        painter.setPen(QPen(edge, 2 if self.repeating else 1))
+        for x in (x0, x1):
+            painter.drawLine(QPointF(x, RULER), QPointF(x, h))
+        painter.fillRect(QRectF(x0, 0, x1 - x0, 4), edge)  # (también en la regla)
 
     def _paint_ruler(self, painter: QPainter, colors, w: int) -> None:
         rate = self.audio.rate
@@ -315,6 +357,10 @@ class Waveform(QWidget):
         if not self.audio or event.button() != Qt.MouseButton.LeftButton:
             return
         x = event.position().x()
+        if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            # Mayús+arrastrar: una selección (la que se puede repetir).
+            self._selecting = self.seconds_at(x)
+            return
         mark = self.bookmark_at(x) if event.position().y() < RULER + FLAG else None
         if mark is not None:
             self.seekRequested.emit(self.bookmarks[mark].time)
@@ -324,6 +370,10 @@ class Waveform(QWidget):
 
     def mouseMoveEvent(self, event) -> None:
         x = event.position().x()
+        if self._selecting is not None:
+            here = self.seconds_at(x)
+            self.set_selection((min(self._selecting, here), max(self._selecting, here)))
+            return
         if self._dragging:
             self.seekRequested.emit(self.seconds_at(x))
             return
@@ -335,8 +385,14 @@ class Waveform(QWidget):
                 tip = f"{clock(b.time, tenths=True)}  {b.label}".rstrip()
             self.setToolTip(tip)
 
-    def mouseReleaseEvent(self, _event) -> None:
+    def mouseReleaseEvent(self, event) -> None:
         self._dragging = False
+        if self._selecting is not None:
+            here = self.seconds_at(event.position().x())
+            start, end = sorted((self._selecting, here))
+            self._selecting = None
+            # (un clic con Mayús, sin arrastrar, quita la selección)
+            self.selectionChanged.emit((start, end) if end - start > 0.05 else None)
 
     def mouseDoubleClickEvent(self, event) -> None:
         mark = self.bookmark_at(event.position().x())
@@ -354,6 +410,12 @@ class Waveform(QWidget):
         if mark is not None:
             menu.addAction(tr("Rename the bookmark…"), lambda: self.renameBookmarkRequested.emit(mark))
             menu.addAction(tr("Remove the bookmark"), lambda: self.removeBookmarkRequested.emit(mark))
+        later = [b.time for b in self.bookmarks if b.time > here + 0.05]
+        if later:
+            menu.addAction(tr("Select from here to the next bookmark"),
+                           lambda: self.selectionChanged.emit((here, later[0])))
+        if self.selection:
+            menu.addAction(tr("Clear the selection"), lambda: self.selectionChanged.emit(None))
         menu.exec(event.globalPos())
 
     def wheelEvent(self, event) -> None:

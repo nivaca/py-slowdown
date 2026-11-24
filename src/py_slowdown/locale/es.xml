@@ -427,4 +427,104 @@
     <en>Ctrl+← / Ctrl+→   PgUp / PgDn</en>
     <tr>Ctrl+← / Ctrl+→   RePág / AvPág</tr>
   </text>
+  <text>
+    <en>&amp;Count in before playing</en>
+    <tr>&amp;Contar antes de tocar</tr>
+  </text>
+  <text>
+    <en>Cou&amp;nts:</en>
+    <tr>&amp;Golpes:</tr>
+  </text>
+  <text>
+    <en>&amp;Follow the speed</en>
+    <tr>&amp;Seguir la velocidad</tr>
+  </text>
+  <text>
+    <en>&amp;Repeat the selection</en>
+    <tr>Repet&amp;ir la selección</tr>
+  </text>
+  <text>
+    <en>&amp;Tempo:</en>
+    <tr>&amp;Tempo:</tr>
+  </text>
+  <text>
+    <en>At the speed now ({speed}×): {beats} clicks at {bpm} BPM, then the recording.</en>
+    <tr>A la velocidad de ahora ({speed}×): {beats} golpes a {bpm} BPM, y luego la grabación.</tr>
+  </text>
+  <text>
+    <en>Clear the selecti&amp;on</en>
+    <tr>Q&amp;uitar la selección</tr>
+  </text>
+  <text>
+    <en>Clear the selection</en>
+    <tr>Quitar la selección</tr>
+  </text>
+  <text>
+    <en>Count in before playing</en>
+    <tr>Contar antes de tocar</tr>
+  </text>
+  <text>
+    <en>Count in before playing (C); right click: how many counts, and the tempo</en>
+    <tr>Contar antes de tocar (C); clic derecho: cuántos golpes, y el tempo</tr>
+  </text>
+  <text>
+    <en>Count-in</en>
+    <tr>Cuenta previa</tr>
+  </text>
+  <text>
+    <en>Co&amp;unt-in settings…</en>
+    <tr>A&amp;justes de la cuenta previa…</tr>
+  </text>
+  <text>
+    <en>Esc</en>
+    <tr>Esc</tr>
+  </text>
+  <text>
+    <en>Playing starts at once.</en>
+    <tr>La reproducción empieza enseguida.</tr>
+  </text>
+  <text>
+    <en>Repeat the selection</en>
+    <tr>Repetir la selección</tr>
+  </text>
+  <text>
+    <en>Repeat the selection without a pause (L); Shift+drag on the waveform selects</en>
+    <tr>Repetir la selección sin pausa (L); Mayús+arrastrar sobre la forma de onda selecciona</tr>
+  </text>
+  <text>
+    <en>Select a part to repeat: Shift+drag on the waveform, or I and O</en>
+    <tr>Seleccione una parte para repetir: Mayús+arrastrar sobre la forma de onda, o I y O</tr>
+  </text>
+  <text>
+    <en>Select from here to the next bookmark</en>
+    <tr>Seleccionar de aquí al marcador siguiente</tr>
+  </text>
+  <text>
+    <en>Select with the mouse</en>
+    <tr>Seleccionar con el ratón</tr>
+  </text>
+  <text>
+    <en>Selection ends &amp;here</en>
+    <tr>La selección termina a&amp;quí</tr>
+  </text>
+  <text>
+    <en>Select&amp;ion starts here</en>
+    <tr>La selección e&amp;mpieza aquí</tr>
+  </text>
+  <text>
+    <en>Selection: {start} – {end}</en>
+    <tr>Selección: {start} – {end}</tr>
+  </text>
+  <text>
+    <en>Shift+drag</en>
+    <tr>Mayús+arrastrar</tr>
+  </text>
+  <text>
+    <en>Start / end of the selection at the position</en>
+    <tr>Principio / final de la selección en la posición</tr>
+  </text>
+  <text>
+    <en>The tempo of the clicks changes with the speed: 120 BPM at 0.5× are counted at 60</en>
+    <tr>El tempo de los golpes cambia con la velocidad: 120 BPM a 0,5× se cuentan a 60</tr>
+  </text>
 </interface>

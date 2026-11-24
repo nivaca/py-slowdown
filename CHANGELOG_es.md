@@ -18,6 +18,16 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 - **Un instalador para cualquier Linux** (`.run`), hecho de la AppImage:
   para el usuario o, con sudo, para todos, con la orden, la entrada del
   menú, los íconos, las páginas de manual y un desinstalador.
+- **Repetir una selección, sin pausa**: Mayús+arrastrar sobre la forma de
+  onda, I y O en la posición, o «Seleccionar de aquí al marcador
+  siguiente»; luego Reproducción > Repetir la selección (L), o su botón. El
+  final de la selección se funde en una centésima de segundo con lo que
+  precede a su principio, antes del estiramiento, de modo que el pasaje
+  suena como un solo flujo a cualquier velocidad.
+- **Cuenta previa antes de tocar** (Reproducción > Contar antes de tocar,
+  C, o su botón): de 1 a 16 golpes a 20–300 BPM, el primero más agudo, y
+  luego la grabación; el tempo puede seguir la velocidad (120 BPM a 0,5× se
+  cuentan a 60); la forma de onda muestra el pulso en grande.
 - **Los archivos que se abren desde el Finder** (Abrir con, o soltados sobre
   el ícono del Dock) los abre la ventana.
 - **Los marcadores y el sonido decodificado, en las carpetas de cada

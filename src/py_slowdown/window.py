@@ -34,7 +34,8 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Store, export_text
-from .engine import MAX_SPEED, MIN_SPEED, Output, Player
+from .countin import CountIn, CountInDialog
+from .engine import MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player
 from .interface import tr
 from .panel import BookmarkPanel
 from .timefmt import clock
@@ -61,6 +62,11 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Previous / next bookmark"), tr("Ctrl+← / Ctrl+→   PgUp / PgDn")),
         (tr("Zoom in / out / whole file"), "Ctrl++ / Ctrl+− / Ctrl+0"),
         (tr("Zoom around the pointer"), tr("Ctrl+wheel")),
+        (tr("Repeat the selection"), "L"),
+        (tr("Select with the mouse"), tr("Shift+drag")),
+        (tr("Start / end of the selection at the position"), "I / O"),
+        (tr("Clear the selection"), tr("Esc")),
+        (tr("Count in before playing"), "C"),
         (tr("Open a file"), "Ctrl+O"),
     ]
 
@@ -77,6 +83,8 @@ class Window(QMainWindow):
         self._resume = 0.0  # where to go once the file is decoded that far
         self._announced: Audio | None = None  # the file whose end of reading was told
         self.skip = float(self.settings.value("skip", 5, type=float))
+        self.count = CountIn.load(self.settings)
+        self.selection: tuple[float, float] | None = None  # seconds
         self.setWindowTitle(APP)
         if ICON.is_file():
             self.setWindowIcon(QIcon(str(ICON)))
@@ -172,6 +180,20 @@ class Window(QMainWindow):
             row.addWidget(b)
         row.addSpacing(6)
         row.addWidget(self.b_mark)
+        self.b_repeat = QToolButton(self)
+        self.b_repeat.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
+        self.b_repeat.setCheckable(True)
+        self.b_repeat.setAutoRaise(True)
+        self.b_repeat.setToolTip(tr("Repeat the selection without a pause (L); Shift+drag on the waveform selects"))
+        self.b_repeat.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.b_count = QToolButton(self)
+        self.b_count.setText(tr("Count-in"))
+        self.b_count.setCheckable(True)
+        self.b_count.setToolTip(tr("Count in before playing (C); right click: how many counts, and the tempo"))
+        self.b_count.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.b_count.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        row.addWidget(self.b_repeat)
+        row.addWidget(self.b_count)
         row.addSpacing(12)
 
         self.time_label = QLabel("0:00.0 / 0:00.0", self)
@@ -190,7 +212,7 @@ class Window(QMainWindow):
         self.speed_slider.setSingleStep(5)
         self.speed_slider.setPageStep(25)
         self.speed_slider.setValue(100)
-        self.speed_slider.setMinimumWidth(180)
+        self.speed_slider.setMinimumWidth(110)
         self.speed_slider.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.speed_slider.setToolTip(tr("Slower (Down) or faster (Up); the pitch stays the same"))
         self.speed_box = QDoubleSpinBox(self)
@@ -214,6 +236,7 @@ class Window(QMainWindow):
         row.addWidget(speaker)
         self.volume = QSlider(Qt.Orientation.Horizontal, self)
         self.volume.setRange(0, 100)
+        self.volume.setMinimumWidth(70)
         self.volume.setMaximumWidth(110)
         self.volume.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.volume.setToolTip(tr("Volume"))
@@ -225,7 +248,8 @@ class Window(QMainWindow):
         if keys:
             action.setShortcuts([QKeySequence(k) for k in keys])
         action.setCheckable(checkable)
-        action.triggered.connect(slot)
+        # (los que se marcan, por toggled: así responden también cuando un botón o el programa los cambia)
+        (action.toggled if checkable else action.triggered).connect(slot)
         self.addAction(action)  # (los atajos valen aunque la barra de menús esté oculta)
         return action
 
@@ -245,6 +269,13 @@ class Window(QMainWindow):
         self.a_slower = a(tr("S&lower"), lambda: self.change_speed(-SPEED_STEP), ["Down", "-"])
         self.a_faster = a(tr("F&aster"), lambda: self.change_speed(SPEED_STEP), ["Up", "+"])
         self.a_normal = a(tr("&Normal speed"), lambda: self.set_speed(1.0), ["N"])
+        self.a_repeat = a(tr("&Repeat the selection"), self._set_repeat, ["L"], checkable=True)
+        self.a_sel_start = a(tr("Select&ion starts here"), lambda: self.mark_selection(start=True), ["I"])
+        self.a_sel_end = a(tr("Selection ends &here"), lambda: self.mark_selection(start=False), ["O"])
+        self.a_sel_clear = a(tr("Clear the selecti&on"), lambda: self.set_selection(None), ["Esc"])
+        self.a_count = a(tr("&Count in before playing"), self._set_count_on, ["C"], checkable=True)
+        self.a_count.setChecked(self.count.on)
+        self.a_count_settings = a(tr("Co&unt-in settings…"), self.count_settings)
         self.a_mark = a(tr("&Add a bookmark"), self.add_bookmark, ["B", "Ctrl+B"])
         self.a_prev_mark = a(tr("&Previous bookmark"), lambda: self.goto_bookmark(-1), ["Ctrl+Left", "PgUp"])
         self.a_next_mark = a(tr("&Next bookmark"), lambda: self.goto_bookmark(1), ["Ctrl+Right", "PgDown"])
@@ -271,7 +302,9 @@ class Window(QMainWindow):
         play = bar.addMenu(tr("&Playback"))
         for action in (self.a_play, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
                        self.a_forward_1, self.a_forward, self.a_end, None,
-                       self.a_slower, self.a_faster, self.a_normal):
+                       self.a_slower, self.a_faster, self.a_normal, None,
+                       self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, None,
+                       self.a_count, self.a_count_settings):
             play.addSeparator() if action is None else play.addAction(action)
 
         marks = bar.addMenu(tr("&Bookmarks"))
@@ -324,6 +357,13 @@ class Window(QMainWindow):
         self.wave.addBookmarkRequested.connect(self.add_bookmark_at)
         self.wave.removeBookmarkRequested.connect(self.remove_bookmark)
         self.wave.renameBookmarkRequested.connect(self.rename_bookmark)
+        self.wave.selectionChanged.connect(self.set_selection)
+        self.b_repeat.toggled.connect(self.a_repeat.setChecked)
+        self.a_repeat.toggled.connect(self.b_repeat.setChecked)
+        self.b_count.toggled.connect(self.a_count.setChecked)
+        self.a_count.toggled.connect(self.b_count.setChecked)
+        self.b_count.setChecked(self.count.on)
+        self.b_count.customContextMenuRequested.connect(lambda _pos: self.count_settings())
         self.panel.activated.connect(lambda row: self.seek(self.bookmarks[row].time))
         self.panel.addRequested.connect(self.add_bookmark)
         self.panel.removeRequested.connect(self.remove_bookmark)
@@ -361,6 +401,8 @@ class Window(QMainWindow):
             return False
         self.audio = audio
         self.wave.set_audio(audio)
+        self.selection = None
+        self.wave.set_selection(None)
         self.bookmarks = self.store.bookmarks(path)
         self._show_bookmarks()
         self.set_speed(self.player.speed)
@@ -384,6 +426,8 @@ class Window(QMainWindow):
         self.bookmarks = []
         self._resume = 0.0
         self.wave.set_audio(None)
+        self.selection = None
+        self.wave.set_selection(None)
         self._show_bookmarks()
         self.setWindowTitle(APP)
         self.statusBar().clearMessage()
@@ -414,9 +458,62 @@ class Window(QMainWindow):
     # --- reproducción
 
     def toggle(self) -> None:
+        if not self.audio:
+            return
+        if self.player.playing:
+            self.player.pause()
+        elif self.count.on:
+            self.player.play(self.count.beats, self.count.tempo(self.player.speed))
+        else:
+            self.player.play()
+        self._update_play_button()
+
+    # --- la cuenta previa y la selección repetida
+
+    def _set_count_on(self, on: bool) -> None:
+        self.count.on = on
+        self.count.save(self.settings)
+
+    def count_settings(self) -> None:
+        dialog = CountInDialog(self.count, self.player.speed, self)
+        if dialog.exec():
+            self.count = dialog.value()
+            self.count.save(self.settings)
+            self.a_count.setChecked(self.count.on)
+
+    def set_selection(self, selection: tuple[float, float] | None) -> None:
+        """The selection (start and end, in seconds), or none; it is repeated if Repeat is on."""
+        if selection is not None:
+            start, end = sorted(selection)
+            limit = self.audio.duration if self.audio else 0.0
+            start, end = max(0.0, start), min(end, limit)
+            selection = (start, end) if end - start >= MIN_LOOP else None
+        self.selection = selection
+        self.wave.set_selection(selection, self.a_repeat.isChecked())
+        self._apply_loop()
+        if selection:
+            self.statusBar().showMessage(tr("Selection: {start} – {end}", start=clock(selection[0], tenths=True),
+                                            end=clock(selection[1], tenths=True)), 4000)
+
+    def mark_selection(self, start: bool) -> None:
+        """The start (or the end) of the selection at the position; the other end stays, or is the file's."""
+        if not self.audio:
+            return
+        here = self.player.position
+        old = self.selection or (0.0, self.audio.duration)
+        self.set_selection((here, old[1]) if start else (old[0], here))
+
+    def _set_repeat(self, on: bool) -> None:
+        self.wave.set_selection(self.selection, on)
+        self._apply_loop()
+        if on and not self.selection:
+            self.statusBar().showMessage(tr("Select a part to repeat: Shift+drag on the waveform, or I and O"), 5000)
+
+    def _apply_loop(self) -> None:
         if self.audio:
-            self.player.toggle()
-            self._update_play_button()
+            loop = self.selection if self.a_repeat.isChecked() else None
+            if loop != self.player.loop:
+                self.player.set_loop(loop)
 
     def stop(self) -> None:
         self.player.stop()
@@ -467,6 +564,8 @@ class Window(QMainWindow):
             self._update_play_button()
         position = self.player.position
         self.wave.set_position(position, self.player.playing)
+        counting = self.player.counting()
+        self.wave.set_count(counting[0] if counting else None)
         self.time_label.setText(f"{clock(position, tenths=True)} / {clock(audio.duration, tenths=True)}")
         if self.b_play.property("playing") != self.player.playing:
             self._update_play_button()
@@ -496,11 +595,12 @@ class Window(QMainWindow):
     def _update_enabled(self) -> None:
         loaded = self.audio is not None
         for widget in (self.b_start, self.b_back, self.b_play, self.b_stop, self.b_forward, self.b_end,
-                       self.b_mark, self.panel.add_button):
+                       self.b_mark, self.b_repeat, self.panel.add_button):
             widget.setEnabled(loaded)
         for action in (self.a_close, self.a_play, self.a_stop, self.a_start, self.a_end, self.a_back,
                        self.a_forward, self.a_back_1, self.a_forward_1, self.a_mark, self.a_prev_mark,
-                       self.a_next_mark, self.a_zoom_in, self.a_zoom_out, self.a_fit):
+                       self.a_next_mark, self.a_zoom_in, self.a_zoom_out, self.a_fit, self.a_repeat,
+                       self.a_sel_start, self.a_sel_end, self.a_sel_clear):
             action.setEnabled(loaded)
         self.a_export.setEnabled(loaded and bool(self.bookmarks))
         self._update_play_button()

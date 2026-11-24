@@ -386,6 +386,8 @@ The controls (figure~\ref{fig:controls_en}) are, from the left:
 \item[Forward] by the skip length (\key{→}); held down, it keeps going.
 \item[Go to the end] (\key{End}).
 \item[Bookmark] adds one at the position (\key{B}).
+\item[Repeat] the selection, again and again (\key{L}; section~\ref{sec:repeat}).
+\item[Count-in] before playing (\key{C}; section~\ref{sec:countin}).
 \end{description}
 
 \noindent\index{skip length}%
@@ -484,6 +486,55 @@ path (section~\ref{sec:files-kept}). The audio file is never changed. A
 file that is moved or renamed is a new file for the program, without
 bookmarks.
 
+\section{Repeating a selection}
+\label{sec:repeat}
+
+\shot{repeat_en}{0.85}{A selection repeated, with the count-in at its third click}
+
+\index{selection}\index{repeat}\index{loop|see{repeat}}%
+A passage can be repeated without end, to hear it until it is understood
+or to play along with it. First select it: \key{Shift+drag} on the
+waveform; or, with the position at its start, \key{I}, and at its end,
+\key{O} (one of them alone selects from the position to the end, or from
+the start, of the file); or, with a right click, \menu{Select from here to
+the next bookmark}. The selection is drawn in green, also on the ruler,
+and the status bar says where it begins and ends. Then turn on
+\menu{Playback\then Repeat the selection} (\key{L}), or the button with
+the two arrows: when the playing reaches the end of the selection, it goes
+on from its start (figure~\ref{fig:repeat_en}).
+
+\index{repeat!without a gap}%
+There is no pause and no click between the end and the start: the last
+hundredth of a second of the selection fades into what comes before its
+start, so that the passage sounds as one continuous stream. This also
+holds at any speed, because the stretching is done on that stream, not on
+each repetition apart. A click outside the selection takes the position
+there as usual; if it is before the selection, the repeating begins when
+the playing reaches it. \key{Esc}, or \menu{Clear the selection}, removes
+it; \key{L} again stops the repeating and keeps the selection.
+
+\section{Counting in}
+\label{sec:countin}
+
+\shot{countin_en}{0.45}{The settings of the count-in}
+
+\index{count-in}\index{metronome|see{count-in}}\index{tempo}%
+Before the recording starts, the program can count, as a metronome does
+before a band comes in: a few clicks at a tempo, the first one higher, and
+then the recording, on the next beat. Turn it on with
+\menu{Playback\then Count in before playing} (\key{C}), or the button
+\menu{Count-in}; it then counts each time playing starts (with
+\key{Space} or the button), not when the position moves while it plays.
+While it counts, the waveform shows the beat in large figures
+(figure~\ref{fig:repeat_en}), and the position does not move.
+
+\menu{Playback\then Count-in settings}, or a right click on the button,
+sets how many counts (from 1 to 16) and the tempo, in beats per minute
+(from 20 to 300; figure~\ref{fig:countin_en}). With \menu{Follow the
+speed}, the tempo changes with the speed: a song at 120 BPM played at
+0.5\,× is counted at 60, as it will sound. The dialog says what will be
+heard at the speed of that moment. These settings are kept.
+
 \section{Settings}
 
 \shot{menu_settings_en}{0.35}{The menu Settings}
@@ -544,6 +595,11 @@ and the recent files.
 \key{Ctrl+←}, \key{Ctrl+→} (or \key{PgUp}, \key{PgDn}) & previous, next bookmark\\
 \key{Ctrl++}, \key{Ctrl+−}, \key{Ctrl+0} & zoom in, zoom out, the whole file\\
 \key{Ctrl+wheel} & zoom around the pointer\\
+\key{L} & repeat the selection\\
+\key{Shift+drag} & select\\
+\key{I}, \key{O} & start, end of the selection at the position\\
+\key{Esc} & clear the selection\\
+\key{C} & count in before playing\\
 \key{Ctrl+O} & open a file\\
 \key{Ctrl+W} & close the file\\
 \key{F1} & the list of the keys\\

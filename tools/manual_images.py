@@ -4,8 +4,8 @@
     uv run python tools/manual_images.py
 
 Escribe docs/img/manual/NOMBRE_IDIOMA.png: la ventana con un archivo abierto, la forma de onda de cerca, el
-menú del clic derecho sobre la forma de onda, el diálogo del nombre de un marcador, los menús Reproducción y
-Configuración, y los atajos de teclado. Todo sobre una grabación de muestra hecha aquí (con ffmpeg), dibujado
+menú del clic derecho sobre la forma de onda, una selección que se repite con la cuenta previa, el diálogo de la
+cuenta previa, el del nombre de un marcador, los menús Reproducción y Configuración, y los atajos de teclado. Todo sobre una grabación de muestra hecha aquí (con ffmpeg), dibujado
 fuera de la pantalla, sin tarjeta de sonido y con una configuración propia: la del usuario no se lee ni se
 escribe (HOME y las carpetas XDG apuntan a una carpeta temporal).
 """
@@ -101,11 +101,36 @@ def shoot(lang: str, audio: Path, folder: Path):
     save(w.view, "zoom", lang)
     w.wave.fit()
 
+    # Una selección que se repite, con la cuenta previa en su tercer golpe.
+    w.set_selection((40.0, 52.0))
+    w.a_repeat.setChecked(True)
+    w.a_count.setChecked(True)
+    w.seek(44.0)
+    settle(app)
+    w.timer.stop()  # (si no, el reloj de la ventana borra el número: no está sonando)
+    w.wave.set_count(3)
+    app.processEvents()
+    save(w.view, "repeat", lang)
+    w.wave.set_count(None)
+    w.timer.start()
+    w.a_count.setChecked(False)
+    w.a_repeat.setChecked(False)
+    w.set_selection(None)
+
+    from py_slowdown.countin import CountIn, CountInDialog
+
+    dialog = CountInDialog(CountIn(True, 4, 120, True), 0.75, w)
+    dialog.show()
+    settle(app)
+    save(dialog, "countin", lang)
+    dialog.close()
+
     # El menú del clic derecho, sobre el primer marcador (el que contextMenuEvent arma).
     menu = QMenu(w.wave)
     menu.addAction(tr("Add a bookmark here"))
     menu.addAction(tr("Rename the bookmark…"))
     menu.addAction(tr("Remove the bookmark"))
+    menu.addAction(tr("Select from here to the next bookmark"))
     menu_shot(app, menu, "context", lang)
 
     for title, name in ((tr("&Playback"), "menu_playback"), (tr("&Bookmarks"), "menu_bookmarks"),

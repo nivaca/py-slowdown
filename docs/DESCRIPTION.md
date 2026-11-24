@@ -8,7 +8,7 @@ lectures and interviews, where one needs to hear a passage again and again
 at a speed one can follow; it follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in seven stages.
+in eight stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -239,10 +239,53 @@ warn the first time, and the manuals say what to do. The signature of
 each file, with the project's key, is what proves that it is the one
 published.
 
+8. Repeating a selection, and counting in
+----------------------------------------
+
+Two things that musicians, above all, ask of such a program came next: to
+repeat a passage again and again, and to be counted in before the
+recording starts.
+
+The repeating had to be without a gap, which ruled out the simple way, a
+seek back to the start each time the end is reached: that leaves a small
+silence and a click, and with the stretcher it would restart Rubber Band at
+every turn. Instead, the selection is repeated where the file is read, so
+that the renderer, and through it Rubber Band, receives one continuous
+stream: the selection, then the selection again. At the joint, the last
+hundredth of a second of the selection fades out while what precedes its
+start fades in (an equal-power crossfade), and the stream goes on from the
+start, so the end runs into the start with neither a gap nor a click. Each
+block of output stops at the end of the selection, so that the position
+shown jumps back to its start exactly when the start is heard. The tests
+check that at normal speed the output is the selection itself, sample for
+sample, turn after turn, with no jump at the joints; that while stretching,
+the click of the test file in the selection is heard once per turn, in its
+place, and each turn lasts what it should; and that the position never
+leaves the selection. A first version of the test counted the clicks by
+their place in the file, so the same click, heard in every turn, was
+counted once; they are now counted by when they are heard.
+
+The count-in is a few clicks made by the program (short tones, the first
+higher and louder), put at the front of the queue of sound, before the
+recording: so it is exact to the sample, and the recording comes in on the
+next beat. Its tempo can follow the speed, so that a song at 120 BPM played
+at half speed is counted at 60, as it will sound. The waveform shows the
+beat in large figures while it counts.
+
+Three things went wrong on the way. Clicking the new buttons checked the
+menu item but did nothing: the window connected its actions by `triggered`,
+which a change made by a button does not emit; actions that are switched on
+and off are now connected by `toggled`, which a test now checks. The
+selection was drawn under the waveform, where only its gaps showed it; it
+is now drawn over it, transparent. And the two new buttons squeezed the
+volume slider to nothing, so the speed slider is now narrower. In the
+dialog of the count-in, the numbers are written as the language of the
+interface writes them (0,75× in Spanish).
+
 Testing
 -------
 
-The program has 83 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 92 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -251,7 +294,9 @@ announces or is cut halfway. They check that at 1× the output is the file
 itself, sample for sample; that at six speeds the output has the right
 length, keeps the pitch (a tone of 220 Hz stays at 220 Hz) and keeps each
 click at its place; that a seek while playing makes no click; and the
-binding to Rubber Band, also when the library is missing. The player is
+binding to Rubber Band, also when the library is missing; and the
+repeating of a selection, at normal speed and stretching, and the
+count-in. The player is
 tested with a sound card that the tests drive themselves, and the window
 offscreen: opening a file, the controls, the speed, the bookmarks, the
 point where it was left, a file that is not audio, the window without
@@ -269,4 +314,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 64 files and about 10,100 lines (6,100 of them in Python).
+The program has 65 files and about 11,100 lines (6,800 of them in Python).

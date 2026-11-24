@@ -1,3 +1,4 @@
+import itertools
 import time
 
 import numpy as np
@@ -169,3 +170,122 @@ def test_rubberband_missing(monkeypatch, tmp_path):
     monkeypatch.setattr(rubberband, "_candidates", lambda: [str(tmp_path / "nothing.so")])
     with pytest.raises(rubberband.RubberBandError, match="not found"):
         rubberband.library()
+
+
+def test_count_in_block():
+    from py_slowdown.engine import COUNT_LEAD, count_in
+
+    block = count_in(RATE, 2, 4, 120)
+    lead, beat, beats = block.count
+    assert (beat, beats) == (RATE // 2, 4) and lead == int(COUNT_LEAD * RATE)
+    assert len(block.frames) == lead + 4 * beat and block.step == 0.0
+    loud = np.abs(block.frames[:, 0])
+    starts = [lead + n * beat for n in range(4)]
+    assert all(loud[s:s + 200].max() > 0.2 for s in starts)  # a click at each beat
+    assert loud[:lead].max() == 0.0 and loud[starts[0]:starts[0] + 400].max() > loud[starts[1]:starts[1] + 400].max()
+    assert count_in(RATE, 1, 99, 1000).count[2] == 16  # (limits)
+
+
+def test_player_counts_in(audio, output):
+    player = Player(output)
+    player.load(audio)
+    try:
+        player.seek(2.0)
+        wait_for(player, output, lambda: player._queued > 0)
+        player.play(beats=2, bpm=240)  # two beats of a quarter of a second each
+        assert player.counting() == (1, 2)
+        heard = []
+        for _ in range(30):  # about 0.35 s: still counting, and the position stays
+            heard.append(output.pull(512))
+            time.sleep(0.001)
+        assert player.counting() == (2, 2) and player.position == 2.0
+        assert np.abs(np.concatenate(heard)).max() > 0.3  # the clicks are heard
+        assert wait_for(player, output, lambda: player.position > 2.05)  # then the recording
+        assert player.counting() is None
+        # Una pausa en medio de la cuenta, y otra vez a tocar: una cuenta nueva, no dos
+        player.pause()
+        output.pull()
+        player.play(beats=3, bpm=100)
+        assert sum(1 for b in player._queue if b.count) == 1
+        player.play()  # (sin cuenta: la que había se quita)
+        assert not any(b.count for b in player._queue)
+    finally:
+        player.unload()
+
+
+def loop_blocks(renderer, seconds):
+    blocks, total = [], 0
+    while total < seconds * RATE:
+        block, _seam = renderer.render()
+        assert block is not None
+        if len(block.frames):
+            blocks.append(block)
+            total += len(block.frames)
+    return blocks
+
+
+def test_loop_at_normal_speed(audio):
+    """The selection is repeated sample after sample, its end running into its start through a short fade."""
+    renderer = Renderer(audio)
+    a, b = int(1.5 * RATE), int(2.5 * RATE)
+    renderer.set_loop((a, b))
+    renderer.seek(a)
+    blocks = loop_blocks(renderer, 3.2)
+    out = np.concatenate([x.frames for x in blocks])[:, 0]
+    starts = [x.start for x in blocks]
+    assert all(a <= s < b for s in starts)
+    # Tres vueltas y algo: cada vuelta dura lo que la selección; la segunda empieza otra vez en a
+    one = b - a
+    source = audio.frames(0, audio.decoded)[:, 0]
+    assert np.allclose(out[FADE + 10:one - 1000], source[a + FADE + 10:b - 1000], atol=1e-6)
+    assert np.allclose(out[one + 10:2 * one - 1000], source[a + 10:b - 1000], atol=1e-6)
+    # Sin chasquidos en las costuras: el tono cambia poco de una muestra a otra, también allí
+    for seam in (one, 2 * one, 3 * one):
+        assert np.abs(np.diff(out[seam - 600:seam + 600])).max() < 0.01
+
+
+@pytest.mark.parametrize("speed", [0.5, 1.5])
+def test_loop_while_stretching(audio, speed):
+    renderer = Renderer(audio)
+    renderer.set_speed(speed)
+    a, b = int(1.5 * RATE), int(2.5 * RATE)
+    renderer.set_loop((a, b))
+    renderer.seek(a)
+    blocks = loop_blocks(renderer, 3 * 1.0 / speed)
+    assert all(a <= x.start < b for x in blocks)
+    # El tictac de 2.0 s se oye una vez por vuelta, en su lugar (contados por el tiempo de salida: en el del
+    # archivo, todos están en el mismo punto)
+    found, last, out = [], -RATE, 0
+    for block in blocks:
+        for i in np.flatnonzero(np.abs(block.frames[:, 0]) > 0.15):
+            if out + i - last > 0.3 * RATE:
+                found.append((block.start + i * block.step) / RATE)
+            last = out + i
+        out += len(block.frames)
+    assert len(found) >= 2 and found == pytest.approx([2.0] * len(found), abs=0.02)
+    # Las vueltas duran lo que deben: la selección estirada
+    wraps = [i for i in range(1, len(blocks)) if blocks[i].start < blocks[i - 1].start]
+    lengths = [sum(len(x.frames) for x in blocks[i:j]) for i, j in itertools.pairwise(wraps)]
+    assert lengths and all(abs(n - (b - a) / speed) < 0.02 * RATE for n in lengths)
+
+
+def test_player_loop(audio, output):
+    player = Player(output)
+    player.load(audio)
+    try:
+        player.set_loop((4.0, 3.0))  # (en cualquier orden)
+        assert player.loop == (3.0, 4.0) and player.position == 3.0  # fuera de ella: va a su principio
+        player.set_loop((3.0, 3.05))  # demasiado corta: no se repite
+        assert player.loop is None
+        player.set_loop((3.0, 4.0))
+        player.play()
+        seen = []
+        for _ in range(600):  # unos 7 s de sonido: más de seis vueltas
+            output.pull(512)
+            seen.append(player.position)
+            time.sleep(0.001)
+        assert min(seen) >= 3.0 - 1e-6 and max(seen) < 4.0 and player.playing
+        player.set_loop(None)
+        assert player.loop is None
+    finally:
+        player.unload()
