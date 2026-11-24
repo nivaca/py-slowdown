@@ -128,6 +128,7 @@ class Renderer:
         self.audio = audio
         self.speed = 1.0
         self.pitch = 0.0  # semitonos
+        self.formants = False  # keep the formants when the pitch moves
         self.pos = 0.0  # cuadro del archivo que corresponde al próximo cuadro de salida
         self._stretcher: rubberband.Stretcher | None = None
         self._stretching = False  # whether the stretcher holds the stream now
@@ -194,6 +195,11 @@ class Renderer:
             self.pitch = semitones
             self._changed(was_plain)
 
+    def set_formants(self, preserved: bool) -> None:
+        self.formants = bool(preserved)
+        if self._stretcher is not None:
+            self._stretcher.set_formants(self.formants)
+
     def _changed(self, was_plain: bool) -> None:
         if self._stretching:
             if self.plain:
@@ -243,6 +249,7 @@ class Renderer:
         if self._stretcher is None:
             self._stretcher = rubberband.Stretcher(audio.rate, audio.channels, OPTIONS, 1.0 / self.speed)
             self._stretcher.set_max_process_size(4096)
+            self._stretcher.set_formants(self.formants)
         st = self._stretcher
         st.reset()
         st.time_ratio = 1.0 / self.speed
@@ -382,6 +389,7 @@ class Player:
         self.loop: tuple[float, float] | None = None  # the selection repeated, in seconds
         self._speed = 1.0
         self._pitch = 0.0
+        self._formants = False
         self._lock = threading.Lock()
         self._wake = threading.Condition(self._lock)
         self._queue: deque[Block] = deque()
@@ -401,6 +409,7 @@ class Player:
         self._renderer = Renderer(audio)
         self._renderer.set_speed(self._speed)
         self._renderer.set_pitch(self._pitch)
+        self._renderer.set_formants(self._formants)
         self.loop = None
         self._position = 0.0
         self._queue.clear()
@@ -516,6 +525,18 @@ class Player:
             self._wake.notify_all()
 
     @property
+    def formants(self) -> bool:
+        """Whether the formants are kept when the pitch moves (voices and instruments keep their timbre)."""
+        return self._formants
+
+    @formants.setter
+    def formants(self, value: bool) -> None:
+        self._formants = bool(value)
+        with self._lock:
+            self._requests.append(("formants", self._formants))
+            self._wake.notify_all()
+
+    @property
     def speed(self) -> float:
         return self._speed
 
@@ -565,6 +586,8 @@ class Player:
                     renderer.set_loop(value)
                 elif kind == "pitch":
                     renderer.set_pitch(value)
+                elif kind == "formants":
+                    renderer.set_formants(value)
             block, seam = renderer.render()
             with self._lock:
                 if any(kind == "seek" for kind, _value in self._requests):

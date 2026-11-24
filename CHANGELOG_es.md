@@ -7,6 +7,11 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Conservar los formantes**: el botón Formantes, junto a la altura, y
+  Reproducción > Conservar los formantes hacen que Rubber Band conserve los
+  formantes cuando la altura se mueve, de modo que una voz o un instrumento
+  conserva su timbre natural en vez de sonar más pequeño (más agudo) o más
+  grande (más grave). Se cambia mientras suena, y se recuerda.
 - **La forma de onda llena la ventana al abrir un archivo**: se dibujaba
   mientras el archivo todavía se leía, y a veces se quedaba así, a medias o
   a la escala de la duración que el archivo anunciaba, hasta que otra cosa

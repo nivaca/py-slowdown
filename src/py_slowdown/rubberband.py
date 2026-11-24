@@ -26,6 +26,8 @@ WINDOW_STANDARD = 0x00000000
 CHANNELS_TOGETHER = 0x10000000
 ENGINE_FINER = 0x20000000
 PITCH_HIGH_CONSISTENCY = 0x04000000  # changes of pitch while it plays, without discontinuities
+FORMANT_SHIFTED = 0x00000000  # los formantes suben y bajan con la altura (lo de siempre)
+FORMANT_PRESERVED = 0x01000000  # keeps the timbre (the formants) of voices and instruments when the pitch moves
 
 HERE = Path(__file__).resolve().parent
 
@@ -94,6 +96,7 @@ def _declare(lib: ctypes.CDLL) -> None:
         "rubberband_available": (ctypes.c_int, [state]),
         "rubberband_retrieve": (uint, [state, ctypes.POINTER(f), uint]),
         "rubberband_set_default_debug_level": (None, [ctypes.c_int]),
+        "rubberband_set_formant_option": (None, [state, ctypes.c_int]),
     }
     for name, (restype, argtypes) in table.items():
         function = getattr(lib, name)
@@ -152,6 +155,10 @@ class Stretcher:
         """The frequencies multiplied by SCALE (2 is an octave up, 2 ** (1 / 12) a semitone)."""
         self._pitch = float(scale)
         self._lib.rubberband_set_pitch_scale(self._state, self._pitch)
+
+    def set_formants(self, preserved: bool) -> None:
+        """Keep the formants when the pitch moves (True), or move them with it; it can change while it plays."""
+        self._lib.rubberband_set_formant_option(self._state, FORMANT_PRESERVED if preserved else FORMANT_SHIFTED)
 
     def reset(self) -> None:
         self._lib.rubberband_reset(self._state)

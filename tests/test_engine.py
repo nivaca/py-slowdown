@@ -408,3 +408,29 @@ def test_player_offset_follows_the_speed(audio, output):
         assert len(block.frames) == len(count_in(RATE, 2, 2, 120).frames) + round(0.2 * RATE)  # (0,1 s, a 0,5×)
     finally:
         player.unload()
+
+
+def test_formants(tmp_path):
+    """Keeping the formants, a vowel moved 7 semitones up keeps its resonance (800 Hz) where it was: its strongest
+    partial stays low, instead of going up with the pitch."""
+    from conftest import write
+
+    t = np.arange(RATE * 3) / RATE
+    vowel = sum(np.sin(2 * np.pi * 150 * k * t) / k * np.exp(-((150 * k - 800) / 300) ** 2) for k in range(1, 30))
+    vowel = (0.4 * vowel / np.abs(vowel).max()).astype(np.float32)
+    path = tmp_path / "vowel.wav"
+    write(path, np.repeat(vowel[:, None], 2, axis=1))
+    audio = Audio(path)
+    audio.wait(10)
+
+    def strongest(formants: bool) -> float:
+        renderer = Renderer(audio)
+        renderer.set_pitch(7.0)
+        renderer.set_formants(formants)
+        out = np.concatenate([b.frames for b in render_all(renderer)])
+        piece = out[RATE:RATE + 16384, 0] * np.hanning(16384)
+        return float(np.fft.rfftfreq(16384, 1 / RATE)[np.argmax(np.abs(np.fft.rfft(piece)))])
+
+    assert strongest(False) > 1000  # (la resonancia sube con la altura: 800 × 1,5)
+    assert strongest(True) < 900  # (se queda donde estaba)
+    audio.close()

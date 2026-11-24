@@ -7,6 +7,11 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Keep the formants**: the button Formants, beside the pitch, and
+  Playback > Keep the formants, make Rubber Band keep the formants when the
+  pitch moves, so that a voice or an instrument keeps its natural timbre
+  instead of sounding smaller (higher) or bigger (lower). It can be changed
+  while it plays, and is remembered.
 - **The waveform fills the window when a file is opened**: it was drawn
   while the file was still being read, and sometimes stayed so, half drawn
   or at the scale of the length the file announced, until something else

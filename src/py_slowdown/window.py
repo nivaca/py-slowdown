@@ -140,11 +140,12 @@ class Window(QMainWindow):
         except rubberband.RubberBandError:
             self.stretching = False
             why = tr("The Rubber Band Library is not installed, so the speed stays at 1×.")
-            for widget in (self.speed_slider, self.speed_box, self.b_normal, self.pitch_box, self.b_pitch):
+            for widget in (self.speed_slider, self.speed_box, self.b_normal, self.pitch_box, self.b_pitch,
+                           self.b_formants):
                 widget.setEnabled(False)
                 widget.setToolTip(why)
             for action in (self.a_slower, self.a_faster, self.a_normal, self.a_higher, self.a_lower,
-                           self.a_original_pitch):
+                           self.a_original_pitch, self.a_formants):
                 action.setEnabled(False)
             self.statusBar().showMessage(why)
         else:
@@ -265,8 +266,15 @@ class Window(QMainWindow):
         self.b_pitch.setToolTip(tr("Original pitch (Shift+N)"))
         self.b_pitch.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.b_pitch.setEnabled(False)
+        self.b_formants = QToolButton(self)
+        self.b_formants.setText(tr("Formants"))
+        self.b_formants.setCheckable(True)
+        self.b_formants.setToolTip(tr("Keep the formants: when the pitch moves, voices and instruments keep their "
+                                      "natural timbre"))
+        self.b_formants.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         row.addWidget(self.pitch_box)
         row.addWidget(self.b_pitch)
+        row.addWidget(self.b_formants)
         row.addSpacing(12)
 
         speaker = QLabel(self)
@@ -311,6 +319,7 @@ class Window(QMainWindow):
         self.a_higher = a(tr("A se&mitone higher"), lambda: self.change_pitch(1.0), ["Ctrl+Up"])
         self.a_lower = a(tr("A semitone lo&wer"), lambda: self.change_pitch(-1.0), ["Ctrl+Down"])
         self.a_original_pitch = a(tr("Ori&ginal pitch"), lambda: self.set_pitch(0.0), ["Shift+N"])
+        self.a_formants = a(tr("Keep the &formants"), self.set_formants, checkable=True)
         self.a_repeat = a(tr("&Repeat the selection"), self._set_repeat, ["L"], checkable=True)
         self.a_sel_start = a(tr("Select&ion starts here"), lambda: self.mark_selection(start=True), ["I"])
         self.a_sel_end = a(tr("Selection ends &here"), lambda: self.mark_selection(start=False), ["O"])
@@ -349,7 +358,7 @@ class Window(QMainWindow):
         for action in (self.a_play, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
                        self.a_forward_1, self.a_forward, self.a_end, None,
                        self.a_slower, self.a_faster, self.a_normal, None,
-                       self.a_higher, self.a_lower, self.a_original_pitch, None,
+                       self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, None,
                        self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, None,
                        self.a_count, self.a_count_settings, self.a_tap):
             play.addSeparator() if action is None else play.addAction(action)
@@ -419,6 +428,9 @@ class Window(QMainWindow):
         self.b_count.setChecked(self.count.on)
         self.b_count.customContextMenuRequested.connect(lambda _pos: self.count_settings())
         self.b_tap.clicked.connect(self.tap_tempo)
+        self.b_formants.toggled.connect(self.a_formants.setChecked)
+        self.a_formants.toggled.connect(self.b_formants.setChecked)
+        self.a_formants.setChecked(self.settings.value("formants", False, type=bool))
         count_menu = QMenu(self.b_count)
         count_menu.addAction(self.a_count_settings)
         self.b_count.setMenu(count_menu)
@@ -691,6 +703,12 @@ class Window(QMainWindow):
         self.pitch_box.setValue(self.player.pitch)
         self.pitch_box.blockSignals(False)
         self.b_pitch.setEnabled(self.player.pitch != 0.0)
+
+    def set_formants(self, on: bool) -> None:
+        """Keep the formants when the pitch moves: a voice or an instrument keeps its timbre, instead of
+        sounding smaller (higher) or bigger (lower)."""
+        self.player.formants = on
+        self.settings.setValue("formants", on)
 
     def change_pitch(self, delta: float) -> None:
         self.set_pitch(self.player.pitch + delta)
