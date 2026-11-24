@@ -347,8 +347,9 @@ Abrir reciente}.
 La forma de onda ocupa casi toda la ventana (figura~\ref{fig:window_es}).
 Encima tiene una regla de tiempos; la línea roja es la posición, el punto
 que se oye; lo ya tocado se ve más oscuro. Los marcadores son líneas de
-trazos, con su nombre arriba. Debajo de la forma de onda están los mandos,
-el tiempo, la velocidad y el volumen; a la derecha, el panel de los
+trazos, con su nombre arriba. Debajo de la forma de onda están los mandos y
+el tiempo, y debajo de ellos la velocidad, la altura y el volumen; a la
+derecha, el panel de los
 marcadores, que se puede cerrar, mover o dejar flotando
 (\menu{Ver\then Marcadores} lo vuelve a mostrar). La barra de estado dice
 qué se está leyendo, y luego el formato del archivo: su códec, su
@@ -430,6 +431,30 @@ guitarra) se suavizan un poco, como con cualquier método de esta clase. A
 Si la biblioteca Rubber Band no está instalada (lo que solo puede pasar
 cuando el programa se instala desde el código), la ventana lo dice en la
 barra de estado, y la velocidad se queda en 1\,×.
+
+\section{La altura}
+\label{sec:altura}
+
+\index{altura}\index{semitonos|see{altura}}\index{transportar|see{altura}}%
+La altura se puede subir o bajar, en semitonos, sin cambiar la velocidad:
+para tocar con una grabación en otra tonalidad, para llevar una canción al
+alcance de una voz, o para oír un pasaje rápido más lento y una octava más
+arriba, donde sus notas se distinguen. La casilla \menu{Altura}, junto a
+la velocidad, va de 12 semitonos abajo a 12 arriba (una octava a cada
+lado), de uno en uno; \key{Ctrl+↑} y \key{Ctrl+↓} hacen lo mismo, y
+\key{Mayús+N}, o el botón \menu{0}, vuelve a la altura de la grabación. La
+casilla acepta también décimas, escritas en ella (0,5, por ejemplo): una
+grabación algo desafinada, como suelen estarlo las cintas viejas, se puede
+afinar con el instrumento.
+
+\index{calidad}\index{rubber band@Rubber Band}%
+La altura se puede cambiar mientras suena la grabación, sin chasquidos.
+También la cambia Rubber Band, en la misma pasada que la velocidad y con la
+misma calidad: medido, un tono queda a menos de un centésimo de semitono
+de la altura pedida, también a las velocidades más lentas y más
+rápidas. A la altura de la grabación y a 1\,× el archivo
+suena tal cual. La altura, como la velocidad, no se guarda de una sesión a
+otra: el programa empieza siempre en la de la grabación.
 
 \section{La forma de onda}
 
@@ -600,6 +625,8 @@ recientes.
 \key{Mayús+←}, \key{Mayús+→} & un segundo atrás, adelante\\
 \key{↓}, \key{↑} (o \key{−}, \key{+}) & más lento, más rápido (de 0,05\,× en 0,05\,×)\\
 \key{N} & velocidad normal\\
+\key{Ctrl+↑}, \key{Ctrl+↓} & un semitono más agudo, más grave\\
+\key{Mayús+N} & la altura original\\
 \key{B} (o \key{Ctrl+B}) & añadir un marcador en la posición\\
 \key{Ctrl+←}, \key{Ctrl+→} (o \key{RePág}, \key{AvPág}) & marcador anterior, siguiente\\
 \key{Ctrl++}, \key{Ctrl+−}, \key{Ctrl+0} & acercar, alejar, todo el archivo\\
@@ -622,7 +649,7 @@ recientes.
 \item[No suena nada] revise el volumen del programa y el del sistema, y
   que esté elegida la salida correcta en la configuración del sonido del
   sistema; el programa toca por la salida predeterminada.
-\item[La velocidad no se puede cambiar] la biblioteca Rubber Band no está
+\item[La velocidad o la altura no se pueden cambiar] la biblioteca Rubber Band no está
   instalada (la barra de estado lo dice): instálela como en la
   sección~\ref{sec:instalacion}.
 \item[Un archivo no se abre] FFmpeg no pudo leerlo: puede estar dañado, o

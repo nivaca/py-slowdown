@@ -5,6 +5,17 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Unreleased
+
+- **The pitch, in semitones**: from 12 down to 12 up, by steps of one or in
+  tenths (to tune a recording that is off pitch to an instrument), without
+  changing the speed, and while it plays, without a click (Rubber Band's
+  option for pitch that changes as it plays). The box Pitch, beside the
+  speed; Ctrl+↑ and Ctrl+↓; Shift+N, or the button 0, for the original
+  pitch. Measured, a tone lands within a cent of the pitch asked for.
+- The controls are in two rows, the speed, the pitch and the volume under
+  the others: in one, the window did not fit a screen 1366 pixels wide.
+
 ## 0.2.0 — 2026-11-24
 
 - **Installers for Windows and macOS**, which carry their own Python, Qt,

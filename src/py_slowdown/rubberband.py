@@ -25,6 +25,7 @@ PROCESS_REALTIME = 0x00000001
 WINDOW_STANDARD = 0x00000000
 CHANNELS_TOGETHER = 0x10000000
 ENGINE_FINER = 0x20000000
+PITCH_HIGH_CONSISTENCY = 0x04000000  # changes of pitch while it plays, without discontinuities
 
 HERE = Path(__file__).resolve().parent
 
@@ -84,6 +85,7 @@ def _declare(lib: ctypes.CDLL) -> None:
         "rubberband_reset": (None, [state]),
         "rubberband_get_engine_version": (ctypes.c_int, [state]),
         "rubberband_set_time_ratio": (None, [state, ctypes.c_double]),
+        "rubberband_set_pitch_scale": (None, [state, ctypes.c_double]),
         "rubberband_get_preferred_start_pad": (uint, [state]),
         "rubberband_get_start_delay": (uint, [state]),
         "rubberband_get_samples_required": (uint, [state]),
@@ -120,6 +122,7 @@ class Stretcher:
         if not self._state:
             raise RubberBandError("the Rubber Band Library could not make a stretcher")
         self._ratio = time_ratio
+        self._pitch = 1.0
 
     def __del__(self):
         state = getattr(self, "_state", None)
@@ -139,6 +142,16 @@ class Stretcher:
     def time_ratio(self, ratio: float) -> None:
         self._ratio = float(ratio)
         self._lib.rubberband_set_time_ratio(self._state, self._ratio)
+
+    @property
+    def pitch_scale(self) -> float:
+        return self._pitch
+
+    @pitch_scale.setter
+    def pitch_scale(self, scale: float) -> None:
+        """The frequencies multiplied by SCALE (2 is an octave up, 2 ** (1 / 12) a semitone)."""
+        self._pitch = float(scale)
+        self._lib.rubberband_set_pitch_scale(self._state, self._pitch)
 
     def reset(self) -> None:
         self._lib.rubberband_reset(self._state)

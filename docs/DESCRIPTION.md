@@ -8,7 +8,7 @@ lectures and interviews, where one needs to hear a passage again and again
 at a speed one can follow; it follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in nine stages.
+in ten stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -304,10 +304,38 @@ large window, while the file is still read, and zoomed in to the samples,
 there were no breaks in the sound, even with the old buffer. A test keeps
 the waveform from being drawn again when the position moves.
 
+10. The pitch
+------------
+
+Rubber Band moves the pitch as well as the tempo, in the same pass, so the
+pitch in semitones needed little in the engine: the plain copy of the file
+is now used only at 1× and at the recording's own pitch, and the
+stretcher, given the factor of the frequencies (2 to the power of the
+semitones over twelve), does the rest. Changing it while the recording
+plays is what Rubber Band's option for pitch that changes as it plays is
+for, so the stretcher is made with it. The measurements were the test: a
+tone of 220 Hz, moved by each pitch at several speeds, lands within a
+cent of the frequency asked for, an octave down at 0.25× and an octave up
+at 3× included, and the clicks of the test file stay in their place.
+
+Two measurements misled me first. The FFT of the test, at its length,
+cannot tell frequencies closer than 2.7 Hz apart, which an octave down is
+more than a quarter of a semitone; the peak is now found between its bins.
+And at 1.5× a click of the file fell inside the stretch measured, and
+spread over the whole spectrum; the stretch is now taken between two
+clicks. A test of a change of pitch in the middle of the sound found a jump
+too, but it was my test's own seek, which, without the player, fades the
+new sound in and not the old one out.
+
+The pitch box made the row of controls too wide: the window could not be
+narrower than 1350 pixels, more than a common laptop screen. The speed,
+the pitch and the volume are now in a second row, and the window can be
+800 pixels wide.
+
 Testing
 -------
 
-The program has 93 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 101 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -317,8 +345,8 @@ itself, sample for sample; that at six speeds the output has the right
 length, keeps the pitch (a tone of 220 Hz stays at 220 Hz) and keeps each
 click at its place; that a seek while playing makes no click; and the
 binding to Rubber Band, also when the library is missing; and the
-repeating of a selection, at normal speed and stretching, and the
-count-in. The player is
+repeating of a selection, at normal speed and stretching, the count-in,
+and the pitch, by the frequency of a tone. The player is
 tested with a sound card that the tests drive themselves, and the window
 offscreen: opening a file, the controls, the speed, the bookmarks, the
 point where it was left, a file that is not audio, the window without

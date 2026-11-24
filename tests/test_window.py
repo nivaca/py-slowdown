@@ -148,6 +148,7 @@ def test_without_rubberband(app, output, tmp_path, monkeypatch, wav):
     settings = QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat)
     w = Window(player=Player(output), store=Store(tmp_path / "b.json"), settings=settings)
     assert not w.speed_slider.isEnabled() and not w.a_faster.isEnabled()
+    assert not w.pitch_box.isEnabled() and not w.a_higher.isEnabled()
     assert "Rubber Band" in w.statusBar().currentMessage()
     w.change_speed(0.5)
     assert w.player.speed == 1.0
@@ -293,3 +294,20 @@ def test_moving_the_position_does_not_redraw_the_wave(app):
         wave.grab()
     assert wave._cache is images  # (copiadas, no dibujadas otra vez)
     assert (clock.perf_counter() - start) / 9 < 0.05
+
+
+def test_pitch_controls(window, app, wav):
+    loaded(window, app, wav)
+    assert window.pitch_box.value() == 0.0 and not window.b_pitch.isEnabled()
+    window.a_higher.trigger()
+    window.a_higher.trigger()
+    assert window.player.pitch == 2.0 and window.pitch_box.value() == 2.0 and window.b_pitch.isEnabled()
+    window.a_lower.trigger()
+    assert window.player.pitch == 1.0
+    window.pitch_box.setValue(-3.5)  # (con decimales: para afinar una grabación con el instrumento)
+    assert window.player.pitch == -3.5
+    window.set_pitch(40)
+    assert window.player.pitch == 12.0 and window.pitch_box.value() == 12.0
+    window.a_original_pitch.trigger()
+    assert window.player.pitch == 0.0 and not window.b_pitch.isEnabled()
+    assert window.player.speed == 1.0  # (la velocidad no cambió)

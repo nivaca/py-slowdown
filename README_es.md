@@ -34,6 +34,9 @@ Lo que hace
   listan en un panel lateral, se dibujan sobre la forma de onda y se pueden
   exportar a un archivo de texto. Ctrl+← y Ctrl+→ van al marcador anterior
   y al siguiente.
+- Sube o baja la altura, en semitonos (de −12 a +12, también décimas, para
+  afinar una grabación con un instrumento), sin cambiar la velocidad,
+  también mientras suena.
 - Repite una selección sin fin y sin pausa (Mayús+arrastrar sobre la
   forma de onda, o I y O, y luego L): el final del pasaje entra en su
   principio con un fundido breve, a cualquier velocidad.
@@ -58,6 +61,8 @@ Teclado
 | Añadir un marcador                | B                                |
 | Marcador anterior / siguiente     | Ctrl+← / Ctrl+→, RePág / AvPág   |
 | Acercar / alejar / todo           | Ctrl++ / Ctrl+− / Ctrl+0         |
+| Un semitono más agudo / grave     | Ctrl+↑ / Ctrl+↓                  |
+| Altura original                   | Mayús+N                          |
 | Repetir la selección              | L                                |
 | Seleccionar                       | Mayús+arrastrar, o I y O         |
 | Quitar la selección               | Esc                              |

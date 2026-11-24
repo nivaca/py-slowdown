@@ -527,4 +527,48 @@
     <en>The tempo of the clicks changes with the speed: 120 BPM at 0.5× are counted at 60</en>
     <tr>El tempo de los golpes cambia con la velocidad: 120 BPM a 0,5× se cuentan a 60</tr>
   </text>
+  <text>
+    <en>A se&amp;mitone higher</en>
+    <tr>Un semitono más a&amp;gudo</tr>
+  </text>
+  <text>
+    <en>A semitone lo&amp;wer</en>
+    <tr>Un semitono más gra&amp;ve</tr>
+  </text>
+  <text>
+    <en>Ori&amp;ginal pitch</en>
+    <tr>Altura &amp;original</tr>
+  </text>
+  <text>
+    <en>A semitone higher / lower</en>
+    <tr>Un semitono más agudo / más grave</tr>
+  </text>
+  <text>
+    <en>Ctrl+↑ / Ctrl+↓</en>
+    <tr>Ctrl+↑ / Ctrl+↓</tr>
+  </text>
+  <text>
+    <en>Original pitch</en>
+    <tr>Altura original</tr>
+  </text>
+  <text>
+    <en>Shift+N</en>
+    <tr>Mayús+N</tr>
+  </text>
+  <text>
+    <en>Pitch</en>
+    <tr>Altura</tr>
+  </text>
+  <text>
+    <en> st</en>
+    <tr> st</tr>
+  </text>
+  <text>
+    <en>The pitch, in semitones, up or down (Ctrl+↑, Ctrl+↓); the speed does not change</en>
+    <tr>La altura, en semitonos, hacia arriba o hacia abajo (Ctrl+↑, Ctrl+↓); la velocidad no cambia</tr>
+  </text>
+  <text>
+    <en>Original pitch (Shift+N)</en>
+    <tr>Altura original (Mayús+N)</tr>
+  </text>
 </interface>

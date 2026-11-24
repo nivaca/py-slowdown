@@ -32,6 +32,9 @@ What it does
   the waveform; each can have a label. They are listed in a side panel,
   drawn on the waveform, and can be exported as a text file. Ctrl+← and
   Ctrl+→ go to the previous and next bookmark.
+- Moves the pitch up or down, in semitones (from −12 to +12, tenths too, to
+  tune a recording to an instrument), without changing the speed, also
+  while it plays.
 - Repeats a selection without end and without a gap (Shift+drag on the
   waveform, or I and O, then L): the end of the passage runs into its
   start through a short fade, at any speed.
@@ -56,6 +59,8 @@ Keyboard
 | Add a bookmark                 | B                                |
 | Previous / next bookmark       | Ctrl+← / Ctrl+→, PgUp / PgDn     |
 | Zoom in / out / whole file     | Ctrl++ / Ctrl+− / Ctrl+0         |
+| A semitone higher / lower      | Ctrl+↑ / Ctrl+↓                  |
+| Original pitch                 | Shift+N                          |
 | Repeat the selection           | L                                |
 | Select                         | Shift+drag, or I and O           |
 | Clear the selection            | Esc                              |

@@ -1,8 +1,8 @@
 """La reproducción: el audio a otra velocidad, sin cambiar su altura.
 
-Renderer produce el audio de salida por bloques, a partir de un Audio y de una
-velocidad. A velocidad 1 copia las muestras tal cual (bit a bit); a cualquier
-otra, las pasa por el motor R3 («finer») de Rubber Band (rubberband.py), en modo
+Renderer produce el audio de salida por bloques, a partir de un Audio, de una
+velocidad y de un cambio de altura en semitonos. A velocidad 1 y sin cambio de
+altura copia las muestras tal cual (bit a bit); si no, las pasa por el motor R3 («finer») de Rubber Band (rubberband.py), en modo
 de tiempo real, que estira o encoge el tiempo y conserva la altura y el timbre.
 Rubber Band no es transparente a velocidad 1 (deja un error de unos -40 dB en un sonido ruidoso), y
 por eso no se usa entonces.
@@ -39,11 +39,22 @@ OPTIONS = (
     | rubberband.ENGINE_FINER  # R3, the high-quality engine
     | rubberband.CHANNELS_TOGETHER  # keeps the stereo image and mono compatibility of a mix
     | rubberband.WINDOW_STANDARD
+    | rubberband.PITCH_HIGH_CONSISTENCY  # the pitch changes while it plays, without a click
 )
+MAX_PITCH = 12.0  # semitonos, arriba o abajo
 
 
 def clamp_speed(speed: float) -> float:
     return min(MAX_SPEED, max(MIN_SPEED, round(float(speed), 3)))
+
+
+def clamp_pitch(semitones: float) -> float:
+    return min(MAX_PITCH, max(-MAX_PITCH, round(float(semitones), 2)))
+
+
+def pitch_scale(semitones: float) -> float:
+    """The factor of the frequencies for SEMITONES: 2 ** (semitones / 12)."""
+    return 2.0 ** (semitones / 12.0)
 
 
 class Block:
@@ -94,6 +105,7 @@ class Renderer:
     def __init__(self, audio: Audio):
         self.audio = audio
         self.speed = 1.0
+        self.pitch = 0.0  # semitonos
         self.pos = 0.0  # cuadro del archivo que corresponde al próximo cuadro de salida
         self._stretcher: rubberband.Stretcher | None = None
         self._stretching = False  # whether the stretcher holds the stream now
@@ -141,20 +153,35 @@ class Renderer:
         self._stretching = False
         self._seam = True
 
+    @property
+    def plain(self) -> bool:
+        """Whether the file is played as it is: at 1×, and at its own pitch."""
+        return self.speed == 1.0 and self.pitch == 0.0
+
     def set_speed(self, speed: float) -> None:
         speed = clamp_speed(speed)
-        if speed == self.speed:
-            return
-        was_one = self.speed == 1.0
-        self.speed = speed
+        if speed != self.speed:
+            was_plain = self.plain
+            self.speed = speed
+            self._changed(was_plain)
+
+    def set_pitch(self, semitones: float) -> None:
+        semitones = clamp_pitch(semitones)
+        if semitones != self.pitch:
+            was_plain = self.plain
+            self.pitch = semitones
+            self._changed(was_plain)
+
+    def _changed(self, was_plain: bool) -> None:
         if self._stretching:
-            if speed == 1.0:
+            if self.plain:
                 # From Rubber Band to the plain copy, from where the output has got to.
                 self._stretching = False
                 self._seam = True
             else:
-                self._stretcher.time_ratio = 1.0 / speed
-        elif not was_one:
+                self._stretcher.time_ratio = 1.0 / self.speed
+                self._stretcher.pitch_scale = pitch_scale(self.pitch)
+        elif not was_plain:
             self._seam = True
 
     def render(self, frames: int = BLOCK) -> tuple[Block | None, bool]:
@@ -163,7 +190,7 @@ class Renderer:
         The block is None at the end of the file; it is empty while the frames
         it needs are still being decoded.
         """
-        if self.speed == 1.0:
+        if self.plain:
             block = self._copy(frames)
         else:
             block = self._stretch(frames)
@@ -197,6 +224,7 @@ class Renderer:
         st = self._stretcher
         st.reset()
         st.time_ratio = 1.0 / self.speed
+        st.pitch_scale = pitch_scale(self.pitch)
         start = round(self.pos)
         self.pos = float(start)
         pad = st.get_preferred_start_pad()
@@ -331,6 +359,7 @@ class Player:
         self.volume = 1.0
         self.loop: tuple[float, float] | None = None  # the selection repeated, in seconds
         self._speed = 1.0
+        self._pitch = 0.0
         self._lock = threading.Lock()
         self._wake = threading.Condition(self._lock)
         self._queue: deque[Block] = deque()
@@ -349,6 +378,7 @@ class Player:
         self.audio = audio
         self._renderer = Renderer(audio)
         self._renderer.set_speed(self._speed)
+        self._renderer.set_pitch(self._pitch)
         self.loop = None
         self._position = 0.0
         self._queue.clear()
@@ -447,6 +477,18 @@ class Player:
             self._wake.notify_all()
 
     @property
+    def pitch(self) -> float:
+        """Semitones up (or down, below 0); 0 is the pitch of the recording."""
+        return self._pitch
+
+    @pitch.setter
+    def pitch(self, value: float) -> None:
+        self._pitch = clamp_pitch(value)
+        with self._lock:
+            self._requests.append(("pitch", self._pitch))
+            self._wake.notify_all()
+
+    @property
     def speed(self) -> float:
         return self._speed
 
@@ -494,6 +536,8 @@ class Player:
                     renderer.set_speed(value)
                 elif kind == "loop":
                     renderer.set_loop(value)
+                elif kind == "pitch":
+                    renderer.set_pitch(value)
             block, seam = renderer.render()
             with self._lock:
                 if any(kind == "seek" for kind, _value in self._requests):

@@ -343,8 +343,8 @@ An audio file can also be dropped on the window, or opened with
 The waveform takes most of the window (figure~\ref{fig:window_en}). Above
 it is a ruler of times; the red line is the position, the point that is
 heard; what was already played is darker. The bookmarks are dashed lines,
-with their labels on top. Under the waveform are the controls, the time,
-the speed and the volume; on the right, the panel of the bookmarks, which
+with their labels on top. Under the waveform are the controls and the
+time, and under them the speed, the pitch and the volume; on the right, the panel of the bookmarks, which
 can be closed, moved or left floating (\menu{View\then Bookmarks} brings it
 back). The status bar says what is being read, and then the format of the
 file: its codec, its sample rate, mono or stereo, and its length.
@@ -423,6 +423,29 @@ file is played as it is.
 If the Rubber Band Library is not installed (which can happen only when the
 program is installed from the source), the window says so in the status
 bar, and the speed stays at 1\,×.
+
+\section{The pitch}
+\label{sec:pitch}
+
+\index{pitch}\index{semitones|see{pitch}}\index{transposing|see{pitch}}%
+The pitch can be moved up or down, in semitones, without changing the
+speed: to play along with a recording in another key, to bring a song
+within reach of a voice, or to hear a fast passage slower and an octave
+higher, where its notes stand out. The box \menu{Pitch}, beside the speed,
+goes from 12 semitones down to 12 up (an octave each way), by steps of
+one; \key{Ctrl+↑} and \key{Ctrl+↓} do the same, and \key{Shift+N}, or
+the button \menu{0}, brings back the pitch of the recording. The box also
+takes tenths, written in it (0.5, say): a recording that is a little off
+pitch, as old tapes often are, can be tuned to the instrument.
+
+\index{quality}\index{rubber band@Rubber Band}%
+The pitch can be changed while the recording plays, without a click. It
+is done by Rubber Band too, in the same pass as the speed, with the same
+quality: measured, a tone lands within a cent (a hundredth of a semitone)
+of the pitch asked for, also at the slowest and fastest speeds. At the pitch of the
+recording and at 1\,× the file is played as it is. The pitch, like the
+speed, is not kept from one session to the next: the program always
+starts at the recording's own.
 
 \section{The waveform}
 
@@ -591,6 +614,8 @@ and the recent files.
 \key{Shift+←}, \key{Shift+→} & back, forward one second\\
 \key{↓}, \key{↑} (or \key{−}, \key{+}) & slower, faster (by 0.05\,×)\\
 \key{N} & normal speed\\
+\key{Ctrl+↑}, \key{Ctrl+↓} & a semitone higher, lower\\
+\key{Shift+N} & the original pitch\\
 \key{B} (or \key{Ctrl+B}) & add a bookmark at the position\\
 \key{Ctrl+←}, \key{Ctrl+→} (or \key{PgUp}, \key{PgDn}) & previous, next bookmark\\
 \key{Ctrl++}, \key{Ctrl+−}, \key{Ctrl+0} & zoom in, zoom out, the whole file\\
@@ -613,7 +638,7 @@ and the recent files.
 \item[There is no sound] check the volume of the program and that of the
   system, and that the right output is chosen in the settings of the
   system's sound; the program plays through the default output.
-\item[The speed cannot be changed] the Rubber Band Library is not
+\item[The speed or the pitch cannot be changed] the Rubber Band Library is not
   installed (the status bar says so): install it as in
   section~\ref{sec:installing}.
 \item[A file is not opened] FFmpeg could not read it: it may be damaged,

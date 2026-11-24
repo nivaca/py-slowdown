@@ -28,6 +28,8 @@
       <li xml:lang="es">Velocidad de 0,25× a 3×, que se cambia mientras suena, con el motor R3 de la biblioteca Rubber Band; a 1× el archivo suena tal cual</li>
       <li>MP3, M4A, MP4, FLAC, WAV, Ogg, Opus and the other formats FFmpeg reads</li>
       <li xml:lang="es">MP3, M4A, MP4, FLAC, WAV, Ogg, Opus y los demás formatos que lee FFmpeg</li>
+      <li>The pitch moved up or down in semitones, without changing the speed</li>
+      <li xml:lang="es">La altura, subida o bajada en semitonos, sin cambiar la velocidad</li>
       <li>A selection repeated without a gap, at any speed, and a count-in before playing</li>
       <li xml:lang="es">Una selección que se repite sin pausa, a cualquier velocidad, y una cuenta previa antes de tocar</li>
       <li>Bookmarks with labels, kept for each file with the point where it was left</li>

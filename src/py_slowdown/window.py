@@ -35,7 +35,7 @@ from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Store, export_text
 from .countin import CountIn, CountInDialog
-from .engine import MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player
+from .engine import MAX_PITCH, MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player
 from .interface import tr
 from .panel import BookmarkPanel
 from .timefmt import clock
@@ -58,6 +58,8 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Back / forward one second"), tr("Shift+← / Shift+→")),
         (tr("Slower / faster"), "↓ / ↑   − / +"),
         (tr("Normal speed"), "N"),
+        (tr("A semitone higher / lower"), tr("Ctrl+↑ / Ctrl+↓")),
+        (tr("Original pitch"), tr("Shift+N")),
         (tr("Add a bookmark"), "B"),
         (tr("Previous / next bookmark"), tr("Ctrl+← / Ctrl+→   PgUp / PgDn")),
         (tr("Zoom in / out / whole file"), "Ctrl++ / Ctrl+− / Ctrl+0"),
@@ -135,10 +137,11 @@ class Window(QMainWindow):
         except rubberband.RubberBandError:
             self.stretching = False
             why = tr("The Rubber Band Library is not installed, so the speed stays at 1×.")
-            for widget in (self.speed_slider, self.speed_box, self.b_normal):
+            for widget in (self.speed_slider, self.speed_box, self.b_normal, self.pitch_box, self.b_pitch):
                 widget.setEnabled(False)
                 widget.setToolTip(why)
-            for action in (self.a_slower, self.a_faster, self.a_normal):
+            for action in (self.a_slower, self.a_faster, self.a_normal, self.a_higher, self.a_lower,
+                           self.a_original_pitch):
                 action.setEnabled(False)
             self.statusBar().showMessage(why)
         else:
@@ -163,8 +166,13 @@ class Window(QMainWindow):
     def _build_transport(self) -> None:
         sp = QStyle.StandardPixmap
         self.transport = QWidget(self)
-        row = QHBoxLayout(self.transport)
-        row.setContentsMargins(0, 4, 0, 0)
+        # Dos filas: los mandos y el tiempo; debajo, la velocidad, la altura y el volumen (en una sola, la ventana
+        # no cabía en una pantalla de 1366 píxeles).
+        rows = QVBoxLayout(self.transport)
+        rows.setContentsMargins(0, 4, 0, 0)
+        rows.setSpacing(2)
+        row = QHBoxLayout()
+        rows.addLayout(row)
         self.b_start = self._tool(sp.SP_MediaSkipBackward, tr("Go to the start (Home)"))
         self.b_back = self._tool(sp.SP_MediaSeekBackward, "", repeat=True)
         self.b_play = self._tool(sp.SP_MediaPlay, tr("Play (Space)"))
@@ -205,6 +213,8 @@ class Window(QMainWindow):
         self.time_label.setToolTip(tr("Position / length"))
         row.addWidget(self.time_label)
         row.addStretch()
+        row = QHBoxLayout()
+        rows.addLayout(row)
 
         row.addWidget(QLabel(tr("Speed"), self))
         self.speed_slider = QSlider(Qt.Orientation.Horizontal, self)
@@ -212,7 +222,7 @@ class Window(QMainWindow):
         self.speed_slider.setSingleStep(5)
         self.speed_slider.setPageStep(25)
         self.speed_slider.setValue(100)
-        self.speed_slider.setMinimumWidth(110)
+        self.speed_slider.setMinimumWidth(160)
         self.speed_slider.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.speed_slider.setToolTip(tr("Slower (Down) or faster (Up); the pitch stays the same"))
         self.speed_box = QDoubleSpinBox(self)
@@ -229,6 +239,24 @@ class Window(QMainWindow):
         row.addWidget(self.speed_slider)
         row.addWidget(self.speed_box)
         row.addWidget(self.b_normal)
+        row.addSpacing(8)
+
+        row.addWidget(QLabel(tr("Pitch"), self))
+        self.pitch_box = QDoubleSpinBox(self)
+        self.pitch_box.setRange(-MAX_PITCH, MAX_PITCH)
+        self.pitch_box.setSingleStep(1.0)
+        self.pitch_box.setDecimals(1)
+        self.pitch_box.setSuffix(tr(" st"))
+        self.pitch_box.setValue(0.0)
+        self.pitch_box.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self.pitch_box.setToolTip(tr("The pitch, in semitones, up or down (Ctrl+↑, Ctrl+↓); the speed does not change"))
+        self.b_pitch = QToolButton(self)
+        self.b_pitch.setText("0")
+        self.b_pitch.setToolTip(tr("Original pitch (Shift+N)"))
+        self.b_pitch.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.b_pitch.setEnabled(False)
+        row.addWidget(self.pitch_box)
+        row.addWidget(self.b_pitch)
         row.addSpacing(12)
 
         speaker = QLabel(self)
@@ -241,6 +269,7 @@ class Window(QMainWindow):
         self.volume.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.volume.setToolTip(tr("Volume"))
         row.addWidget(self.volume)
+        row.addStretch()
         self._update_skip_tips()
 
     def _action(self, text: str, slot, keys=(), checkable: bool = False) -> QAction:
@@ -269,6 +298,9 @@ class Window(QMainWindow):
         self.a_slower = a(tr("S&lower"), lambda: self.change_speed(-SPEED_STEP), ["Down", "-"])
         self.a_faster = a(tr("F&aster"), lambda: self.change_speed(SPEED_STEP), ["Up", "+"])
         self.a_normal = a(tr("&Normal speed"), lambda: self.set_speed(1.0), ["N"])
+        self.a_higher = a(tr("A se&mitone higher"), lambda: self.change_pitch(1.0), ["Ctrl+Up"])
+        self.a_lower = a(tr("A semitone lo&wer"), lambda: self.change_pitch(-1.0), ["Ctrl+Down"])
+        self.a_original_pitch = a(tr("Ori&ginal pitch"), lambda: self.set_pitch(0.0), ["Shift+N"])
         self.a_repeat = a(tr("&Repeat the selection"), self._set_repeat, ["L"], checkable=True)
         self.a_sel_start = a(tr("Select&ion starts here"), lambda: self.mark_selection(start=True), ["I"])
         self.a_sel_end = a(tr("Selection ends &here"), lambda: self.mark_selection(start=False), ["O"])
@@ -303,6 +335,7 @@ class Window(QMainWindow):
         for action in (self.a_play, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
                        self.a_forward_1, self.a_forward, self.a_end, None,
                        self.a_slower, self.a_faster, self.a_normal, None,
+                       self.a_higher, self.a_lower, self.a_original_pitch, None,
                        self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, None,
                        self.a_count, self.a_count_settings):
             play.addSeparator() if action is None else play.addAction(action)
@@ -349,6 +382,9 @@ class Window(QMainWindow):
         self.b_forward.clicked.connect(lambda: self.jump(self.skip))
         self.b_mark.clicked.connect(self.add_bookmark)
         self.b_normal.clicked.connect(lambda: self.set_speed(1.0))
+        self.b_pitch.clicked.connect(lambda: self.set_pitch(0.0))
+        self.pitch_box.valueChanged.connect(self.set_pitch)
+        self.pitch_box.editingFinished.connect(self.wave.setFocus)
         self.speed_slider.valueChanged.connect(lambda v: self.set_speed(v / 100))
         self.speed_box.valueChanged.connect(self.set_speed)
         self.speed_box.editingFinished.connect(self.wave.setFocus)
@@ -546,6 +582,19 @@ class Window(QMainWindow):
     def change_speed(self, delta: float) -> None:
         if self.stretching:
             self.set_speed(self.player.speed + delta)
+
+    def set_pitch(self, semitones: float) -> None:
+        """Move the pitch SEMITONES up (or down, below 0) from that of the recording."""
+        if not self.stretching:
+            return
+        self.player.pitch = semitones
+        self.pitch_box.blockSignals(True)
+        self.pitch_box.setValue(self.player.pitch)
+        self.pitch_box.blockSignals(False)
+        self.b_pitch.setEnabled(self.player.pitch != 0.0)
+
+    def change_pitch(self, delta: float) -> None:
+        self.set_pitch(self.player.pitch + delta)
 
     def _set_volume(self, value: int) -> None:
         # A square curve: the steps of the slider sound more even to the ear.

@@ -5,6 +5,19 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+- **La altura, en semitonos**: de 12 abajo a 12 arriba, de uno en uno o en
+  décimas (para afinar con un instrumento una grabación desafinada), sin
+  cambiar la velocidad, y mientras suena, sin chasquidos (la opción de
+  Rubber Band para la altura que cambia mientras suena). La casilla Altura,
+  junto a la velocidad; Ctrl+↑ y Ctrl+↓; Mayús+N, o el botón 0, para la
+  altura original. Medido, un tono queda a menos de un centésimo de
+  semitono de la altura pedida.
+- Los mandos están en dos filas, la velocidad, la altura y el volumen debajo
+  de los demás: en una sola, la ventana no cabía en una pantalla de 1366
+  píxeles.
+
 ## 0.2.0 — 2026-11-24
 
 - **Instaladores para Windows y macOS**, que llevan su propio Python, Qt,

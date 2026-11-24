@@ -289,3 +289,82 @@ def test_player_loop(audio, output):
         assert player.loop is None
     finally:
         player.unload()
+
+
+def dominant(frames: np.ndarray, speed: float = 1.0) -> float:
+    """The main frequency of FRAMES, measured between two clicks of the test file (at 1.1 s of it, as heard at
+    SPEED): a click inside the window spreads over the whole spectrum."""
+    start = int(1.1 / speed * RATE)
+    part = frames[start: start + 16384, 0] * np.hanning(16384)
+    spectrum = np.log(np.abs(np.fft.rfft(part)) + 1e-12)
+    k = int(np.argmax(spectrum))
+    # Entre dos bins de la FFT (2,7 Hz): la parábola que pasa por el pico y sus vecinos
+    a, b, c = spectrum[k - 1], spectrum[k], spectrum[k + 1]
+    return float((k + 0.5 * (a - c) / (a - 2 * b + c)) * RATE / 16384)
+
+
+@pytest.mark.parametrize(("semitones", "speed"), [(12, 1.0), (-5, 1.0), (7, 0.75), (-12, 1.5)])
+def test_pitch_shift(audio, semitones, speed):
+    from py_slowdown.engine import pitch_scale
+
+    renderer = Renderer(audio)
+    renderer.set_speed(speed)
+    renderer.set_pitch(semitones)
+    assert not renderer.plain
+    blocks = render_all(renderer)
+    out = np.concatenate([b.frames for b in blocks])
+    # El tono de 220 Hz sube o baja lo pedido (a un cuarto de semitono: entre 6 y 12 Hz, según la nota)
+    assert dominant(out, speed) == pytest.approx(220 * pitch_scale(semitones), rel=0.007)
+    # La duración la decide la velocidad, no la altura; y cada tictac sigue en su lugar
+    assert 6.0 / speed - 0.05 < len(out) / RATE < 6.0 / speed + 0.25
+    assert clicks(blocks) == pytest.approx([1, 2, 3, 4, 5], abs=0.02)
+
+
+def test_pitch_back_to_zero_is_the_file_itself(audio):
+    renderer = Renderer(audio)
+    renderer.set_pitch(3)
+    renderer.render()
+    renderer.set_pitch(0)
+    assert renderer.plain
+    block, seam = renderer.render()
+    assert seam and block.step == 1.0  # (de Rubber Band a la copia, con su rampa)
+    rest = render_all(renderer)
+    start = round(rest[0].start)
+    out = np.concatenate([b.frames for b in rest])
+    assert np.array_equal(out, audio.frames(start, start + len(out)))
+
+
+def test_player_pitch(audio, output):
+    from py_slowdown.engine import clamp_pitch
+
+    assert clamp_pitch(30) == 12 and clamp_pitch(-30) == -12 and clamp_pitch(0.333) == 0.33
+    player = Player(output)
+    player.load(audio)
+    try:
+        player.pitch = -2
+        assert player.pitch == -2
+        player.play()
+        assert wait_for(player, output, lambda: player.position > 0.5)
+        assert 0.4 < player.position < 1.5  # (la altura no cambia el paso del tiempo)
+    finally:
+        player.unload()
+
+
+def test_pitch_changes_while_playing_without_a_click(audio):
+    """With Rubber Band's option for pitch that changes as it plays, moving it a few semitones up and down in
+    the middle makes no jump in the sound."""
+    renderer = Renderer(audio)
+    renderer.set_speed(0.75)
+    renderer.seek(1.03 * RATE)
+    out = []
+    # Seis alturas, nueve bloques cada una (algo más de 0,2 s): todo entre dos tictacs del archivo, sin saltos
+    for semitones in (0, 3, 5, -2, 0, 4):
+        renderer.set_pitch(semitones)
+        for _ in range(9):
+            block, _seam = renderer.render()
+            out.append(block.frames[:, 0])
+    assert renderer.pos < 1.99 * RATE
+    heard = np.concatenate(out)[2000:]  # (sin la rampa de entrada)
+    # El tono (0.05 a 220 Hz, o a 280 Hz a +4) cambia menos de 0.003 por muestra; un salto, mucho más
+    jumps = np.abs(np.diff(heard))
+    assert jumps.max() < 0.01
