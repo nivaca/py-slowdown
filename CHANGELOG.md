@@ -7,6 +7,11 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Each file as it was played**: when a file is closed, its speed, pitch,
+  formants, way of hearing, selection (and whether it was repeated) and,
+  with the count-in on, the count-in's tempo and offset are kept with its
+  bookmarks, and they come back when it is opened again. Only what is not
+  the usual is kept; a file with nothing kept leaves them as they are.
 - **Loops, selections kept with a name**: Playback > Save the selection as a
   loop (Shift+L), or Save the selection in the new tab Loops of the panel
   (now Bookmarks and loops), keeps the selection, and its name is written in

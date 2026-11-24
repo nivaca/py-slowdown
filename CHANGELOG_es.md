@@ -7,6 +7,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Cada archivo como se tocó**: al cerrar un archivo, su velocidad, su
+  altura, los formantes, la manera de oír, la selección (y si se repetía)
+  y, con la cuenta previa encendida, el tempo y el desfase de la cuenta se
+  guardan con sus marcadores, y vuelven al abrirlo de nuevo. Solo se guarda
+  lo que no es lo de siempre; un archivo sin nada guardado los deja como
+  están.
 - **Bucles, selecciones guardadas con un nombre**: Reproducción > Guardar la
   selección como bucle (Mayús+L), o Guardar la selección en la pestaña
   nueva Bucles del panel (ahora Marcadores y bucles), guarda la selección,

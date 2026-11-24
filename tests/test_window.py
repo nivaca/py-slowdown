@@ -670,3 +670,38 @@ def test_loops_in_the_window(window, app, wav):
     assert [x.label for x in window.loops] == ["Riff"] and window.loop_panel.table.rowCount() == 1
     window.remove_loop(0)
     assert window.loops == [] and window.store.loops(wav) == []
+
+
+def test_settings_of_each_file(window, app, wav, tmp_path):
+    """The speed, the pitch, the formants, how it is heard, the selection repeated and the count-in of a file come
+    back when it is opened again; a file with nothing kept leaves them as they are."""
+    from conftest import tone, write
+
+    loaded(window, app, wav)
+    window.set_speed(0.6)
+    window.set_pitch(-3.0)
+    window.a_formants.setChecked(True)
+    window.set_hearing("mono", "no_bass")
+    window.set_selection((1.0, 2.0))
+    window.a_repeat.setChecked(True)
+    window.count.bpm = 88
+    window.count.offset = 0.25
+    window.a_count.setChecked(True)
+    other = tmp_path / "other.wav"
+    write(other, tone(3.0))
+    loaded(window, app, other)  # (nada guardado: sigue como estaba)
+    assert window.player.speed == 0.6 and window.player.hearing == ("mono", "no_bass")
+    window.set_speed(1.0)
+    window.set_pitch(0.0)
+    window.a_formants.setChecked(False)
+    window.set_hearing("both", "none")
+    window.a_count.setChecked(False)
+    window.count.bpm = 120
+    window.close_file()
+    assert window.store.settings(other) == {}  # (lo de siempre no se guarda)
+    loaded(window, app, wav)
+    window._tick()
+    assert (window.player.speed, window.player.pitch, window.player.formants) == (0.6, -3.0, True)
+    assert window.player.hearing == ("mono", "no_bass") and window.b_hear.text() == "Hear: mono, no bass"
+    assert window.selection == (1.0, 2.0) and window.a_repeat.isChecked() and window.player.loop == (1.0, 2.0)
+    assert (window.count.on, window.count.bpm, window.count.offset) == (True, 88, 0.25)

@@ -39,7 +39,7 @@ from .bookmarks import Bookmark, Loop, Store, export_text
 from . import export
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
-from .engine import MAX_PITCH, MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
+from .engine import MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
 from .hearing import CHANNELS, FILTERS
 from .interface import tr
 from .panel import BookmarkPanel, LoopPanel
@@ -107,6 +107,7 @@ class Window(QMainWindow):
         self.bookmarks: list[Bookmark] = []
         self.loops: list[Loop] = []
         self._resume = 0.0  # where to go once the file is decoded that far
+        self._pending_selection: tuple[tuple[float, float], bool] | None = None  # (selección, repetir), al leerla
         self._announced: Audio | None = None  # the file whose end of reading was told
         self.skip = float(self.settings.value("skip", 5, type=float))
         self.count = CountIn.load(self.settings)
@@ -542,6 +543,7 @@ class Window(QMainWindow):
         self.loop_panel.show_loops(self.loops)
         self.set_speed(self.player.speed)
         self.set_hearing(*self.player.hearing)
+        self._apply_file_settings(self.store.settings(path))
         # Sigue donde se dejó, cuando el archivo esté decodificado hasta allí (_tick).
         self._resume = self.store.position(path)
         self.setWindowTitle(f"{path.name} — {APP}")
@@ -570,6 +572,7 @@ class Window(QMainWindow):
         if self.audio is None:
             return
         self.store.set_position(self.audio.path, self._position_to_keep())
+        self.store.set_settings(self.audio.path, self._file_settings())
         audio = self.audio
         self.player.unload()
         audio.close()
@@ -578,6 +581,7 @@ class Window(QMainWindow):
         self.loops = []
         self.loop_panel.show_loops(self.loops)
         self._resume = 0.0
+        self._pending_selection = None
         self.wave.set_audio(None)
         self.selection = None
         self.wave.set_selection(None)
@@ -585,6 +589,56 @@ class Window(QMainWindow):
         self.setWindowTitle(APP)
         self.statusBar().clearMessage()
         self._update_enabled()
+
+    def _file_settings(self) -> dict:
+        """How the file is played, to have it so again the next time: only what is not the usual."""
+        player = self.player
+        kept: dict = {}
+        if player.speed != 1.0:
+            kept["speed"] = player.speed
+        if player.pitch:
+            kept["pitch"] = player.pitch
+        if player.formants:
+            kept["formants"] = True
+        if player.hearing != ("both", "none"):
+            kept["hearing"] = list(player.hearing)
+        selection = self.selection or (self._pending_selection[0] if self._pending_selection else None)
+        if selection:
+            kept["selection"] = [round(selection[0], 3), round(selection[1], 3)]
+            repeat = self.a_repeat.isChecked() if self.selection else self._pending_selection[1]
+            if repeat:
+                kept["repeat"] = True
+        if self.count.on:
+            # (el tempo y el desfase de la cuenta son de cada pieza)
+            kept["countin"] = {"bpm": self.count.bpm, "offset": self.count.offset}
+        return kept
+
+    def _apply_file_settings(self, kept: dict) -> None:
+        """Play the file as it was played the last time (KEPT, from _file_settings); nothing kept, nothing
+        changes."""
+        if not kept:
+            return
+        try:
+            if self.stretching:
+                self.set_speed(float(kept.get("speed", 1.0)))
+                self.set_pitch(float(kept.get("pitch", 0.0)))
+                self.a_formants.setChecked(bool(kept.get("formants", False)))
+            channels, filter_ = kept.get("hearing", ("both", "none"))
+            self.set_hearing(channels if channels in CHANNELS else "both", filter_ if filter_ in FILTERS else "none")
+            selection = kept.get("selection")
+            if selection:
+                start, end = sorted(float(x) for x in selection)
+                # (se elige cuando el archivo esté leído hasta su final: _tick)
+                self._pending_selection = ((start, end), bool(kept.get("repeat", False)))
+            countin = kept.get("countin")
+            if isinstance(countin, dict):
+                self.count.bpm = int(min(MAX_BPM, max(MIN_BPM, int(countin.get("bpm", self.count.bpm)))))
+                self.count.offset = min(MAX_OFFSET, max(-MAX_OFFSET, float(countin.get("offset", 0.0))))
+                self.a_count.setChecked(True)
+                self.count.save(self.settings)
+                self._update_count_tip()
+        except (TypeError, ValueError):
+            pass  # (lo guardado no se entiende: queda lo que había)
 
     def _position_to_keep(self) -> float:
         # At the end, or nearly, the next time starts from the beginning.
@@ -812,6 +866,11 @@ class Window(QMainWindow):
         audio = self.audio
         if audio is None:
             return
+        if self._pending_selection and (audio.done or audio.decoded / audio.rate > self._pending_selection[0][1]):
+            selection, repeat = self._pending_selection
+            self._pending_selection = None
+            self.set_selection(selection)
+            self.a_repeat.setChecked(repeat and self.selection is not None)
         if self._resume and (audio.done or audio.decoded / audio.rate > self._resume + 1):
             self.player.seek(min(self._resume, audio.duration))
             self._resume = 0.0

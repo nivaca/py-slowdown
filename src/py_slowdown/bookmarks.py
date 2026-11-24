@@ -9,7 +9,12 @@ macOS), por la ruta completa del archivo de audio:
      "files": {"/home/.../clase.mp3": {
          "bookmarks": [{"time": 83.25, "label": "La segunda estrofa"}],
          "loops": [{"start": 95.0, "end": 103.5, "label": "El puente"}],
-         "position": 412.8}}}
+         "position": 412.8,
+         "settings": {"speed": 0.75, "pitch": -2.0, "selection": [95.0, 103.5], "repeat": true}}}}
+
+En "settings" va lo que la ventana quiere recordar de ese archivo (la velocidad,
+la altura, cómo se oye, la selección, la cuenta previa), solo lo que no es lo de
+siempre.
 
 El archivo de audio no se toca. Si se mueve o se renombra, sus marcadores se
 quedan con la ruta vieja.
@@ -102,6 +107,17 @@ class Store:
         self._tidy(audio_path)
         self.save()
 
+    def settings(self, audio_path) -> dict:
+        """What was kept of how the file was played (see Window): {} if nothing."""
+        value = self._files.get(self.key(audio_path), {}).get("settings", {})
+        return dict(value) if isinstance(value, dict) else {}
+
+    def set_settings(self, audio_path, settings: dict) -> None:
+        entry = self._files.setdefault(self.key(audio_path), {})
+        entry["settings"] = dict(settings)
+        self._tidy(audio_path)
+        self.save()
+
     def position(self, audio_path) -> float:
         try:
             return float(self._files.get(self.key(audio_path), {}).get("position", 0.0))
@@ -118,7 +134,7 @@ class Store:
         # Un archivo sin marcadores y leído desde el principio no ocupa lugar.
         key = self.key(audio_path)
         entry = self._files.get(key, {})
-        for name in ("bookmarks", "loops"):
+        for name in ("bookmarks", "loops", "settings"):
             if not entry.get(name):
                 entry.pop(name, None)
         if not entry.get("position"):
