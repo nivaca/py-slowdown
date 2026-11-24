@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=py-slowdown
+GenericName=Audio player for transcription
+GenericName[es]=Reproductor de audio para transcribir
+Comment=Play audio slower or faster without changing its pitch, with a waveform and bookmarks
+Comment[es]=Reproducir audio más lento o más rápido sin cambiar su altura, con forma de onda y marcadores
+Keywords=audio;slow down;speed;tempo;time stretch;transcription;waveform;bookmarks;music;practice;
+Keywords[es]=audio;ralentizar;velocidad;tempo;transcripción;forma de onda;marcadores;música;práctica;
+Categories=AudioVideo;Audio;Player;
+Icon=py-slowdown
+Exec=py-slowdown %f
+MimeType=audio/mpeg;audio/mp4;audio/x-m4a;audio/aac;audio/flac;audio/x-flac;audio/wav;audio/x-wav;audio/ogg;audio/opus;audio/x-aiff;audio/x-ms-wma;video/mp4;video/x-matroska;video/webm;
+Terminal=false
+StartupNotify=true
+StartupWMClass=py-slowdown

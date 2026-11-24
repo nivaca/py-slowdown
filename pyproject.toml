@@ -1,0 +1,49 @@
+[project]
+name = "py-slowdown"
+version = "0.1.0"
+description = "Play audio slower or faster without changing its pitch, with a waveform and bookmarks"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Nicolas Vaughan", email = "nicolasvaughan@proton.me" }
+]
+requires-python = ">=3.14"
+keywords = ["audio", "player", "time stretching", "slow down", "transcription", "waveform", "bookmarks"]
+classifiers = [
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+    "Natural Language :: Spanish",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio :: Players",
+]
+dependencies = [
+    "av>=14",
+    "numpy>=2.3",
+    "pylibrb>=0.1.2",
+    "pyside6-essentials>=6.10",
+    "sounddevice>=0.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/nivaca/py-slowdown"
+Source = "https://github.com/nivaca/py-slowdown"
+Mirror = "https://codeberg.org/nivaca/py-slowdown"
+
+[project.gui-scripts]
+py-slowdown = "py_slowdown.app:main"
+
+[build-system]
+requires = ["uv_build>=0.10,<0.14"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["tests"]
+addopts = ["--import-mode=importlib"]

@@ -1,0 +1,411 @@
+"""La forma de onda: el audio dibujado, la posición y los marcadores.
+
+Waveform dibuja el mínimo y el máximo de cada columna de píxeles: con los picos
+que Audio calculó (Peaks) cuando la vista es amplia, y con las muestras mismas
+cuando se acerca más que un grupo de picos por píxel. La parte ya tocada va en
+otro color; encima, una regla de tiempos, la línea de la posición y los
+marcadores con su nombre. Un clic lleva la posición allí; arrastrar la sigue;
+Ctrl+rueda acerca o aleja la vista alrededor del puntero, y la rueda sola la
+corre. WaveformView le pone una barra de desplazamiento debajo.
+"""
+
+from __future__ import annotations
+
+import math
+
+import numpy as np
+from PySide6.QtCore import QPointF, QRectF, Qt, Signal
+from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPalette, QPen, QPolygonF
+from PySide6.QtWidgets import QMenu, QScrollBar, QSizePolicy, QVBoxLayout, QWidget
+
+from .audio import BUCKET, Audio
+from .bookmarks import Bookmark
+from .interface import tr
+from .timefmt import clock
+
+RULER = 22  # height of the ruler, in pixels
+FLAG = 16  # alto de la banda de los marcadores
+MIN_FPP = 1.0  # a lo sumo un cuadro por píxel
+GRAB = 5  # píxeles a cada lado de un marcador que cuentan como suyos
+
+# Pasos de la regla, en segundos: se usa el primero que deje unos 90 píxeles entre marcas.
+STEPS = (0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600)
+
+
+def columns(audio: Audio, start: float, fpp: float, width: int) -> tuple[np.ndarray, np.ndarray]:
+    """(lo, hi) of each of WIDTH pixel columns from frame START at FPP frames per pixel.
+
+    Columns past the decoded audio are NaN.
+    """
+    lo = np.full(width, np.nan, np.float32)
+    hi = np.full(width, np.nan, np.float32)
+    edges = start + np.arange(width + 1) * fpp
+    if fpp >= BUCKET:
+        peaks = audio.peaks
+        count = peaks.count
+        idx = np.floor(edges / BUCKET).astype(np.int64)
+        valid = np.flatnonzero((idx[:-1] < count) & (idx[:-1] >= 0))
+        if valid.size:
+            first = idx[valid]
+            lo[valid] = np.minimum.reduceat(peaks.lo[:count], first)
+            hi[valid] = np.maximum.reduceat(peaks.hi[:count], first)
+            # reduceat lleva cada tramo hasta el comienzo del siguiente; el último, hasta el final del arreglo
+            stop = min(count, int(idx[valid[-1] + 1]))
+            if stop > first[-1]:
+                lo[valid[-1]] = peaks.lo[first[-1]:stop].min()
+                hi[valid[-1]] = peaks.hi[first[-1]:stop].max()
+        return lo, hi
+    f0 = max(0, int(edges[0]))
+    data = audio.frames(f0, math.ceil(edges[-1]) + 1)
+    if not len(data):
+        return lo, hi
+    mins, maxs = data.min(axis=1), data.max(axis=1)
+    idx = np.floor(edges[:-1]).astype(np.int64) - f0
+    valid = np.flatnonzero((idx >= 0) & (idx < len(data)))
+    if valid.size:
+        lo[valid] = np.minimum.reduceat(mins, idx[valid])
+        hi[valid] = np.maximum.reduceat(maxs, idx[valid])
+    return lo, hi
+
+
+class Waveform(QWidget):
+    seekRequested = Signal(float)  # seconds
+    addBookmarkRequested = Signal(float)
+    removeBookmarkRequested = Signal(int)
+    renameBookmarkRequested = Signal(int)
+    viewChanged = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.audio: Audio | None = None
+        self.bookmarks: list[Bookmark] = []
+        self.position = 0.0  # seconds
+        self.start = 0.0  # primer cuadro visible
+        self.fpp = 0.0  # frames per pixel; 0: the whole file fits
+        self.follow = True
+        self._dragging = False
+        self._cache_key = None
+        self._cache: tuple[np.ndarray, np.ndarray] | None = None
+        self.setMinimumHeight(120)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setMouseTracking(True)
+
+    # --- la vista
+
+    def set_audio(self, audio: Audio | None) -> None:
+        self.audio = audio
+        self.position = 0.0
+        self.start = 0.0
+        self.fpp = 0.0
+        self._cache_key = None
+        self.viewChanged.emit()
+        self.update()
+
+    def fit_fpp(self) -> float:
+        if not self.audio:
+            return 1.0
+        return max(MIN_FPP, self.audio.length / max(1, self.width()))
+
+    def current_fpp(self) -> float:
+        return self.fpp or self.fit_fpp()
+
+    def visible_frames(self) -> float:
+        return self.current_fpp() * self.width()
+
+    def max_start(self) -> float:
+        if not self.audio:
+            return 0.0
+        return max(0.0, self.audio.length - self.visible_frames())
+
+    def set_start(self, frame: float) -> None:
+        frame = min(max(0.0, frame), self.max_start())
+        if frame != self.start:
+            self.start = frame
+            self.viewChanged.emit()
+            self.update()
+
+    def zoom(self, factor: float, anchor_x: float | None = None) -> None:
+        """Show FACTOR times more detail, keeping the frame under ANCHOR_X in place."""
+        if not self.audio:
+            return
+        if anchor_x is None:
+            # Without a pointer: around the position if it is in view, else around the middle.
+            px = self.x_of(self.position)
+            anchor_x = px if 0 <= px <= self.width() else self.width() / 2
+        old = self.current_fpp()
+        anchor = self.start + anchor_x * old
+        fpp = min(max(MIN_FPP, old / factor), self.fit_fpp())
+        self.fpp = 0.0 if fpp >= self.fit_fpp() else fpp
+        self.start = 0.0
+        self.set_start(anchor - anchor_x * self.current_fpp())
+        self.viewChanged.emit()
+        self.update()
+
+    def fit(self) -> None:
+        self.fpp = 0.0
+        self.start = 0.0
+        self.viewChanged.emit()
+        self.update()
+
+    def x_of(self, seconds: float) -> float:
+        if not self.audio:
+            return 0.0
+        return (seconds * self.audio.rate - self.start) / self.current_fpp()
+
+    def seconds_at(self, x: float) -> float:
+        if not self.audio:
+            return 0.0
+        frame = self.start + x * self.current_fpp()
+        return min(max(0.0, frame), self.audio.length) / self.audio.rate
+
+    def set_position(self, seconds: float, playing: bool = False) -> None:
+        old = self.x_of(self.position)
+        self.position = seconds
+        x = self.x_of(seconds)
+        if playing and self.follow and self.fpp and not self._dragging and not (0 <= x < self.width() - 2):
+            # When the position leaves the view while playing, the view turns to the next page.
+            self.set_start(seconds * self.audio.rate - self.width() * 0.05 * self.current_fpp())
+            return
+        if int(old) != int(x):
+            self.update()
+
+    def set_bookmarks(self, bookmarks: list[Bookmark]) -> None:
+        self.bookmarks = list(bookmarks)
+        self.update()
+
+    def bookmark_at(self, x: float) -> int | None:
+        best, where = GRAB + 1, None
+        for i, mark in enumerate(self.bookmarks):
+            distance = abs(self.x_of(mark.time) - x)
+            if distance < best:
+                best, where = distance, i
+        return where
+
+    # --- el dibujo
+
+    def _colors(self) -> dict[str, QColor]:
+        palette = self.palette()
+        base = palette.color(QPalette.ColorRole.Base)
+        dark = base.lightness() < 128
+        accent = palette.color(QPalette.ColorRole.Highlight)
+        wave = QColor(accent)
+        played = QColor(accent).lighter(150) if dark else QColor(accent).darker(160)
+        return {
+            "base": base,
+            "ruler": palette.color(QPalette.ColorRole.Window),
+            "text": palette.color(QPalette.ColorRole.Text),
+            "faint": palette.color(QPalette.ColorRole.PlaceholderText),
+            "wave": wave,
+            "played": played,
+            "cursor": QColor("#ff5a3c") if dark else QColor("#d62d0f"),
+            "mark": QColor("#f2b134") if dark else QColor("#b8730a"),
+        }
+
+    def paintEvent(self, _event) -> None:
+        painter = QPainter(self)
+        colors = self._colors()
+        w, h = self.width(), self.height()
+        painter.fillRect(self.rect(), colors["base"])
+        painter.fillRect(QRectF(0, 0, w, RULER), colors["ruler"])
+        if not self.audio:
+            painter.setPen(colors["faint"])
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter,
+                             tr("Open an audio file (Ctrl+O), or drop one here"))
+            return
+        top = RULER + FLAG
+        self._paint_ruler(painter, colors, w)
+        self._paint_wave(painter, colors, w, top, h - top)
+        self._paint_marks(painter, colors, h)
+        x = self.x_of(self.position)
+        painter.setPen(QPen(colors["cursor"], 2))
+        painter.drawLine(QPointF(x, RULER), QPointF(x, h))
+        painter.end()
+
+    def _paint_ruler(self, painter: QPainter, colors, w: int) -> None:
+        rate = self.audio.rate
+        seconds_per_px = self.current_fpp() / rate
+        step = next((s for s in STEPS if s / seconds_per_px >= 90), STEPS[-1])
+        first = math.floor(self.start / rate / step) * step
+        painter.setPen(colors["faint"])
+        painter.drawLine(0, RULER - 1, w, RULER - 1)
+        metrics = QFontMetrics(painter.font())
+        t = first
+        end = (self.start + w * self.current_fpp()) / rate
+        while t <= end + step:
+            x = self.x_of(t)
+            painter.setPen(colors["faint"])
+            painter.drawLine(QPointF(x, RULER - 6), QPointF(x, RULER - 1))
+            for k in range(1, 5):  # marcas menores
+                xm = self.x_of(t + k * step / 5)
+                painter.drawLine(QPointF(xm, RULER - 3), QPointF(xm, RULER - 1))
+            painter.setPen(colors["text"])
+            label = clock(t, tenths=step < 1) if step >= 0.1 else f"{t:.2f}"
+            painter.drawText(QPointF(x + 3, metrics.ascent() + 2), label)
+            t += step
+
+    def _paint_wave(self, painter: QPainter, colors, w: int, top: int, height: int) -> None:
+        audio = self.audio
+        fpp = self.current_fpp()
+        key = (self.start, fpp, w, audio.decoded, audio.peaks.count)
+        if key != self._cache_key:
+            self._cache = columns(audio, self.start, fpp, w)
+            self._cache_key = key
+        lo, hi = self._cache
+        mid = top + height / 2
+        # A escala del pico del archivo (lo leído hasta ahora): una grabación baja no se ve plana.
+        peaks = audio.peaks
+        loudest = max(float(np.abs(peaks.lo[:peaks.count]).max(initial=0)),
+                      float(np.abs(peaks.hi[:peaks.count]).max(initial=0)), 0.05)
+        half = (height / 2 - 2) / min(1.0, loudest)
+        painter.setPen(colors["faint"])
+        painter.drawLine(QPointF(0, mid), QPointF(w, mid))
+        ok = ~np.isnan(lo)
+        if not ok.any():
+            return
+        xs = np.flatnonzero(ok)
+        # Una columna muy baja se ve al menos como una línea de un píxel.
+        limit = height / 2 - 2
+        y_hi = mid - np.clip(hi[xs] * half, -limit, limit)
+        y_lo = mid - np.clip(lo[xs] * half, -limit, limit)
+        y_lo = np.maximum(y_lo, y_hi + 1)
+        points = [QPointF(float(x) + 0.5, float(y)) for x, y in zip(xs, y_hi)]
+        points += [QPointF(float(x) + 0.5, float(y)) for x, y in zip(xs[::-1], y_lo[::-1])]
+        polygon = QPolygonF(points)
+        cursor = self.x_of(self.position)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        for color, clip in ((colors["played"], QRectF(0, top, max(0, cursor), height)),
+                            (colors["wave"], QRectF(cursor, top, max(0, w - cursor), height))):
+            if clip.width() <= 0:
+                continue
+            painter.save()
+            painter.setClipRect(clip)
+            painter.setPen(QPen(color, 1))
+            painter.setBrush(color)
+            painter.drawPolygon(polygon)
+            painter.restore()
+        if not audio.done:
+            # What is still to be read: a faint band.
+            x = (audio.decoded - self.start) / fpp
+            if x < w:
+                shade = QColor(colors["faint"])
+                shade.setAlpha(40)
+                painter.fillRect(QRectF(max(0, x), top, w - max(0, x), height), shade)
+
+    def _paint_marks(self, painter: QPainter, colors, h: int) -> None:
+        metrics = QFontMetrics(painter.font())
+        color = colors["mark"]
+        for i, mark in enumerate(self.bookmarks):
+            x = self.x_of(mark.time)
+            if x < -200 or x > self.width() + 2:
+                continue
+            painter.setPen(QPen(color, 1, Qt.PenStyle.DashLine))
+            painter.drawLine(QPointF(x, RULER), QPointF(x, h))
+            label = mark.label or str(i + 1)
+            text_w = min(metrics.horizontalAdvance(label) + 8, 220)
+            box = QRectF(x, RULER + 1, text_w, FLAG - 2)
+            painter.fillRect(box, color)
+            painter.setPen(colors["base"])
+            painter.drawText(box.adjusted(4, 0, -2, 0), Qt.AlignmentFlag.AlignVCenter,
+                             metrics.elidedText(label, Qt.TextElideMode.ElideRight, text_w - 6))
+
+    # --- el ratón
+
+    def mousePressEvent(self, event) -> None:
+        if not self.audio or event.button() != Qt.MouseButton.LeftButton:
+            return
+        x = event.position().x()
+        mark = self.bookmark_at(x) if event.position().y() < RULER + FLAG else None
+        if mark is not None:
+            self.seekRequested.emit(self.bookmarks[mark].time)
+            return
+        self._dragging = True
+        self.seekRequested.emit(self.seconds_at(x))
+
+    def mouseMoveEvent(self, event) -> None:
+        x = event.position().x()
+        if self._dragging:
+            self.seekRequested.emit(self.seconds_at(x))
+            return
+        if self.audio:
+            mark = self.bookmark_at(x)
+            tip = clock(self.seconds_at(x), tenths=True)
+            if mark is not None:
+                b = self.bookmarks[mark]
+                tip = f"{clock(b.time, tenths=True)}  {b.label}".rstrip()
+            self.setToolTip(tip)
+
+    def mouseReleaseEvent(self, _event) -> None:
+        self._dragging = False
+
+    def mouseDoubleClickEvent(self, event) -> None:
+        mark = self.bookmark_at(event.position().x())
+        if mark is not None:
+            self.renameBookmarkRequested.emit(mark)
+
+    def contextMenuEvent(self, event) -> None:
+        if not self.audio:
+            return
+        x = event.pos().x()
+        menu = QMenu(self)
+        here = self.seconds_at(x)
+        menu.addAction(tr("Add a bookmark here"), lambda: self.addBookmarkRequested.emit(here))
+        mark = self.bookmark_at(x)
+        if mark is not None:
+            menu.addAction(tr("Rename the bookmark…"), lambda: self.renameBookmarkRequested.emit(mark))
+            menu.addAction(tr("Remove the bookmark"), lambda: self.removeBookmarkRequested.emit(mark))
+        menu.exec(event.globalPos())
+
+    def wheelEvent(self, event) -> None:
+        if not self.audio:
+            return
+        delta = event.angleDelta()
+        steps = (delta.y() or delta.x()) / 120
+        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.zoom(1.25 ** steps, event.position().x())
+        else:
+            # La rueda corre la vista un octavo de su ancho por paso.
+            self.set_start(self.start - steps * self.visible_frames() / 8)
+        event.accept()
+
+    def resizeEvent(self, event) -> None:
+        if self.fpp and self.fpp >= self.fit_fpp():
+            self.fpp = 0.0
+        self.set_start(self.start)
+        self.viewChanged.emit()
+        super().resizeEvent(event)
+
+
+class WaveformView(QWidget):
+    """The waveform with a scroll bar under it."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.wave = Waveform(self)
+        self.bar = QScrollBar(Qt.Orientation.Horizontal, self)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self.wave)
+        layout.addWidget(self.bar)
+        self._sync = False
+        self.wave.viewChanged.connect(self._update_bar)
+        self.bar.valueChanged.connect(self._scrolled)
+        self._update_bar()
+
+    def _update_bar(self) -> None:
+        # La barra cuenta en píxeles de la vista actual.
+        wave = self.wave
+        fpp = wave.current_fpp()
+        self._sync = True
+        total = int(wave.max_start() / fpp) if wave.audio else 0
+        self.bar.setRange(0, total)
+        self.bar.setPageStep(max(1, wave.width()))
+        self.bar.setSingleStep(max(1, wave.width() // 10))
+        self.bar.setValue(int(wave.start / fpp))
+        self.bar.setVisible(total > 0)
+        self._sync = False
+
+    def _scrolled(self, value: int) -> None:
+        if not self._sync:
+            self.wave.set_start(value * self.wave.current_fpp())

@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The interface of py-slowdown in Spanish: each <text> gives an English text of the
+     program (<en>) and its translation (<tr>). See src/py_slowdown/interface.py.
+     tests/test_interface.py checks that every text of the program is here, and nothing else. -->
+<interface code="es" name="Spanish" native="Español">
+  <text>
+    <en>&amp;File</en>
+    <tr>&amp;Archivo</tr>
+  </text>
+  <text>
+    <en>&amp;Open…</en>
+    <tr>&amp;Abrir…</tr>
+  </text>
+  <text>
+    <en>Open &amp;recent</en>
+    <tr>Abrir &amp;reciente</tr>
+  </text>
+  <text>
+    <en>&amp;Close</en>
+    <tr>&amp;Cerrar</tr>
+  </text>
+  <text>
+    <en>&amp;Quit</en>
+    <tr>&amp;Salir</tr>
+  </text>
+  <text>
+    <en>&amp;Playback</en>
+    <tr>&amp;Reproducción</tr>
+  </text>
+  <text>
+    <en>&amp;Play/Pause</en>
+    <tr>&amp;Tocar/Pausa</tr>
+  </text>
+  <text>
+    <en>&amp;Stop</en>
+    <tr>&amp;Detener</tr>
+  </text>
+  <text>
+    <en>Go to the s&amp;tart</en>
+    <tr>Ir al &amp;principio</tr>
+  </text>
+  <text>
+    <en>Go to the &amp;end</en>
+    <tr>Ir al &amp;final</tr>
+  </text>
+  <text>
+    <en>&amp;Back</en>
+    <tr>&amp;Atrás</tr>
+  </text>
+  <text>
+    <en>&amp;Forward</en>
+    <tr>Adelant&amp;e</tr>
+  </text>
+  <text>
+    <en>Back one second</en>
+    <tr>Un segundo atrás</tr>
+  </text>
+  <text>
+    <en>Forward one second</en>
+    <tr>Un segundo adelante</tr>
+  </text>
+  <text>
+    <en>S&amp;lower</en>
+    <tr>Más &amp;lento</tr>
+  </text>
+  <text>
+    <en>F&amp;aster</en>
+    <tr>Más &amp;rápido</tr>
+  </text>
+  <text>
+    <en>&amp;Normal speed</en>
+    <tr>Velocidad &amp;normal</tr>
+  </text>
+  <text>
+    <en>&amp;Bookmarks</en>
+    <tr>&amp;Marcadores</tr>
+  </text>
+  <text>
+    <en>&amp;Add a bookmark</en>
+    <tr>&amp;Añadir un marcador</tr>
+  </text>
+  <text>
+    <en>&amp;Previous bookmark</en>
+    <tr>Marcador a&amp;nterior</tr>
+  </text>
+  <text>
+    <en>&amp;Next bookmark</en>
+    <tr>Marcador &amp;siguiente</tr>
+  </text>
+  <text>
+    <en>&amp;Export the bookmarks…</en>
+    <tr>&amp;Exportar los marcadores…</tr>
+  </text>
+  <text>
+    <en>&amp;View</en>
+    <tr>&amp;Ver</tr>
+  </text>
+  <text>
+    <en>Zoom &amp;in</en>
+    <tr>&amp;Acercar</tr>
+  </text>
+  <text>
+    <en>Zoom &amp;out</en>
+    <tr>A&amp;lejar</tr>
+  </text>
+  <text>
+    <en>&amp;Whole file</en>
+    <tr>&amp;Todo el archivo</tr>
+  </text>
+  <text>
+    <en>&amp;Follow the position</en>
+    <tr>&amp;Seguir la posición</tr>
+  </text>
+  <text>
+    <en>&amp;Settings</en>
+    <tr>&amp;Configuración</tr>
+  </text>
+  <text>
+    <en>&amp;Skip length</en>
+    <tr>&amp;Longitud del salto</tr>
+  </text>
+  <text>
+    <en>&amp;Language</en>
+    <tr>&amp;Idioma</tr>
+  </text>
+  <text>
+    <en>{n} s</en>
+    <tr>{n} s</tr>
+  </text>
+  <text>
+    <en>&amp;Help</en>
+    <tr>A&amp;yuda</tr>
+  </text>
+  <text>
+    <en>&amp;Keyboard shortcuts</en>
+    <tr>&amp;Atajos de teclado</tr>
+  </text>
+  <text>
+    <en>&amp;About py-slowdown</en>
+    <tr>Acerca &amp;de py-slowdown</tr>
+  </text>
+  <text>
+    <en>Bookmarks</en>
+    <tr>Marcadores</tr>
+  </text>
+  <text>
+    <en>Time</en>
+    <tr>Tiempo</tr>
+  </text>
+  <text>
+    <en>Label</en>
+    <tr>Nombre</tr>
+  </text>
+  <text>
+    <en>Add</en>
+    <tr>Añadir</tr>
+  </text>
+  <text>
+    <en>Remove</en>
+    <tr>Quitar</tr>
+  </text>
+  <text>
+    <en>Export…</en>
+    <tr>Exportar…</tr>
+  </text>
+  <text>
+    <en>Save the bookmarks as a text file</en>
+    <tr>Guardar los marcadores en un archivo de texto</tr>
+  </text>
+  <text>
+    <en>Add a bookmark at the current position (B)</en>
+    <tr>Añadir un marcador en la posición actual (B)</tr>
+  </text>
+  <text>
+    <en>Double-click to go there</en>
+    <tr>Doble clic para ir allí</tr>
+  </text>
+  <text>
+    <en>Add a bookmark here</en>
+    <tr>Añadir un marcador aquí</tr>
+  </text>
+  <text>
+    <en>Rename the bookmark…</en>
+    <tr>Cambiar el nombre del marcador…</tr>
+  </text>
+  <text>
+    <en>Remove the bookmark</en>
+    <tr>Quitar el marcador</tr>
+  </text>
+  <text>
+    <en>Open an audio file (Ctrl+O), or drop one here</en>
+    <tr>Abra un archivo de audio (Ctrl+O), o suéltelo aquí</tr>
+  </text>
+  <text>
+    <en>Go to the start (Home)</en>
+    <tr>Ir al principio (Inicio)</tr>
+  </text>
+  <text>
+    <en>Go to the end (End)</en>
+    <tr>Ir al final (Fin)</tr>
+  </text>
+  <text>
+    <en>Play (Space)</en>
+    <tr>Tocar (Espacio)</tr>
+  </text>
+  <text>
+    <en>Pause (Space)</en>
+    <tr>Pausa (Espacio)</tr>
+  </text>
+  <text>
+    <en>Stop and go back to the start (S)</en>
+    <tr>Detener y volver al principio (S)</tr>
+  </text>
+  <text>
+    <en>Bookmark</en>
+    <tr>Marcador</tr>
+  </text>
+  <text>
+    <en>Position / length</en>
+    <tr>Posición / duración</tr>
+  </text>
+  <text>
+    <en>Speed</en>
+    <tr>Velocidad</tr>
+  </text>
+  <text>
+    <en>Slower (Down) or faster (Up); the pitch stays the same</en>
+    <tr>Más lento (Abajo) o más rápido (Arriba); la altura no cambia</tr>
+  </text>
+  <text>
+    <en>Normal speed (N)</en>
+    <tr>Velocidad normal (N)</tr>
+  </text>
+  <text>
+    <en>Volume</en>
+    <tr>Volumen</tr>
+  </text>
+  <text>
+    <en>Back {n} s (Left); hold to keep going</en>
+    <tr>{n} s atrás (Izquierda); mantenga apretado para seguir</tr>
+  </text>
+  <text>
+    <en>Forward {n} s (Right); hold to keep going</en>
+    <tr>{n} s adelante (Derecha); mantenga apretado para seguir</tr>
+  </text>
+  <text>
+    <en>Open an audio file</en>
+    <tr>Abrir un archivo de audio</tr>
+  </text>
+  <text>
+    <en>Audio and video files</en>
+    <tr>Archivos de audio y de video</tr>
+  </text>
+  <text>
+    <en>All files</en>
+    <tr>Todos los archivos</tr>
+  </text>
+  <text>
+    <en>Text files</en>
+    <tr>Archivos de texto</tr>
+  </text>
+  <text>
+    <en>(none)</en>
+    <tr>(ninguno)</tr>
+  </text>
+  <text>
+    <en>Reading {name}…</en>
+    <tr>Leyendo {name}…</tr>
+  </text>
+  <text>
+    <en>Reading {name}… {percent}%</en>
+    <tr>Leyendo {name}… {percent} %</tr>
+  </text>
+  <text>
+    <en>{name}: read up to {time} ({error})</en>
+    <tr>{name}: leído hasta {time} ({error})</tr>
+  </text>
+  <text>
+    <en>Cannot read {name} as audio:
+{error}</en>
+    <tr>No se puede leer {name} como audio:
+{error}</tr>
+  </text>
+  <text>
+    <en>Cannot play {name}:
+{error}</en>
+    <tr>No se puede tocar {name}:
+{error}</tr>
+  </text>
+  <text>
+    <en>mono</en>
+    <tr>mono</tr>
+  </text>
+  <text>
+    <en>stereo</en>
+    <tr>estéreo</tr>
+  </text>
+  <text>
+    <en>Bookmark at {time}</en>
+    <tr>Marcador en {time}</tr>
+  </text>
+  <text>
+    <en>Label:</en>
+    <tr>Nombre:</tr>
+  </text>
+  <text>
+    <en>Export the bookmarks</en>
+    <tr>Exportar los marcadores</tr>
+  </text>
+  <text>
+    <en>The language changes when py-slowdown starts again.</en>
+    <tr>El idioma cambia cuando py-slowdown vuelva a abrirse.</tr>
+  </text>
+  <text>
+    <en>Keyboard shortcuts</en>
+    <tr>Atajos de teclado</tr>
+  </text>
+  <text>
+    <en>About py-slowdown</en>
+    <tr>Acerca de py-slowdown</tr>
+  </text>
+  <text>
+    <en>Play or pause</en>
+    <tr>Tocar o pausar</tr>
+  </text>
+  <text>
+    <en>Stop and go back to the start</en>
+    <tr>Detener y volver al principio</tr>
+  </text>
+  <text>
+    <en>Go to the start / to the end</en>
+    <tr>Ir al principio / al final</tr>
+  </text>
+  <text>
+    <en>Back / forward (skip length)</en>
+    <tr>Atrás / adelante (longitud del salto)</tr>
+  </text>
+  <text>
+    <en>Back / forward one second</en>
+    <tr>Un segundo atrás / adelante</tr>
+  </text>
+  <text>
+    <en>Slower / faster</en>
+    <tr>Más lento / más rápido</tr>
+  </text>
+  <text>
+    <en>Normal speed</en>
+    <tr>Velocidad normal</tr>
+  </text>
+  <text>
+    <en>Add a bookmark</en>
+    <tr>Añadir un marcador</tr>
+  </text>
+  <text>
+    <en>Previous / next bookmark</en>
+    <tr>Marcador anterior / siguiente</tr>
+  </text>
+  <text>
+    <en>Zoom in / out / whole file</en>
+    <tr>Acercar / alejar / todo el archivo</tr>
+  </text>
+  <text>
+    <en>Zoom around the pointer</en>
+    <tr>Acercar alrededor del puntero</tr>
+  </text>
+  <text>
+    <en>Ctrl+wheel</en>
+    <tr>Ctrl+rueda</tr>
+  </text>
+  <text>
+    <en>Open a file</en>
+    <tr>Abrir un archivo</tr>
+  </text>
+  <text>
+    <en>&lt;p&gt;&lt;b&gt;py-slowdown {version}&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Plays audio slower or faster without changing its pitch, with the Rubber Band Library (R3 engine).&lt;/p&gt;&lt;p&gt;© 2026 Nicolas Vaughan &amp;lt;nicolasvaughan@proton.me&amp;gt;&lt;br&gt;GNU General Public License, version 3 or later.&lt;/p&gt;</en>
+    <tr>&lt;p&gt;&lt;b&gt;py-slowdown {version}&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Reproduce audio más lento o más rápido sin cambiar su altura, con la biblioteca Rubber Band (motor R3).&lt;/p&gt;&lt;p&gt;© 2026 Nicolas Vaughan &amp;lt;nicolasvaughan@proton.me&amp;gt;&lt;br&gt;Licencia Pública General de GNU, versión 3 o posterior.&lt;/p&gt;</tr>
+  </text>
+</interface>
