@@ -100,9 +100,11 @@ def test_not_audio(tmp_path, decoder):
 def test_samples_live_in_cache(wav):
     audio = Audio(wav)
     audio.wait(10)
-    # El archivo temporal no tiene nombre: nada queda en la carpeta, ni antes ni después de cerrar.
-    assert list(audio_module.cache_dir().iterdir()) == []
+    # El archivo temporal no tiene nombre: nada queda en la carpeta, ni antes ni después de cerrar (salvo la
+    # carpeta de las formas de onda guardadas).
+    assert [p.name for p in audio_module.cache_dir().iterdir()] == ["peaks"]
     audio.close()
+    assert [p.name for p in audio_module.cache_dir().iterdir()] == ["peaks"]
 
 
 def test_peaks_in_pieces():
@@ -137,3 +139,38 @@ def test_damaged_halfway(tmp_path, decoder):
     assert audio.wait(10)
     assert 0.5 < audio.duration < 3.5
     audio.close()
+
+
+def test_peaks_kept_for_the_next_time(tmp_path, decoder, monkeypatch):
+    """Once a file is read, its peaks are kept: the next time the whole waveform, and the length, are there at
+    once; a file that changed is read anew; only the newest PEAK_FILES are kept."""
+    import os
+    import time
+
+    path = tmp_path / "song.flac"
+    write(path, tone(4.0))
+    first = Audio(path)
+    first.wait(10)
+    assert first.peaks is first._building and list((audio_module.cache_dir() / "peaks").glob("*.npz"))
+    first.close()
+    again = Audio(path)
+    assert again.peaks is not again._building and again.peaks.count == -(-4 * RATE // BUCKET)
+    assert again.duration == 4.0  # (antes de terminar de leerlo)
+    again.wait(10)
+    assert np.array_equal(again.peaks.lo[:again.peaks.count], again._building.lo[:again.peaks.count])
+    again.close()
+    write(path, tone(3.0))  # (otro contenido, otro tamaño: no es el mismo archivo)
+    os.utime(path, (time.time() + 5, time.time() + 5))
+    changed = Audio(path)
+    assert changed.peaks is changed._building
+    changed.wait(10)
+    assert changed.duration == 3.0
+    changed.close()
+    monkeypatch.setattr(audio_module, "PEAK_FILES", 2)
+    for n in range(3):
+        other = tmp_path / f"other{n}.flac"
+        write(other, tone(1.0 + n))
+        a = Audio(other)
+        a.wait(10)
+        a.close()
+    assert len(list((audio_module.cache_dir() / "peaks").glob("*.npz"))) == 2

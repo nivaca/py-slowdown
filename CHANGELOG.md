@@ -7,6 +7,11 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **The whole waveform at once, the second time**: once a file is read,
+  its waveform is kept in the cache folder (about 4 MB for an hour and a
+  half, for the 200 files opened last), and the next time the whole
+  waveform and the exact length are there as soon as it opens, while the
+  sound is read as before. A file that changed is read anew.
 - **Keyboard shortcuts of one's own**: Settings > Keyboard shortcuts lists
   every action with its keys; a click on the keys and the new ones change
   them (a foot pedal that sends keys works the same way). Keys given to two

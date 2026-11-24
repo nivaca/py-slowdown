@@ -7,6 +7,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Toda la forma de onda enseguida, la segunda vez**: una vez leído un
+  archivo, su forma de onda se guarda en la carpeta de caché (unos 4 MB por
+  hora y media, de los 200 archivos abiertos más recientemente), y la vez
+  siguiente toda la forma de onda y la duración exacta están apenas se
+  abre, mientras el sonido se lee como antes. Un archivo que cambió se lee
+  de nuevo.
 - **Atajos de teclado propios**: Configuración > Atajos de teclado muestra
   cada acción con sus teclas; un clic en las teclas y las nuevas las
   cambian (un pedal de pie que manda teclas sirve igual). Unas teclas en

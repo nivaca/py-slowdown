@@ -13,6 +13,7 @@ esperar el final.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -63,6 +64,55 @@ def cache_dir() -> Path:
         path = Path(os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")) / "py-slowdown"
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+PEAK_FILES = 200  # formas de onda guardadas: las de los archivos abiertos más recientemente
+
+
+def peaks_path(path: Path, rate: int, channels: int) -> Path | None:
+    """Where the peaks of PATH, read at RATE and CHANNELS, are kept between sessions (None: it cannot be told)."""
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    # (otro tamaño u otra fecha: otro archivo, aunque se llame igual)
+    key = f"{path.resolve()}|{stat.st_size}|{stat.st_mtime_ns}|{rate}|{channels}|{BUCKET}|1"
+    return cache_dir() / "peaks" / (hashlib.sha256(key.encode()).hexdigest()[:32] + ".npz")
+
+
+def load_peaks(where: Path | None) -> tuple[Peaks, int] | None:
+    """The peaks kept at WHERE, and the frames of the file: (peaks, frames), or None."""
+    if where is None or not where.is_file():
+        return None
+    try:
+        with np.load(where) as data:
+            lo, hi, frames = data["lo"], data["hi"], int(data["frames"])
+        peaks = Peaks(len(lo))
+        peaks.lo[:len(lo)] = lo.astype(np.float32) / SCALE
+        peaks.hi[:len(hi)] = hi.astype(np.float32) / SCALE
+        peaks.count = len(lo)
+        os.utime(where)  # (usada ahora: de las últimas que se borran)
+        return peaks, frames
+    except (OSError, ValueError, KeyError):
+        return None
+
+
+def save_peaks(where: Path | None, peaks: Peaks, frames: int) -> None:
+    """Keep PEAKS for the next time, and forget the oldest beyond PEAK_FILES."""
+    if where is None:
+        return
+    try:
+        where.parent.mkdir(parents=True, exist_ok=True)
+        count = peaks.count
+        temporary = where.with_suffix(".tmp.npz")
+        np.savez_compressed(temporary, lo=np.rint(peaks.lo[:count] * SCALE).astype(np.int16),
+                            hi=np.rint(peaks.hi[:count] * SCALE).astype(np.int16), frames=np.int64(frames))
+        temporary.replace(where)
+        kept = sorted(where.parent.glob("*.npz"), key=lambda p: p.stat().st_mtime, reverse=True)
+        for old in kept[PEAK_FILES:]:
+            old.unlink(missing_ok=True)
+    except OSError:
+        pass  # (sin la forma de onda guardada, la próxima vez se dibuja mientras se lee, como siempre)
 
 
 class Peaks:
@@ -279,7 +329,12 @@ class Audio:
         capacity = int((seconds if seconds else 600.0) * self.rate * 1.02) + self.rate
         self._file = tempfile.TemporaryFile(dir=cache_dir(), prefix="decoded-")  # noqa: SIM115 (open while the audio is)
         self._data = self._map(capacity)
-        self.peaks = Peaks(capacity // BUCKET + 2)
+        # Los picos que se dibujan: los de la última vez, si el archivo es el mismo (toda la forma de onda
+        # enseguida); si no, los que se calculan al leerlo (_building).
+        self._building = Peaks(capacity // BUCKET + 2)
+        self._peaks_file = peaks_path(self.path, self.rate, self.channels)
+        kept = load_peaks(self._peaks_file)
+        self.peaks, self._known_frames = kept if kept else (self._building, None)
 
         self.decoded = 0  # frames ready to be read
         self.parts_used = 0  # partes leídas en paralelo que se añadieron (0: todo de corrido)
@@ -297,7 +352,11 @@ class Audio:
     @property
     def duration(self) -> float:
         """Seconds: the real length once decoded, the announced one before."""
-        if self.done or not self.estimated:
+        if self.done:
+            return self.decoded / self.rate
+        if self._known_frames:
+            return self._known_frames / self.rate  # (medido la última vez)
+        if not self.estimated:
             return self.decoded / self.rate
         return max(self.decoded, self._data.shape[0] / 1.02 - self.rate) / self.rate
 
@@ -358,7 +417,13 @@ class Audio:
             for part in running:
                 part.kill()
             self._straight.close()
-        self.peaks.finish()
+        self._building.finish()
+        if self.peaks is not self._building:
+            if self._building.count != self.peaks.count or self.decoded != self._known_frames:
+                self.peaks = self._building  # (no era el mismo: lo leído manda)
+                self._known_frames = None
+        elif not self.error and not self._stop.is_set():
+            save_peaks(self._peaks_file, self._building, self.decoded)
         self.done = True
 
     def _parallel(self) -> bool:
@@ -446,7 +511,7 @@ class Audio:
             np.clip(scaled, -SCALE, SCALE - 1, out=scaled)
             samples = scaled.astype(np.int16)
         self._data[self.decoded:end] = samples
-        self.peaks.add(samples)
+        self._building.add(samples)
         self.decoded = end
 
     def wait(self, timeout: float | None = None) -> bool:
