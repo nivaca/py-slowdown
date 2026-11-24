@@ -35,7 +35,9 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Store, export_text
+from . import export
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, number, recording_tempo
+from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_PITCH, MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
 from .hearing import CHANNELS, FILTERS
 from .interface import tr
@@ -331,6 +333,7 @@ class Window(QMainWindow):
         a = self._action
         self.a_open = a(tr("&Open…"), self.open_dialog, [QKeySequence.StandardKey.Open])
         self.a_close = a(tr("&Close"), self.close_file, [QKeySequence.StandardKey.Close])
+        self.a_export_audio = a(tr("E&xport the audio…"), self.export_audio, ["Ctrl+E"])
         self.a_quit = a(tr("&Quit"), self.close, [QKeySequence.StandardKey.Quit])
         self.a_play = a(tr("&Play/Pause"), self.toggle, ["Space"])
         self.a_stop = a(tr("&Stop"), self.stop, ["S"])
@@ -377,6 +380,7 @@ class Window(QMainWindow):
         file.addAction(self.a_open)
         self.recent_menu = file.addMenu(tr("Open &recent"))
         self.recent_menu.aboutToShow.connect(self._fill_recent)
+        file.addAction(self.a_export_audio)
         file.addAction(self.a_close)
         file.addSeparator()
         file.addAction(self.a_quit)
@@ -838,7 +842,7 @@ class Window(QMainWindow):
         for widget in (self.b_start, self.b_back, self.b_play, self.b_stop, self.b_forward, self.b_end,
                        self.b_mark, self.b_repeat, self.panel.add_button):
             widget.setEnabled(loaded)
-        for action in (self.a_close, self.a_play, self.a_stop, self.a_start, self.a_end, self.a_back,
+        for action in (self.a_close, self.a_export_audio, self.a_play, self.a_stop, self.a_start, self.a_end, self.a_back,
                        self.a_forward, self.a_back_1, self.a_forward_1, self.a_mark, self.a_prev_mark,
                        self.a_next_mark, self.a_zoom_in, self.a_zoom_out, self.a_fit, self.a_repeat,
                        self.a_sel_start, self.a_sel_end, self.a_sel_clear):
@@ -931,6 +935,39 @@ class Window(QMainWindow):
         if target is not None:
             self.seek(target.time)
             self.panel.table.selectRow(self.bookmarks.index(target))
+
+    def export_audio(self) -> None:
+        """Save the recording (or the selection) as it sounds: at the speed and pitch chosen, and, if asked, as
+        it is heard (Hear)."""
+        if not self.audio:
+            return
+        player = self.player
+        channels, filter_ = player.hearing
+        plain = (channels, filter_) == ("both", "none")
+        dialog = ExportDialog(self, self.selection, player.speed, player.pitch, player.formants,
+                              None if plain else self.b_hear.text(),
+                              self.settings.value("export/format", "wav"))
+        if not dialog.exec():
+            return
+        format_ = dialog.chosen_format()
+        self.settings.setValue("export/format", format_)
+        folder = Path(self.settings.value("export/folder", str(self.audio.path.parent)))
+        suggestion = folder / suggested_name(self.audio.path, player.speed, player.pitch, format_)
+        suffix = export.FORMATS[format_][0]
+        path, _ = QFileDialog.getSaveFileName(self, tr("Export the audio"), str(suggestion),
+                                              f"{dialog.format.currentText()} (*{suffix})")
+        if not path:
+            return
+        path = Path(path)
+        if path.suffix.lower() != suffix:
+            path = path.with_name(path.name + suffix)
+        self.settings.setValue("export/folder", str(path.parent))
+        start, end = self.selection if dialog.part.isChecked() and self.selection else (0.0, None)
+        settings = export.Settings(start=start, end=end, speed=player.speed, pitch=player.pitch,
+                                   formants=player.formants,
+                                   hearing=player.hearing if dialog.hearing.isChecked() else ("both", "none"))
+        if run_export(self, self.audio, path, format_, settings):
+            self.statusBar().showMessage(tr("Exported {name}", name=path.name), 6000)
 
     def export_bookmarks(self) -> None:
         if not self.audio or not self.bookmarks:

@@ -7,6 +7,14 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Export the audio**: File > Export the audio (Ctrl+E) saves the whole
+  file, or the selection, as it sounds: at the speed and the pitch chosen,
+  with the formants if they are kept, and, if asked, as it is heard (Hear).
+  As WAV, FLAC, MP3 or Opus, named after the recording with its speed and
+  pitch. It is done in the background, with a progress bar and Cancel, while
+  the recording goes on playing (about 13 times faster than real time). The
+  whole file at 1× is the file itself, sample for sample; a selection comes
+  in and goes out on a short ramp; a filter does not delay it.
 - **Hear one part of the mix**: Playback > Hear, and the button Hear in the
   second row, choose the channels (both, the left or the right only, the
   two in one, or the mix without its centre, where the voice and the solo

@@ -172,10 +172,11 @@ class Renderer:
     def _wraps(self, before: float, after: float) -> bool:
         return bool(self.loop) and before < self.loop[1] <= after + 0.5
 
-    def seek(self, frame: float) -> None:
+    def seek(self, frame: float, fade: bool = True) -> None:
+        """Go to FRAME; the next block comes in on a short ramp, unless FADE is False."""
         self.pos = float(min(max(0.0, frame), max(0, self.audio.length)))
         self._stretching = False
-        self._seam = True
+        self._seam = fade
 
     @property
     def plain(self) -> bool:

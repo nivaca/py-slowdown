@@ -751,4 +751,94 @@
     <en>&amp;Hear</en>
     <tr>&amp;Oír</tr>
   </text>
+  <text>
+    <en>At {speed}×</en>
+    <tr>A {speed}×</tr>
+  </text>
+  <text>
+    <en>{n} semitones higher</en>
+    <tr>{n} semitonos más alto</tr>
+  </text>
+  <text>
+    <en>{n} semitones lower</en>
+    <tr>{n} semitonos más bajo</tr>
+  </text>
+  <text>
+    <en>(formants kept)</en>
+    <tr>(con los formantes)</tr>
+  </text>
+  <text>
+    <en>at the pitch of the recording</en>
+    <tr>a la altura de la grabación</tr>
+  </text>
+  <text>
+    <en>Export the audio</en>
+    <tr>Exportar el audio</tr>
+  </text>
+  <text>
+    <en>The &amp;whole file</en>
+    <tr>El archivo &amp;entero</tr>
+  </text>
+  <text>
+    <en>The &amp;selection ({start} – {end})</en>
+    <tr>La &amp;selección ({start} – {end})</tr>
+  </text>
+  <text>
+    <en>The &amp;selection (there is none)</en>
+    <tr>La &amp;selección (no hay ninguna)</tr>
+  </text>
+  <text>
+    <en>As it is heard ({what})</en>
+    <tr>Como se oye ({what})</tr>
+  </text>
+  <text>
+    <en>As it is heard (Hear: everything)</en>
+    <tr>Como se oye (Oír: todo)</tr>
+  </text>
+  <text>
+    <en>Export:</en>
+    <tr>Exportar:</tr>
+  </text>
+  <text>
+    <en>&amp;Format:</en>
+    <tr>&amp;Formato:</tr>
+  </text>
+  <text>
+    <en>Sound:</en>
+    <tr>Sonido:</tr>
+  </text>
+  <text>
+    <en>&amp;Export…</en>
+    <tr>&amp;Exportar…</tr>
+  </text>
+  <text>
+    <en>{n} st</en>
+    <tr>{n} st</tr>
+  </text>
+  <text>
+    <en> (export)</en>
+    <tr> (exportado)</tr>
+  </text>
+  <text>
+    <en>Exporting {name}…</en>
+    <tr>Exportando {name}…</tr>
+  </text>
+  <text>
+    <en>Cancel</en>
+    <tr>Cancelar</tr>
+  </text>
+  <text>
+    <en>Cannot export {name}:
+{error}</en>
+    <tr>No se puede exportar {name}:
+{error}</tr>
+  </text>
+  <text>
+    <en>E&amp;xport the audio…</en>
+    <tr>E&amp;xportar el audio…</tr>
+  </text>
+  <text>
+    <en>Exported {name}</en>
+    <tr>Exportado {name}</tr>
+  </text>
 </interface>

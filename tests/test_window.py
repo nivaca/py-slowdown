@@ -616,3 +616,34 @@ def test_hearing_in_the_window(window, app, wav, tmp_path):
     write(mono, tone(2.0, channels=1))
     loaded(window, app, mono)
     assert not window.a_channels["left"].isEnabled() and window.a_filters["bass"].isEnabled()
+
+
+def test_export_the_audio(window, app, wav, tmp_path, monkeypatch):
+    """File > Export the audio: the selection, at the speed and pitch chosen, as it is heard, into the file named."""
+    from py_slowdown import exportdialog, window as window_module
+    from py_slowdown.audio import Audio
+
+    loaded(window, app, wav)
+    window.set_speed(0.5)
+    window.set_selection((1.0, 3.0))
+    window.a_filters["bass"].trigger()
+    chosen = {}
+
+    def accept(dialog):
+        chosen["sound"] = dialog.sound.text()
+        chosen["hearing"] = dialog.hearing.isChecked()
+        dialog.format.setCurrentIndex(dialog.format.findData("flac"))
+        return True
+
+    monkeypatch.setattr(exportdialog.ExportDialog, "exec", accept)
+    out = tmp_path / "slow.flac"
+    monkeypatch.setattr(window_module.QFileDialog, "getSaveFileName",
+                        lambda *args, **kwargs: (str(out), ""))
+    window.export_audio()
+    assert chosen == {"sound": "At 0.5×, at the pitch of the recording.", "hearing": True}
+    assert out.exists() and window.settings.value("export/format") == "flac"
+    again = Audio(out)
+    again.wait(10)
+    assert abs(again.duration - 4.0) < 0.05  # (dos segundos a 0,5×)
+    again.close()
+    assert exportdialog.suggested_name(wav, 0.75, -2.0, "mp3") == "clicks (0.75×, −2 st).mp3"

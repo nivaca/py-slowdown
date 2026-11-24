@@ -7,6 +7,15 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Exportar el audio**: Archivo > Exportar el audio (Ctrl+E) guarda el
+  archivo entero, o la selección, como suena: a la velocidad y la altura
+  elegidas, con los formantes si se conservan y, si se pide, como se oye
+  (Oír). En WAV, FLAC, MP3 u Opus, con el nombre de la grabación, su
+  velocidad y su altura. Se hace en segundo plano, con una barra de
+  progreso y Cancelar, mientras la grabación sigue sonando (unas 13 veces
+  más rápido que el tiempo real). El archivo entero a 1× es el archivo
+  mismo, muestra por muestra; una selección entra y sale en una rampa
+  corta; un filtro no lo atrasa.
 - **Oír una parte de la mezcla**: Reproducción > Oír, y el botón Oír de la
   segunda fila, eligen los canales (los dos, solo el izquierdo o el
   derecho, los dos en uno, o la mezcla sin su centro, donde suelen estar la
