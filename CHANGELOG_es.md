@@ -5,7 +5,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Sin publicar
+## 1.2.0 — 2026-11-24
+
+Los ajustes de cada grabación viajan con ella, en un archivo XML de su
+nombre; velocidades propias en un botón; una calidad de reproducción a
+elegir; y una ventana más clara: Oír y Cuenta previa en la barra de menús,
+botones que muestran cuándo están encendidos.
 
 - **Formantes solo con la altura movida**: el botón Formantes (y
   Reproducción > Conservar los formantes) está apagado mientras la altura

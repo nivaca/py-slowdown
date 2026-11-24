@@ -5,7 +5,12 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 1.2.0 — 2026-11-24
+
+The settings of each recording travel with it, in an XML file of its name;
+speeds of one's own in a button; a choice of playback quality; and a
+clearer window: Hear and Count-in in the menu bar, buttons that show when
+they are on.
 
 - **Formants only with the pitch moved**: the button Formants (and Playback >
   Keep the formants) is greyed out while the pitch is that of the
