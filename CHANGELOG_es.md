@@ -7,6 +7,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Bucles, selecciones guardadas con un nombre**: Reproducción > Guardar la
+  selección como bucle (Mayús+L), o Guardar la selección en la pestaña
+  nueva Bucles del panel (ahora Marcadores y bucles), guarda la selección,
+  y su nombre se escribe en la lista. Un doble clic en sus tiempos la vuelve
+  a elegir, la repite y va a su comienzo. Se guardan para cada archivo, con
+  sus marcadores.
 - **Exportar el audio**: Archivo > Exportar el audio (Ctrl+E) guarda el
   archivo entero, o la selección, como suena: a la velocidad y la altura
   elegidas, con los formantes si se conservan y, si se pide, como se oye

@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QSlider,
     QStyle,
+    QTabWidget,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -34,14 +35,14 @@ from PySide6.QtWidgets import (
 
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
-from .bookmarks import Bookmark, Store, export_text
+from .bookmarks import Bookmark, Loop, Store, export_text
 from . import export
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_PITCH, MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
 from .hearing import CHANNELS, FILTERS
 from .interface import tr
-from .panel import BookmarkPanel
+from .panel import BookmarkPanel, LoopPanel
 from .timefmt import clock
 from .waveform import WaveformView
 
@@ -104,6 +105,7 @@ class Window(QMainWindow):
         self.store = store or Store()
         self.audio: Audio | None = None
         self.bookmarks: list[Bookmark] = []
+        self.loops: list[Loop] = []
         self._resume = 0.0  # where to go once the file is decoded that far
         self._announced: Audio | None = None  # the file whose end of reading was told
         self.skip = float(self.settings.value("skip", 5, type=float))
@@ -118,6 +120,7 @@ class Window(QMainWindow):
         self.view = WaveformView(self)
         self.wave = self.view.wave
         self.panel = BookmarkPanel(self)
+        self.loop_panel = LoopPanel(self)
         self._build_transport()
         central = QWidget(self)
         layout = QVBoxLayout(central)
@@ -126,9 +129,12 @@ class Window(QMainWindow):
         layout.addWidget(self.transport)
         self.setCentralWidget(central)
 
-        self.dock = QDockWidget(tr("Bookmarks"), self)
+        self.tabs = QTabWidget(self)
+        self.tabs.addTab(self.panel, tr("Bookmarks"))
+        self.tabs.addTab(self.loop_panel, tr("Loops"))
+        self.dock = QDockWidget(tr("Bookmarks and loops"), self)
         self.dock.setObjectName("bookmarks")
-        self.dock.setWidget(self.panel)
+        self.dock.setWidget(self.tabs)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
 
         self._build_actions()
@@ -354,6 +360,7 @@ class Window(QMainWindow):
         self.a_sel_start = a(tr("Select&ion starts here"), lambda: self.mark_selection(start=True), ["I"])
         self.a_sel_end = a(tr("Selection ends &here"), lambda: self.mark_selection(start=False), ["O"])
         self.a_sel_clear = a(tr("Clear the selecti&on"), lambda: self.set_selection(None), ["Esc"])
+        self.a_save_loop = a(tr("Sa&ve the selection as a loop"), self.save_loop, ["Shift+L"])
         self.a_count = a(tr("&Count in before playing"), self._set_count_on, ["C"], checkable=True)
         self.a_count.setChecked(self.count.on)
         self.a_count_settings = a(tr("Co&unt-in settings…"), self.count_settings)
@@ -405,7 +412,7 @@ class Window(QMainWindow):
                        self.a_forward_1, self.a_forward, self.a_end, None,
                        self.a_slower, self.a_faster, self.a_normal, None,
                        self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, None,
-                       self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, None,
+                       self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, self.a_save_loop, None,
                        self.a_count, self.a_count_settings, self.a_tap):
             play.addSeparator() if action is None else play.addAction(action)
         play.addSeparator()
@@ -491,6 +498,10 @@ class Window(QMainWindow):
         self.panel.removeRequested.connect(self.remove_bookmark)
         self.panel.renamed.connect(self._renamed)
         self.panel.exportRequested.connect(self.export_bookmarks)
+        self.loop_panel.activated.connect(self.repeat_loop)
+        self.loop_panel.saveRequested.connect(self.save_loop)
+        self.loop_panel.removeRequested.connect(self.remove_loop)
+        self.loop_panel.renamed.connect(self._loop_renamed)
 
     # --- archivos
 
@@ -527,6 +538,8 @@ class Window(QMainWindow):
         self.wave.set_selection(None)
         self.bookmarks = self.store.bookmarks(path)
         self._show_bookmarks()
+        self.loops = self.store.loops(path)
+        self.loop_panel.show_loops(self.loops)
         self.set_speed(self.player.speed)
         self.set_hearing(*self.player.hearing)
         # Sigue donde se dejó, cuando el archivo esté decodificado hasta allí (_tick).
@@ -562,6 +575,8 @@ class Window(QMainWindow):
         audio.close()
         self.audio = None
         self.bookmarks = []
+        self.loops = []
+        self.loop_panel.show_loops(self.loops)
         self._resume = 0.0
         self.wave.set_audio(None)
         self.selection = None
@@ -690,6 +705,7 @@ class Window(QMainWindow):
         self.selection = selection
         self.wave.set_selection(selection, self.a_repeat.isChecked())
         self._apply_loop()
+        self._update_loop_saving()
         if selection:
             self.statusBar().showMessage(tr("Selection: {start} – {end}", start=clock(selection[0], tenths=True),
                                             end=clock(selection[1], tenths=True)), 4000)
@@ -848,6 +864,7 @@ class Window(QMainWindow):
                        self.a_sel_start, self.a_sel_end, self.a_sel_clear):
             action.setEnabled(loaded)
         self.a_export.setEnabled(loaded and bool(self.bookmarks))
+        self._update_loop_saving()
         self._update_hearing_choices()
         self._update_play_button()
 
@@ -935,6 +952,59 @@ class Window(QMainWindow):
         if target is not None:
             self.seek(target.time)
             self.panel.table.selectRow(self.bookmarks.index(target))
+
+    # --- bucles: selecciones guardadas con un nombre
+
+    def _update_loop_saving(self) -> None:
+        can = self.audio is not None and self.selection is not None
+        self.a_save_loop.setEnabled(can)
+        self.loop_panel.save_button.setEnabled(can)
+
+    def _save_loops(self) -> None:
+        if self.audio:
+            self.store.set_loops(self.audio.path, self.loops)
+
+    def save_loop(self) -> None:
+        """Keep the selection as a loop; its name is written in the list (Loops), which is shown."""
+        if not self.audio or not self.selection:
+            return
+        start, end = self.selection
+        for row, loop in enumerate(self.loops):
+            if abs(loop.start - start) < 0.05 and abs(loop.end - end) < 0.05:
+                self.tabs.setCurrentWidget(self.loop_panel)
+                self.loop_panel.show_loops(self.loops, row)
+                return
+        loop = Loop(round(start, 3), round(end, 3), "")
+        self.loops.append(loop)
+        self.loops.sort(key=lambda x: (x.start, x.end))
+        row = self.loops.index(loop)
+        self._save_loops()
+        self.dock.show()
+        self.tabs.setCurrentWidget(self.loop_panel)
+        self.loop_panel.show_loops(self.loops, row)
+        self.loop_panel.edit_label(row)
+        self.statusBar().showMessage(tr("Loop {start} – {end}: write its name", start=clock(start, tenths=True),
+                                        end=clock(end, tenths=True)), 4000)
+
+    def repeat_loop(self, row: int) -> None:
+        """Select the loop of ROW, repeat it, and go to its start."""
+        if not self.audio or not 0 <= row < len(self.loops):
+            return
+        loop = self.loops[row]
+        self.set_selection((loop.start, loop.end))
+        self.a_repeat.setChecked(True)
+        self.seek(loop.start)
+
+    def remove_loop(self, row: int) -> None:
+        if 0 <= row < len(self.loops):
+            del self.loops[row]
+            self._save_loops()
+            self.loop_panel.show_loops(self.loops)
+
+    def _loop_renamed(self, row: int, text: str) -> None:
+        if 0 <= row < len(self.loops):
+            self.loops[row].label = text
+            self._save_loops()
 
     def export_audio(self) -> None:
         """Save the recording (or the selection) as it sounds: at the speed and pitch chosen, and, if asked, as

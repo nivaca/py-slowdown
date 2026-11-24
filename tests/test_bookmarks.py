@@ -65,3 +65,15 @@ def test_folders_of_each_system(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
     assert bookmarks.data_dir() == tmp_path / "data" / "py-slowdown"
+
+
+def test_loops(tmp_path):
+    """Loops are kept by file, in order, each with its start before its end; none, nothing is kept."""
+    from py_slowdown.bookmarks import Loop
+
+    store = Store(tmp_path / "b.json")
+    audio = tmp_path / "song.mp3"
+    store.set_loops(audio, [Loop(12.0, 15.5, "Bridge"), Loop(3.0, 1.0, "Intro")])
+    assert Store(tmp_path / "b.json").loops(audio) == [Loop(1.0, 3.0, "Intro"), Loop(12.0, 15.5, "Bridge")]
+    store.set_loops(audio, [])
+    assert json.loads((tmp_path / "b.json").read_text())["files"] == {}

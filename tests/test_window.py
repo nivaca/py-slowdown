@@ -647,3 +647,26 @@ def test_export_the_audio(window, app, wav, tmp_path, monkeypatch):
     assert abs(again.duration - 4.0) < 0.05  # (dos segundos a 0,5×)
     again.close()
     assert exportdialog.suggested_name(wav, 0.75, -2.0, "mp3") == "clicks (0.75×, −2 st).mp3"
+
+
+def test_loops_in_the_window(window, app, wav):
+    """Save the selection as a loop, name it, and later repeat it with a double click; it is there when the file is
+    opened again."""
+    loaded(window, app, wav)
+    assert not window.a_save_loop.isEnabled()
+    window.set_selection((1.0, 2.5))
+    window.save_loop()
+    window.loop_panel._filling = False
+    window.loop_panel.table.item(0, 2).setText("Riff")
+    assert [(x.start, x.end, x.label) for x in window.loops] == [(1.0, 2.5, "Riff")]
+    window.save_loop()  # (la misma: no se repite)
+    assert len(window.loops) == 1
+    window.set_selection(None)
+    window.a_repeat.setChecked(False)
+    window.repeat_loop(0)
+    assert window.selection == (1.0, 2.5) and window.a_repeat.isChecked() and window.player.loop == (1.0, 2.5)
+    window.close_file()
+    loaded(window, app, wav)
+    assert [x.label for x in window.loops] == ["Riff"] and window.loop_panel.table.rowCount() == 1
+    window.remove_loop(0)
+    assert window.loops == [] and window.store.loops(wav) == []

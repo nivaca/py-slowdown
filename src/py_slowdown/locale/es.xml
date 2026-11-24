@@ -841,4 +841,40 @@
     <en>Exported {name}</en>
     <tr>Exportado {name}</tr>
   </text>
+  <text>
+    <en>Start</en>
+    <tr>Inicio</tr>
+  </text>
+  <text>
+    <en>End</en>
+    <tr>Fin</tr>
+  </text>
+  <text>
+    <en>Save the selection</en>
+    <tr>Guardar la selección</tr>
+  </text>
+  <text>
+    <en>Keep the selection as a loop, with a name (Shift+L)</en>
+    <tr>Guardar la selección como un bucle, con un nombre (Mayús+L)</tr>
+  </text>
+  <text>
+    <en>Double-click to repeat it</en>
+    <tr>Doble clic para repetirlo</tr>
+  </text>
+  <text>
+    <en>Loops</en>
+    <tr>Bucles</tr>
+  </text>
+  <text>
+    <en>Bookmarks and loops</en>
+    <tr>Marcadores y bucles</tr>
+  </text>
+  <text>
+    <en>Sa&amp;ve the selection as a loop</en>
+    <tr>&amp;Guardar la selección como bucle</tr>
+  </text>
+  <text>
+    <en>Loop {start} – {end}: write its name</en>
+    <tr>Bucle {start} – {end}: escriba su nombre</tr>
+  </text>
 </interface>

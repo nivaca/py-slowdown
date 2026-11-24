@@ -1,4 +1,4 @@
-"""Los marcadores de cada archivo, y el punto donde se dejó.
+"""Los marcadores de cada archivo, sus selecciones guardadas (bucles), y el punto donde se dejó.
 
 Se guardan juntos en un archivo JSON de la carpeta de datos del usuario
 ($XDG_DATA_HOME/py-slowdown/bookmarks.json, o ~/.local/share/... en Linux;
@@ -7,7 +7,8 @@ macOS), por la ruta completa del archivo de audio:
 
     {"version": 1,
      "files": {"/home/.../clase.mp3": {
-         "bookmarks": [{"time": 83.25, "label": "La segunda pregunta"}],
+         "bookmarks": [{"time": 83.25, "label": "La segunda estrofa"}],
+         "loops": [{"start": 95.0, "end": 103.5, "label": "El puente"}],
          "position": 412.8}}}
 
 El archivo de audio no se toca. Si se mueve o se renombra, sus marcadores se
@@ -26,6 +27,15 @@ from pathlib import Path
 @dataclass
 class Bookmark:
     time: float  # segundos desde el principio
+    label: str = ""
+
+
+@dataclass
+class Loop:
+    """A selection kept with a name, to repeat it again."""
+
+    start: float  # segundos
+    end: float
     label: str = ""
 
 
@@ -74,6 +84,24 @@ class Store:
         self._tidy(audio_path)
         self.save()
 
+    def loops(self, audio_path) -> list[Loop]:
+        entry = self._files.get(self.key(audio_path), {})
+        out = []
+        for item in entry.get("loops", []):
+            try:
+                start, end = sorted((float(item["start"]), float(item["end"])))
+                out.append(Loop(start, end, str(item.get("label", ""))))
+            except (KeyError, TypeError, ValueError):
+                continue
+        return sorted(out, key=lambda loop: (loop.start, loop.end))
+
+    def set_loops(self, audio_path, loops: list[Loop]) -> None:
+        entry = self._files.setdefault(self.key(audio_path), {})
+        entry["loops"] = [{"start": round(loop.start, 3), "end": round(loop.end, 3), "label": loop.label}
+                          for loop in sorted(loops, key=lambda loop: (loop.start, loop.end))]
+        self._tidy(audio_path)
+        self.save()
+
     def position(self, audio_path) -> float:
         try:
             return float(self._files.get(self.key(audio_path), {}).get("position", 0.0))
@@ -90,8 +118,9 @@ class Store:
         # Un archivo sin marcadores y leído desde el principio no ocupa lugar.
         key = self.key(audio_path)
         entry = self._files.get(key, {})
-        if not entry.get("bookmarks"):
-            entry.pop("bookmarks", None)
+        for name in ("bookmarks", "loops"):
+            if not entry.get(name):
+                entry.pop(name, None)
         if not entry.get("position"):
             entry.pop("position", None)
         if not entry:

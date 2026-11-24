@@ -7,6 +7,11 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Loops, selections kept with a name**: Playback > Save the selection as a
+  loop (Shift+L), or Save the selection in the new tab Loops of the panel
+  (now Bookmarks and loops), keeps the selection, and its name is written in
+  the list. A double click on its times selects it again, repeats it, and
+  goes to its start. They are kept for each file, with its bookmarks.
 - **Export the audio**: File > Export the audio (Ctrl+E) saves the whole
   file, or the selection, as it sounds: at the speed and the pitch chosen,
   with the formants if they are kept, and, if asked, as it is heard (Hear).
