@@ -1,3 +1,5 @@
+import shutil
+
 import numpy as np
 import pytest
 from conftest import RATE, tone, write
@@ -6,8 +8,27 @@ from py_slowdown import audio as audio_module
 from py_slowdown.audio import BUCKET, Audio, AudioError, Peaks
 
 
+def decoders():
+    """The decoders there are here: PyAV if installed, the ffmpeg program if installed."""
+    found = []
+    try:
+        import av  # noqa: F401
+        found.append("av")
+    except ImportError:
+        pass
+    if shutil.which("ffmpeg") and shutil.which("ffprobe"):
+        found.append("ffmpeg")
+    return found
+
+
+@pytest.fixture(params=decoders())
+def decoder(request, monkeypatch):
+    monkeypatch.setenv("PY_SLOWDOWN_DECODER", request.param)
+    return request.param
+
+
 @pytest.mark.parametrize("suffix", [".wav", ".flac", ".mp3", ".m4a", ".opus"])
-def test_formats(tmp_path, suffix):
+def test_formats(tmp_path, suffix, decoder):
     path = tmp_path / f"a{suffix}"
     rate = 48000 if suffix == ".opus" else RATE  # Opus solo usa 48 kHz
     write(path, tone(3.0, rate=rate), rate=rate)
@@ -23,7 +44,7 @@ def test_formats(tmp_path, suffix):
         audio.close()
 
 
-def test_samples_exact(wav):
+def test_samples_exact(wav, decoder):
     audio = Audio(wav)
     audio.wait(10)
     expected = tone(6.0)
@@ -33,7 +54,7 @@ def test_samples_exact(wav):
     audio.close()
 
 
-def test_mono_and_resampled(tmp_path):
+def test_mono_and_resampled(tmp_path, decoder):
     path = tmp_path / "mono.flac"
     write(path, tone(2.0, channels=1))
     audio = Audio(path, rate=48000)
@@ -43,7 +64,7 @@ def test_mono_and_resampled(tmp_path):
     audio.close()
 
 
-def test_longer_than_announced(wav, monkeypatch):
+def test_longer_than_announced(wav, monkeypatch, decoder):
     # Un archivo que anuncia menos de lo que dura: el archivo temporal crece y nada se pierde.
     monkeypatch.setattr(Audio, "_announced_seconds", lambda self: 0.5)
     audio = Audio(wav)
@@ -53,7 +74,7 @@ def test_longer_than_announced(wav, monkeypatch):
     audio.close()
 
 
-def test_not_audio(tmp_path):
+def test_not_audio(tmp_path, decoder):
     path = tmp_path / "text.mp3"
     path.write_text("not audio at all")
     with pytest.raises(AudioError):
@@ -81,3 +102,22 @@ def test_peaks_in_pieces():
     assert np.array_equal(whole.lo[:11], pieces.lo[:11])
     assert np.array_equal(whole.hi[:11], pieces.hi[:11])
     assert whole.hi[0] == data[:BUCKET].max()
+
+
+def test_decoder_choice(monkeypatch):
+    monkeypatch.setenv("PY_SLOWDOWN_DECODER", "ffmpeg")
+    assert audio_module.decoder() == "ffmpeg"
+    monkeypatch.delenv("PY_SLOWDOWN_DECODER")
+    assert audio_module.decoder() in ("av", "ffmpeg")
+
+
+def test_damaged_halfway(tmp_path, decoder):
+    """A file cut short: what could be read stays, and the error is told."""
+    path = tmp_path / "cut.flac"
+    write(path, tone(4.0))
+    data = path.read_bytes()
+    path.write_bytes(data[: len(data) // 2])
+    audio = Audio(path)
+    assert audio.wait(10)
+    assert 0.5 < audio.duration < 3.5
+    audio.close()

@@ -1,7 +1,7 @@
 """El audio de un archivo, decodificado.
 
 Audio abre un archivo (MP3, MP4, M4A, FLAC, WAV, Ogg, Opus... lo que FFmpeg lea,
-mediante PyAV) y lo decodifica en un hilo aparte, a muestras float32 entrelazadas
+mediante PyAV o, donde PyAV no está, con el programa ffmpeg) y lo decodifica en un hilo aparte, a muestras float32 entrelazadas
 (cuadros × canales; uno o dos canales: los demás se mezclan en estéreo). Las
 muestras van a un archivo temporal sin nombre, mapeado en memoria: una grabación
 de dos horas ocupa más de un gigabyte en float32, y así el sistema guarda en la
@@ -13,12 +13,14 @@ esperar el final.
 
 from __future__ import annotations
 
+import json
 import os
+import shutil
+import subprocess
 import tempfile
 import threading
 from pathlib import Path
 
-import av
 import numpy as np
 
 # Frames per peak: the waveform keeps the minimum and the maximum of each group of BUCKET frames.
@@ -86,6 +88,125 @@ class Peaks:
         self.count = end
 
 
+def decoder() -> str:
+    """"av" (PyAV) or "ffmpeg" (the ffmpeg program): what reads the files here.
+
+    PyAV is preferred; the ffmpeg program serves where PyAV is not installed
+    (Fedora has no package of PyAV, so the RPM uses ffmpeg-free).
+    $PY_SLOWDOWN_DECODER chooses one.
+    """
+    wanted = os.environ.get("PY_SLOWDOWN_DECODER", "")
+    if wanted in ("av", "ffmpeg"):
+        return wanted
+    try:
+        import av  # noqa: F401
+    except ImportError:
+        return "ffmpeg"
+    return "av"
+
+
+class _PyAV:
+    """A file read by PyAV."""
+
+    def __init__(self, path: Path):
+        import av
+
+        self._av = av
+        try:
+            self._container = av.open(str(path))
+        except (av.FFmpegError, OSError) as error:
+            raise AudioError(str(error)) from error
+        if not self._container.streams.audio:
+            self._container.close()
+            raise AudioError("no audio")
+        stream = self._stream = self._container.streams.audio[0]
+        self.channels = stream.channels or 2
+        self.rate = int(stream.rate or stream.sample_rate or 44100)
+        self.codec = stream.codec_context.name if stream.codec_context else ""
+        if stream.duration and stream.time_base:
+            self.seconds = float(stream.duration * stream.time_base)
+        elif self._container.duration:
+            self.seconds = self._container.duration / av.time_base
+        else:
+            self.seconds = None
+
+    def samples(self, rate: int, channels: int, stop: threading.Event):
+        """The samples, converted to RATE and CHANNELS, as arrays of frames × channels."""
+        av = self._av
+        resampler = av.AudioResampler(format="flt", layout="mono" if channels == 1 else "stereo", rate=rate)
+        try:
+            for frame in self._container.decode(self._stream):
+                if stop.is_set():
+                    return
+                for out in resampler.resample(frame):
+                    yield out.to_ndarray().reshape(-1, channels)
+            for out in resampler.resample(None):
+                yield out.to_ndarray().reshape(-1, channels)
+        except av.FFmpegError as error:
+            raise AudioError(str(error)) from error
+        finally:
+            self._container.close()
+
+
+class _FFmpeg:
+    """A file read by the ffmpeg program (and described by ffprobe)."""
+
+    CHUNK = 8192  # cuadros por lectura
+
+    def __init__(self, path: Path):
+        self.path = path
+        for tool in ("ffmpeg", "ffprobe"):
+            if not shutil.which(tool):
+                raise AudioError(f"{tool} is not installed (nor PyAV)")
+        try:
+            probe = subprocess.run(
+                ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
+                 "stream=codec_name,sample_rate,channels,duration:format=duration", "-of", "json", str(path)],
+                capture_output=True, text=True, timeout=60, check=False)
+            info = json.loads(probe.stdout or "{}")
+        except (OSError, ValueError, subprocess.TimeoutExpired) as error:
+            raise AudioError(str(error)) from error
+        streams = info.get("streams") or []
+        if probe.returncode != 0 or not streams:
+            raise AudioError(probe.stderr.strip() or "no audio")
+        stream = streams[0]
+        self.channels = int(stream.get("channels") or 2)
+        self.rate = int(stream.get("sample_rate") or 44100)
+        self.codec = stream.get("codec_name", "")
+        seconds = stream.get("duration") or (info.get("format") or {}).get("duration")
+        try:
+            self.seconds = float(seconds) if seconds not in (None, "N/A") else None
+        except ValueError:
+            self.seconds = None
+
+    def samples(self, rate: int, channels: int, stop: threading.Event):
+        # Lo que ffmpeg escribe: float32 entrelazado, ya en la frecuencia y los canales pedidos.
+        command = ["ffmpeg", "-nostdin", "-v", "error", "-i", str(self.path), "-map", "0:a:0",
+                   "-f", "f32le", "-acodec", "pcm_f32le", "-ac", str(channels), "-ar", str(rate), "pipe:1"]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        size = self.CHUNK * channels * 4
+        rest = b""
+        try:
+            while not stop.is_set():
+                data = process.stdout.read(size)
+                if not data:
+                    break
+                data = rest + data
+                whole = len(data) // (channels * 4) * channels * 4
+                rest = data[whole:]
+                if whole:
+                    yield np.frombuffer(data[:whole], np.float32).reshape(-1, channels)
+        finally:
+            if stop.is_set():
+                process.kill()
+            process.stdout.close()
+            error = process.stderr.read().decode(errors="replace").strip()
+            process.stderr.close()
+            status = process.wait()
+        if status != 0 and not stop.is_set():
+            raise AudioError(error.splitlines()[-1] if error else f"ffmpeg ended with {status}")
+
+
 class Audio:
     """The decoded audio of a file.
 
@@ -99,18 +220,10 @@ class Audio:
         Raises AudioError if the file has no audio that FFmpeg can read.
         """
         self.path = Path(path)
-        try:
-            self._container = av.open(str(self.path))
-        except (av.FFmpegError, OSError) as error:
-            raise AudioError(str(error)) from error
-        if not self._container.streams.audio:
-            self._container.close()
-            raise AudioError("no audio")
-        stream = self._container.streams.audio[0]
-        self._stream = stream
-        self.channels = 1 if (stream.channels or 2) == 1 else 2
-        self.rate = int(rate or stream.rate or stream.sample_rate or 44100)
-        self.codec = stream.codec_context.name if stream.codec_context else ""
+        self._source = _PyAV(self.path) if decoder() == "av" else _FFmpeg(self.path)
+        self.channels = 1 if self._source.channels == 1 else 2
+        self.rate = int(rate or self._source.rate)
+        self.codec = self._source.codec
 
         seconds = self._announced_seconds()
         self.estimated = seconds is not None
@@ -129,12 +242,7 @@ class Audio:
     # --- lo que se sabe del archivo
 
     def _announced_seconds(self) -> float | None:
-        stream = self._stream
-        if stream.duration and stream.time_base:
-            return float(stream.duration * stream.time_base)
-        if self._container.duration:
-            return self._container.duration / av.time_base
-        return None
+        return self._source.seconds
 
     @property
     def duration(self) -> float:
@@ -168,26 +276,16 @@ class Audio:
         self._data = self._map(max(needed, int(self._data.shape[0] * 1.5)))
 
     def _decode(self) -> None:
-        layout = "mono" if self.channels == 1 else "stereo"
-        resampler = av.AudioResampler(format="flt", layout=layout, rate=self.rate)
         try:
-            for frame in self._container.decode(self._stream):
-                if self._stop.is_set():
-                    return
-                for out in resampler.resample(frame):
-                    self._take(out)
-            for out in resampler.resample(None):
-                self._take(out)
-        except av.FFmpegError as error:
+            for samples in self._source.samples(self.rate, self.channels, self._stop):
+                self._take(samples)
+        except AudioError as error:
             # A file damaged halfway: what was read until then stays.
             self.error = str(error)
-        finally:
-            self._container.close()
         self.peaks.finish()
         self.done = True
 
-    def _take(self, frame) -> None:
-        samples = frame.to_ndarray().reshape(-1, self.channels)
+    def _take(self, samples: np.ndarray) -> None:
         if not samples.size:
             return
         end = self.decoded + samples.shape[0]

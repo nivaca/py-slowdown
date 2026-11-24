@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from . import __version__, interface
+from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Store, export_text
 from .engine import MAX_SPEED, MIN_SPEED, Output, Player
@@ -45,6 +45,24 @@ SPEED_STEP = 0.05
 SKIPS = (1, 2, 5, 10, 15, 30, 60)
 RECENT = 10
 ICON = Path(__file__).resolve().parent / "icons" / "py-slowdown.svg"
+
+
+def shortcut_rows() -> list[tuple[str, str]]:
+    """(what, keys) of each keyboard shortcut: for Help > Keyboard shortcuts and the manual page."""
+    return [
+        (tr("Play or pause"), "Space"),
+        (tr("Stop and go back to the start"), "S"),
+        (tr("Go to the start / to the end"), "Home / End"),
+        (tr("Back / forward (skip length)"), "← / →"),
+        (tr("Back / forward one second"), "Shift+← / Shift+→"),
+        (tr("Slower / faster"), "↓ / ↑   − / +"),
+        (tr("Normal speed"), "N"),
+        (tr("Add a bookmark"), "B"),
+        (tr("Previous / next bookmark"), "Ctrl+← / Ctrl+→   PgUp / PgDn"),
+        (tr("Zoom in / out / whole file"), "Ctrl++ / Ctrl+− / Ctrl+0"),
+        (tr("Zoom around the pointer"), tr("Ctrl+wheel")),
+        (tr("Open a file"), "Ctrl+O"),
+    ]
 
 
 class Window(QMainWindow):
@@ -99,7 +117,24 @@ class Window(QMainWindow):
             self.restoreState(state)
         self.volume.setValue(int(self.settings.value("volume", 100, type=int)))
         self._update_enabled()
+        self._check_rubberband()
         self.wave.setFocus()
+
+    def _check_rubberband(self) -> None:
+        """Without the Rubber Band Library, the files play only at 1× (and the window says why)."""
+        try:
+            rubberband.library()
+        except rubberband.RubberBandError:
+            self.stretching = False
+            why = tr("The Rubber Band Library is not installed, so the speed stays at 1×.")
+            for widget in (self.speed_slider, self.speed_box, self.b_normal):
+                widget.setEnabled(False)
+                widget.setToolTip(why)
+            for action in (self.a_slower, self.a_faster, self.a_normal):
+                action.setEnabled(False)
+            self.statusBar().showMessage(why)
+        else:
+            self.stretching = True
 
     # --- construcción
 
@@ -412,7 +447,8 @@ class Window(QMainWindow):
         self.b_normal.setEnabled(speed != 1.0)
 
     def change_speed(self, delta: float) -> None:
-        self.set_speed(self.player.speed + delta)
+        if self.stretching:
+            self.set_speed(self.player.speed + delta)
 
     def _set_volume(self, value: int) -> None:
         # A square curve: the steps of the slider sound more even to the ear.
@@ -573,20 +609,7 @@ class Window(QMainWindow):
         QMessageBox.information(self, APP, tr("The language changes when py-slowdown starts again."))
 
     def show_shortcuts(self) -> None:
-        rows = [
-            (tr("Play or pause"), "Space"),
-            (tr("Stop and go back to the start"), "S"),
-            (tr("Go to the start / to the end"), "Home / End"),
-            (tr("Back / forward (skip length)"), "← / →"),
-            (tr("Back / forward one second"), "Shift+← / Shift+→"),
-            (tr("Slower / faster"), "↓ / ↑   − / +"),
-            (tr("Normal speed"), "N"),
-            (tr("Add a bookmark"), "B"),
-            (tr("Previous / next bookmark"), "Ctrl+← / Ctrl+→   PgUp / PgDn"),
-            (tr("Zoom in / out / whole file"), "Ctrl++ / Ctrl+− / Ctrl+0"),
-            (tr("Zoom around the pointer"), tr("Ctrl+wheel")),
-            (tr("Open a file"), "Ctrl+O"),
-        ]
+        rows = shortcut_rows()
         html = "<table cellspacing='4'>" + "".join(
             f"<tr><td>{what}</td><td>&nbsp;&nbsp;<b>{keys}</b></td></tr>" for what, keys in rows) + "</table>"
         QMessageBox.information(self, tr("Keyboard shortcuts"), html)

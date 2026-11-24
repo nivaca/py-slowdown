@@ -2,9 +2,9 @@
 
 Renderer produce el audio de salida por bloques, a partir de un Audio y de una
 velocidad. A velocidad 1 copia las muestras tal cual (bit a bit); a cualquier
-otra, las pasa por el motor R3 («finer») de Rubber Band, en modo de tiempo real,
-que estira o encoge el tiempo y conserva la altura y el timbre. Rubber Band no es
-transparente a velocidad 1 (deja un error de unos -40 dB en un sonido ruidoso), y
+otra, las pasa por el motor R3 («finer») de Rubber Band (rubberband.py), en modo
+de tiempo real, que estira o encoge el tiempo y conserva la altura y el timbre.
+Rubber Band no es transparente a velocidad 1 (deja un error de unos -40 dB en un sonido ruidoso), y
 por eso no se usa entonces.
 
 Player lo lleva a la tarjeta de sonido: un hilo productor llena una cola corta
@@ -23,8 +23,8 @@ from collections import deque
 from collections.abc import Callable
 
 import numpy as np
-import pylibrb
 
+from . import rubberband
 from .audio import Audio
 
 MIN_SPEED = 0.25
@@ -34,10 +34,10 @@ FADE = 192  # cuadros de cada rampa contra chasquidos (unos 4 ms)
 QUEUE_SECONDS = 0.15  # audio preparado de antemano: también el retraso de un cambio de velocidad
 
 OPTIONS = (
-    pylibrb.Option.PROCESS_REALTIME
-    | pylibrb.Option.ENGINE_FINER  # R3, the high-quality engine
-    | pylibrb.Option.CHANNELS_TOGETHER  # keeps the stereo image and mono compatibility of a mix
-    | pylibrb.Option.WINDOW_STANDARD
+    rubberband.PROCESS_REALTIME
+    | rubberband.ENGINE_FINER  # R3, the high-quality engine
+    | rubberband.CHANNELS_TOGETHER  # keeps the stereo image and mono compatibility of a mix
+    | rubberband.WINDOW_STANDARD
 )
 
 
@@ -67,7 +67,7 @@ class Renderer:
         self.audio = audio
         self.speed = 1.0
         self.pos = 0.0  # cuadro del archivo que corresponde al próximo cuadro de salida
-        self._stretcher: pylibrb.RubberBandStretcher | None = None
+        self._stretcher: rubberband.Stretcher | None = None
         self._stretching = False  # whether the stretcher holds the stream now
         self._feed = 0  # next frame of the file to give the stretcher
         self._final = False  # the stretcher was given the end of the file
@@ -128,7 +128,7 @@ class Renderer:
         # después corresponde justo a self.pos, sin el arranque en falso de un estirador vacío.
         audio = self.audio
         if self._stretcher is None:
-            self._stretcher = pylibrb.RubberBandStretcher(audio.rate, audio.channels, OPTIONS, 1.0 / self.speed)
+            self._stretcher = rubberband.Stretcher(audio.rate, audio.channels, OPTIONS, 1.0 / self.speed)
             self._stretcher.set_max_process_size(4096)
         st = self._stretcher
         st.reset()
@@ -164,7 +164,7 @@ class Renderer:
             self._final = last
         available = st.available()
         if available <= 0:
-            if self._final and (available < 0 or st.is_done()):
+            if self._final and available < 0:
                 return None
             return Block(np.zeros((0, audio.channels), np.float32), self.pos, self.speed)
         if self._discard:
@@ -180,18 +180,43 @@ class Renderer:
         return block
 
 
+def sounddevice():
+    """The sounddevice module, with the PortAudio bundled in the package if there is one.
+
+    The AppImage and the Debian package carry their own PortAudio (lib/, made by
+    tools/build-libs.py): sounddevice only looks for it by name, with
+    ctypes.util.find_library, so it is pointed there while it is imported.
+    """
+    import sys
+
+    if "sounddevice" in sys.modules:
+        return sys.modules["sounddevice"]
+    bundled = rubberband.HERE / "lib" / "libportaudio.so.2"
+    if not bundled.is_file():
+        import sounddevice as module
+
+        return module
+    import ctypes.util
+
+    original = ctypes.util.find_library
+    ctypes.util.find_library = lambda name: str(bundled) if name == "portaudio" else original(name)
+    try:
+        import sounddevice as module
+    finally:
+        ctypes.util.find_library = original
+    return module
+
+
 class Output:
     """Where the audio goes: a sound card through sounddevice."""
 
     latency = 0.0
 
     def open(self, rate: int, channels: int, callback: Callable[[np.ndarray], None]) -> None:
-        import sounddevice
-
         def call(outdata, _frames, _time, _status):
             callback(outdata)
 
-        self._stream = sounddevice.OutputStream(
+        self._stream = sounddevice().OutputStream(
             samplerate=rate, channels=channels, dtype="float32", callback=call, latency="high"
         )
         self._stream.start()
@@ -208,9 +233,7 @@ class Output:
     def supports(rate: int) -> bool:
         """Whether the default sound card plays RATE samples per second."""
         try:
-            import sounddevice
-
-            sounddevice.check_output_settings(samplerate=rate, channels=2, dtype="float32")
+            sounddevice().check_output_settings(samplerate=rate, channels=2, dtype="float32")
         except Exception:  # noqa: BLE001 (sin PortAudio, o sin tarjeta: cualquier error de sounddevice)
             return False
         return True
@@ -218,9 +241,7 @@ class Output:
     @staticmethod
     def default_rate() -> int:
         try:
-            import sounddevice
-
-            return int(sounddevice.query_devices(kind="output")["default_samplerate"])
+            return int(sounddevice().query_devices(kind="output")["default_samplerate"])
         except Exception:  # noqa: BLE001 (sin PortAudio, o sin tarjeta: cualquier error de sounddevice)
             return 48000
 

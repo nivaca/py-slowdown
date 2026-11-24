@@ -22,7 +22,6 @@ classifiers = [
 dependencies = [
     "av>=14",
     "numpy>=2.3",
-    "pylibrb>=0.1.2",
     "pyside6-essentials>=6.10",
     "sounddevice>=0.5",
 ]

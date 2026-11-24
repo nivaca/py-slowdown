@@ -140,3 +140,32 @@ def test_seek_while_playing_has_no_click(audio, output):
         assert 2.5 <= player.position < 3.0
     finally:
         player.unload()
+
+
+def test_rubberband_binding():
+    """The binding to the Rubber Band Library: the R3 engine, and audio in and out."""
+    from py_slowdown import rubberband
+    from py_slowdown.engine import OPTIONS
+
+    stretcher = rubberband.Stretcher(RATE, 2, OPTIONS, 2.0)
+    assert stretcher.engine_version == 3
+    stretcher.time_ratio = 2.0
+    pad = stretcher.get_preferred_start_pad()
+    assert pad > 0 and stretcher.get_start_delay() > 0
+    noise = np.random.default_rng(2).uniform(-0.5, 0.5, (2, RATE)).astype(np.float32)
+    stretcher.process(noise, final=True)
+    out = [stretcher.retrieve(max(0, stretcher.available()))]
+    while stretcher.available() > 0:
+        out.append(stretcher.retrieve(stretcher.available()))
+    got = np.concatenate(out, axis=1)
+    assert got.shape[0] == 2 and abs(got.shape[1] - 2 * RATE) < 0.1 * RATE
+    assert stretcher.available() == -1  # todo entregado
+
+
+def test_rubberband_missing(monkeypatch, tmp_path):
+    from py_slowdown import rubberband
+
+    monkeypatch.setattr(rubberband, "_lib", None)
+    monkeypatch.setattr(rubberband, "_candidates", lambda: [str(tmp_path / "nothing.so")])
+    with pytest.raises(rubberband.RubberBandError, match="not found"):
+        rubberband.library()

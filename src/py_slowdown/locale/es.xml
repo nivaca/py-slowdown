@@ -375,4 +375,40 @@
     <en>&lt;p&gt;&lt;b&gt;py-slowdown {version}&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Plays audio slower or faster without changing its pitch, with the Rubber Band Library (R3 engine).&lt;/p&gt;&lt;p&gt;© 2026 Nicolas Vaughan &amp;lt;nicolasvaughan@proton.me&amp;gt;&lt;br&gt;GNU General Public License, version 3 or later.&lt;/p&gt;</en>
     <tr>&lt;p&gt;&lt;b&gt;py-slowdown {version}&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Reproduce audio más lento o más rápido sin cambiar su altura, con la biblioteca Rubber Band (motor R3).&lt;/p&gt;&lt;p&gt;© 2026 Nicolas Vaughan &amp;lt;nicolasvaughan@proton.me&amp;gt;&lt;br&gt;Licencia Pública General de GNU, versión 3 o posterior.&lt;/p&gt;</tr>
   </text>
+  <text>
+    <en>The Rubber Band Library is not installed, so the speed stays at 1×.</en>
+    <tr>La biblioteca Rubber Band no está instalada: la velocidad se queda en 1×.</tr>
+  </text>
+  <text>
+    <en>Play audio slower or faster without changing its pitch, with a waveform and bookmarks.</en>
+    <tr>Reproduce audio más lento o más rápido sin cambiar su altura, con su forma de onda y marcadores.</tr>
+  </text>
+  <text>
+    <en>FILE</en>
+    <tr>ARCHIVO</tr>
+  </text>
+  <text>
+    <en>an audio or video file to open</en>
+    <tr>un archivo de audio o de video para abrir</tr>
+  </text>
+  <text>
+    <en>show this help and quit</en>
+    <tr>muestra esta ayuda y termina</tr>
+  </text>
+  <text>
+    <en>show the version and quit</en>
+    <tr>muestra la versión y termina</tr>
+  </text>
+  <text>
+    <en>usage: </en>
+    <tr>uso: </tr>
+  </text>
+  <text>
+    <en>positional arguments</en>
+    <tr>argumentos</tr>
+  </text>
+  <text>
+    <en>options</en>
+    <tr>opciones</tr>
+  </text>
 </interface>

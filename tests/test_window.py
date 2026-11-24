@@ -134,3 +134,22 @@ def test_spanish_window(app, output, tmp_path, monkeypatch):
         w.close()
     finally:
         interface.use("en")
+
+
+def test_without_rubberband(app, output, tmp_path, monkeypatch, wav):
+    """Without the Rubber Band Library the speed controls are off, and a file still plays at 1×."""
+    from py_slowdown import rubberband
+
+    def missing():
+        raise rubberband.RubberBandError("not found")
+
+    monkeypatch.setattr(rubberband, "library", missing)
+    monkeypatch.setattr("py_slowdown.window.Output", type(output))
+    settings = QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat)
+    w = Window(player=Player(output), store=Store(tmp_path / "b.json"), settings=settings)
+    assert not w.speed_slider.isEnabled() and not w.a_faster.isEnabled()
+    assert "Rubber Band" in w.statusBar().currentMessage()
+    w.change_speed(0.5)
+    assert w.player.speed == 1.0
+    assert w.open_file(wav)
+    w.close()

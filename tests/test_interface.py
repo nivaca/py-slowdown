@@ -16,6 +16,11 @@ def program_texts() -> set[str]:
             if (isinstance(node, ast.Call) and getattr(node.func, "id", None) == "tr"
                     and node.args and isinstance(node.args[0], ast.Constant)):
                 texts.add(interface.key_of(node.args[0].value))
+    # (los que tr() recibe por nombre: la descripción del programa y los de argparse)
+    from py_slowdown import app
+
+    texts.add(interface.key_of(app.USAGE))
+    texts.update(interface.key_of(t) for t in interface.ARGPARSE_TEXTS)
     return texts
 
 

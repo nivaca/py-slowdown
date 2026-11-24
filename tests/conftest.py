@@ -4,8 +4,9 @@ y carpetas propias (configuración, caché, datos) para no tocar las del usuario
 from __future__ import annotations
 
 import os
+import subprocess
+import wave
 
-import av
 import numpy as np
 import pytest
 
@@ -24,10 +25,30 @@ def tone(seconds: float, rate: int = RATE, channels: int = 2) -> np.ndarray:
     return np.repeat(x[:, None], channels, axis=1)
 
 
-def write(path, samples: np.ndarray, rate: int = RATE, codec: str | None = None) -> None:
-    """Write SAMPLES (frames × channels) to PATH with the codec its extension asks for."""
-    codecs = {".wav": "pcm_s16le", ".flac": "flac", ".mp3": "libmp3lame", ".m4a": "aac", ".ogg": "vorbis", ".opus": "libopus"}
-    codec = codec or codecs[os.path.splitext(str(path))[1]]
+CODECS = {".wav": "pcm_s16le", ".flac": "flac", ".mp3": "libmp3lame", ".m4a": "aac", ".opus": "libopus"}
+
+
+def write(path, samples: np.ndarray, rate: int = RATE) -> None:
+    """Write SAMPLES (frames × channels) to PATH, with the codec its extension asks for.
+
+    With PyAV if it is installed; else (as in the RPM's %check, Fedora has no PyAV)
+    a WAV made by Python, converted by the ffmpeg program.
+    """
+    codec = CODECS[os.path.splitext(str(path))[1]]
+    try:
+        import av
+    except ImportError:
+        av = None
+    if av is None:
+        wav = str(path) + ".tmp.wav"
+        with wave.open(wav, "wb") as out:
+            out.setnchannels(samples.shape[1])
+            out.setsampwidth(2)
+            out.setframerate(rate)
+            out.writeframes((np.clip(samples, -1, 1) * 32767).round().astype("<i2").tobytes())
+        subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", wav, "-c:a", codec, str(path)], check=True)
+        os.unlink(wav)
+        return
     layout = "mono" if samples.shape[1] == 1 else "stereo"
     with av.open(str(path), "w") as container:
         stream = container.add_stream(codec, rate=rate, layout=layout)
