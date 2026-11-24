@@ -28,6 +28,21 @@ def settings():
     return QSettings("py-slowdown", "py-slowdown")
 
 
+def translate_qt(app) -> None:
+    """Qt's own words (OK, Cancel, the names of the keys in the menus) in the language of the interface."""
+    from PySide6.QtCore import QLibraryInfo, QLocale, QTranslator
+
+    code = interface.current()
+    if code == interface.REFERENCE:
+        return
+    QLocale.setDefault(QLocale(code))  # (también los números: 0,75×)
+    translator = QTranslator(app)
+    folder = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
+    if translator.load(f"qtbase_{code}", folder):
+        app.installTranslator(translator)
+        app._qt_translator = translator  # (que no se lo lleve el recolector)
+
+
 def main(argv: list[str] | None = None) -> int:
     config = settings()
     interface.use(config.value("interface", "") or interface.system_code())
@@ -40,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     app.setApplicationName("py-slowdown")
     app.setOrganizationName("py-slowdown")
     app.setDesktopFileName("py-slowdown")
+    translate_qt(app)
 
     from .window import Window
 

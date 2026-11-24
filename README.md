@@ -89,6 +89,17 @@ The tests: `uv run python tools/test.py` (each file in a process of its
 own, at once), or `uv run pytest`. How a release is made is told in
 [packaging/RELEASING.md](packaging/RELEASING.md).
 
+Documentation
+-------------
+
+- The user manual: [docs/MANUAL_en.pdf](docs/MANUAL_en.pdf) (in Spanish,
+  [docs/MANUAL_es.pdf](docs/MANUAL_es.pdf)); `man py-slowdown` once the
+  RPM or the Debian package is installed.
+- How it was made: [docs/DESCRIPTION.md](docs/DESCRIPTION.md).
+- The open-source software it uses, with its licences:
+  [docs/THIRD-PARTY.md](docs/THIRD-PARTY.md).
+- The changes of each version: [CHANGELOG.md](CHANGELOG.md).
+
 Where things are kept
 ---------------------
 

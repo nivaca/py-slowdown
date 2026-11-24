@@ -411,4 +411,20 @@
     <en>options</en>
     <tr>opciones</tr>
   </text>
+  <text>
+    <en>Space</en>
+    <tr>Espacio</tr>
+  </text>
+  <text>
+    <en>Home / End</en>
+    <tr>Inicio / Fin</tr>
+  </text>
+  <text>
+    <en>Shift+← / Shift+→</en>
+    <tr>Mayús+← / Mayús+→</tr>
+  </text>
+  <text>
+    <en>Ctrl+← / Ctrl+→   PgUp / PgDn</en>
+    <tr>Ctrl+← / Ctrl+→   RePág / AvPág</tr>
+  </text>
 </interface>

@@ -50,15 +50,15 @@ ICON = Path(__file__).resolve().parent / "icons" / "py-slowdown.svg"
 def shortcut_rows() -> list[tuple[str, str]]:
     """(what, keys) of each keyboard shortcut: for Help > Keyboard shortcuts and the manual page."""
     return [
-        (tr("Play or pause"), "Space"),
+        (tr("Play or pause"), tr("Space")),
         (tr("Stop and go back to the start"), "S"),
-        (tr("Go to the start / to the end"), "Home / End"),
+        (tr("Go to the start / to the end"), tr("Home / End")),
         (tr("Back / forward (skip length)"), "← / →"),
-        (tr("Back / forward one second"), "Shift+← / Shift+→"),
+        (tr("Back / forward one second"), tr("Shift+← / Shift+→")),
         (tr("Slower / faster"), "↓ / ↑   − / +"),
         (tr("Normal speed"), "N"),
         (tr("Add a bookmark"), "B"),
-        (tr("Previous / next bookmark"), "Ctrl+← / Ctrl+→   PgUp / PgDn"),
+        (tr("Previous / next bookmark"), tr("Ctrl+← / Ctrl+→   PgUp / PgDn")),
         (tr("Zoom in / out / whole file"), "Ctrl++ / Ctrl+− / Ctrl+0"),
         (tr("Zoom around the pointer"), tr("Ctrl+wheel")),
         (tr("Open a file"), "Ctrl+O"),

@@ -92,6 +92,17 @@ Las pruebas: `uv run python tools/test.py` (cada archivo en un proceso
 propio, todos a la vez), o `uv run pytest`. Cómo se publica una versión
 está en [packaging/RELEASING.md](packaging/RELEASING.md).
 
+Documentación
+-------------
+
+- El manual de usuario: [docs/MANUAL_es.pdf](docs/MANUAL_es.pdf) (en
+  inglés, [docs/MANUAL_en.pdf](docs/MANUAL_en.pdf)); `man py-slowdown` una
+  vez instalado el RPM o el paquete de Debian.
+- Su descripción: [docs/DESCRIPCIÓN_es.md](docs/DESCRIPCI%C3%93N_es.md).
+- El software de código abierto que usa, con sus licencias:
+  [docs/TERCEROS_es.md](docs/TERCEROS_es.md).
+- Los cambios de cada versión: [CHANGELOG_es.md](CHANGELOG_es.md).
+
 Dónde se guarda todo
 --------------------
 

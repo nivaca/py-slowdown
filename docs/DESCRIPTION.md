@@ -8,7 +8,7 @@ lectures and interviews, where one needs to hear a passage again and again
 at a speed one can follow; it follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in five stages.
+in six stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -164,10 +164,36 @@ folder, because the shell had `XDG_DATA_HOME` set; the installer only
 removes what it made, so nothing was lost. The installer's own test, in
 `tests/`, gives it a home of its own and no `XDG_DATA_HOME`.
 
+6. The documentation
+--------------------
+
+The documentation follows that of py-pdftools, in English and Spanish: the
+READMEs, the changelogs, these two descriptions, a list of the open-source
+software the program uses, with its versions and licences
+(`docs/THIRD-PARTY.md`, `docs/TERCEROS_es.md`), the manual pages, and a user
+manual in each language (`docs/MANUAL_en.tex`, `docs/MANUAL_es.tex`, made
+into PDFs with LuaLaTeX, with an index). The manual tells how to install
+the program and check the signatures of a release, the window, opening a
+file, the controls, the speed, the waveform, the bookmarks, the settings,
+the files it keeps, the keys, and what to do when something goes wrong. Its
+pictures, ten in each language, are made by `tools/manual_images.py`: the
+window, drawn offscreen with a sample recording made by ffmpeg, with a
+configuration of its own, so that the user's settings are never read nor
+written.
+
+The Spanish pictures showed two things that the window had wrong. Qt's own
+words (OK, Cancel, and the names of the keys in the menus: Space, Left)
+were in English, because Qt's translations were not loaded; now they are,
+in the language of the interface, and the speed is written as 0,75× in
+Spanish. And the list of keys of Help named them in English; now it names
+them in the language of the interface too. The manuals also showed that
+the monospaced font joined two hyphens into a dash (`--help` came out as
+`–help`), so TeX's ligatures are turned off in it.
+
 Testing
 -------
 
-The program has 70 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 75 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -181,13 +207,15 @@ tested with a sound card that the tests drive themselves, and the window
 offscreen: opening a file, the controls, the speed, the bookmarks, the
 point where it was left, a file that is not audio, the window without
 Rubber Band, and the Spanish interface, whose file must have every text of
-the program and no other. Other tests check the packaging: the versions
+the program and no other. Other tests check the packaging and the
+documentation: the versions
 agree, the licence, the desktop file, the metainfo, the spec, the manual
 pages, the icons, the signing key and the signing of a release (with a key
-made for the test). Besides, the player was run on the real sound card at
+made for the test), and that the manuals have the version of the program,
+the same pictures in both languages, and their PDFs. Besides, the player was run on the real sound card at
 seven speeds, with no buffer underrun, also through the PortAudio and the
 Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 48 files and about 6,800 lines (5,000 of them in Python).
+The program has 57 files and about 8,400 lines (5,200 of them in Python).

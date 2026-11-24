@@ -56,11 +56,15 @@ def shoot(lang: str, audio: Path, folder: Path) -> Path:
     from PySide6.QtWidgets import QApplication
 
     from py_slowdown import interface, window
+    from py_slowdown.app import translate_qt
     from py_slowdown.bookmarks import Store
     from py_slowdown.engine import Player
 
     interface.use(lang)
     app = QApplication.instance() or QApplication([])
+    for old in app.findChildren(__import__("PySide6.QtCore", fromlist=["QTranslator"]).QTranslator):
+        app.removeTranslator(old)
+    translate_qt(app)
     window.Output = Silent
     settings = QSettings(str(folder / f"{lang}.ini"), QSettings.Format.IniFormat)
     w = window.Window(player=Player(Silent()), store=Store(folder / f"{lang}.json"), settings=settings)

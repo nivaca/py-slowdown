@@ -1,0 +1,517 @@
+\newcommand*{\version}{0.1.0}
+
+\documentclass[12pt,
+              article,
+              oneside
+              ]{memoir}
+
+\usepackage{iftex}
+
+\ifluatex
+  \usepackage{fontspec}
+\fi
+
+\usepackage[
+  % latin,
+  english,
+  % spanish,% <- principal
+  % es-minimal,
+  % es-noshorthands,
+  % es-tabla,
+]{babel}
+
+\ifluatex
+% LuaLaTeX --------------------
+\defaultfontfeatures{Ligatures=TeX, Scale=MatchLowercase}
+\usepackage[MainFeatures={medium,
+  Ligatures=Common,
+  Numbers=OldStyle,
+  SmallCapsFeatures = {LetterSpace=5.0}}]
+{junicodevf}
+%
+% \setsansfont{Libertinus Sans}
+% (sin las ligaduras de TeX: -{}-help no se vuelve una raya)
+\setmonofont[Scale=MatchLowercase, Ligatures=ResetAll]{DejaVu Sans Mono}
+% \setmonofont[Scale=MatchLowercase]{Libertinus Mono}
+% \setmonofont[Scale=MatchLowercase}]{Fira Code}
+\else
+% PDFLaTeX ---------------------
+\usepackage[T1]{fontenc}
+\usepackage[osf]{libertinus}
+\usepackage[scaled=0.9]{FiraMono}
+% \usepackage[scaled=0.9]{cascadia-code}
+% \usepackage[scaled=0.9]{roboto}
+\input glyphtounicode
+\pdfgentounicode=1
+\fi
+
+\usepackage[babel=true, verbose=false, tracking=true, expansion=true, protrusion=true, final, draft=false]{microtype}
+\SetTracking{ encoding = *, shape = sc }{ 30 }
+\SetTracking[context = notracking, ]{encoding = *}{0}
+
+\usepackage[autostyle=false, style=british]{csquotes}
+\usepackage{latexcolors}
+
+\newcommand{\Rojo}{\color[HTML]{8B0000}}
+\newcommand*{\rojo}[1]{\textcolor[HTML]{8B0000}{#1}}
+\newcommand*{\rojoit}[1]{\textit{\textcolor[HTML]{8B0000}{#1}}}
+\newcommand{\Azul}{\color{bluenivaca}}
+\newcommand*{\azul}[1]{\textcolor{bluenivaca}{#1}}
+\newcommand{\Verde}{\color{darkgreen}}
+\newcommand*{\verde}[1]{\textcolor{darkgreen}{#1}}
+\newcommand{\Amarillo}{\color{goldenpoppy}}
+\newcommand*{\amarillo}[1]{\textcolor{goldenpoppy}{#1}}
+\newcommand{\Morado}{\color{byzantium}}
+\newcommand*{\morado}[1]{\textcolor{byzantium}{#1}}
+\newcommand{\Naranja}{\color{orange}}
+\newcommand*{\naranja}[1]{\textcolor{orange}{#1}}
+
+% \usepackage[margin=3cm]{geometry}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+\clubpenalty=9999
+\widowpenalty=9999
+\brokenpenalty=5000
+\frenchspacing
+\raggedbottom
+\midsloppy
+\parindent=14pt
+\fboxsep=2pt
+
+\renewcommand\thesection{\arabic{section}}
+\chapterstyle{reparticle}
+
+\usepackage{enumitem}
+\setlist{noitemsep, nosep}
+\setlist[description]{font=\itshape}
+
+\newcommand*{\elipsis}{\,.\,.\,.\,}
+\newcommand*{\elipsisb}{\textup{[\elipsis]}}
+
+\renewenvironment{quote}%
+ {\begin{list}{}%
+              {\setlength\rightmargin{0pt}%
+              \setlength\leftmargin{\parindent}}%
+  \item[]\small\ignorespaces}
+ {\unskip\end{list}}
+
+
+\definecolor{Link}{HTML}{408080}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  filecolor=blue,
+  citecolor = black,
+  urlcolor=Link,
+}
+\urlstyle{tt}
+\usepackage{bookmark}
+
+\setlength{\droptitle}{-2cm}
+
+\title{\bfseries%
+  \texttt{py-slowdown} v.\version{} \\
+  User Manual}
+
+\author{%
+  Nicolás Vaughan\\
+  \begin{minipage}[t]{0.8\linewidth}
+    \centering\small%
+    \href{mailto:nicolasvaughan@proton.me}{\texttt{nicolasvaughan@proton.me}}\\
+    \url{https://nicolasvaughan.org}\\
+    \url{https://github.com/nivaca/py-slowdown}\\
+    \url{https://codeberg.org/nivaca/py-slowdown}\\
+  \end{minipage}}
+
+
+\date{2026-11-24}
+
+% The pictures, made by tools/manual_images.py
+\graphicspath{{img/manual/}}
+\usepackage{longtable}
+
+% the title and the author in the PDF's own metadata
+\hypersetup{pdftitle={py-slowdown User Manual}, pdfauthor={Nicolás Vaughan}}
+
+% the index (makeindex, with the style manual.ist: see latexmkrc)
+\makeindex
+
+% menus, keys, and the pictures of the window
+\newcommand*{\menu}[1]{\textit{#1}}
+\newcommand*{\then}{\,>\,}
+\newcommand*{\key}[1]{\texttt{#1}}
+\newcommand*{\shot}[3]{%
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=#2\textwidth,height=0.75\textheight,keepaspectratio]{#1}
+    \caption{#3}
+    \label{fig:#1}
+  \end{figure}}
+
+\begin{document}
+\maketitle
+
+\tableofcontents*
+
+\section{Introduction}
+\noindent
+\texttt{py-slowdown} plays a recording slower or faster without changing its
+pitch. I made it for transcribing recorded lectures and interviews, where a
+passage must be heard again and again at a speed one can follow; it serves
+as well for dictations, for learning a language, and for learning music by
+ear.
+
+\index{waveform}\index{speed}\index{bookmarks}\index{formats}%
+The recording is shown as a waveform, over which the position moves while
+it plays. The usual controls move through it; the speed goes from 0.25\,×
+to 3\,×, and can be changed while the recording plays; bookmarks, each with
+a label, keep the places one wants to come back to. For each file the
+program remembers its bookmarks and the point where it was left, and goes
+on from there the next time.
+
+\index{rubber band@Rubber Band}\index{quality}%
+The stretching is done by the Rubber Band Library, with its R3 engine, the
+one of highest quality, made for speech and music. At 1\,× the file is
+played exactly as it is, sample for sample, without going through Rubber
+Band.
+
+\index{language of the interface}%
+The window is in English or Spanish. This manual describes version
+\version{}; the pictures are of the English window.
+
+\section{Installing}
+\label{sec:installing}
+
+\index{installing}%
+The releases are on GitHub and Codeberg (the addresses are on the first
+page). Each one has the packages below, and every file is signed: see
+section~\ref{sec:signatures}.
+
+\subsection{Fedora}
+
+\index{fedora (copr, rpm)@Fedora (Copr, RPM)}%
+The simplest way, which also keeps the program up to date, is the Copr
+repository:
+
+\begin{quote}
+\texttt{sudo dnf copr enable nivaca/py-slowdown}\\
+\texttt{sudo dnf install py-slowdown}
+\end{quote}
+
+\noindent The RPM of each release can also be installed by itself
+(\texttt{sudo dnf install ./py-slowdown-\version-1.fc45.noarch.rpm}). It
+uses Fedora's Rubber Band, PortAudio and \texttt{ffmpeg}, which
+\texttt{dnf} installs with it.
+
+\subsection{Any Linux: the AppImage}
+
+\index{appimage@AppImage}%
+The AppImage is a single file that runs on any Linux with glibc 2.34 or
+later (Ubuntu 22.04, Debian 12, Fedora 35 and later) and needs nothing
+installed: it carries its own Python, Qt, FFmpeg, Rubber Band and
+PortAudio. Make it executable and run it:
+
+\begin{quote}
+\texttt{chmod +x py-slowdown-\version-x86\_64.AppImage}\\
+\texttt{./py-slowdown-\version-x86\_64.AppImage [FILE]}
+\end{quote}
+
+\subsection{Debian and Ubuntu}
+
+\index{debian and ubuntu@Debian and Ubuntu}%
+The Debian package, for Debian 12, Ubuntu 22.04 and later, is made from the
+AppImage and installs it in \texttt{/opt/py-slowdown}, with the command
+\texttt{py-slowdown}, an entry in the menu of applications and the manual
+page:
+
+\begin{quote}
+\texttt{sudo apt install ./py-slowdown\_\version-1\_amd64.deb}
+\end{quote}
+
+\subsection{From the source, on Linux and macOS}
+
+\index{installer}\index{macos@macOS}%
+With the source (cloned, or the ZIP of a release unpacked) and Python 3.14
+or later, \texttt{install/install.sh} installs the program for one user, in
+an environment of its own, with an entry in the menu of applications (on
+macOS, an application in \texttt{\textasciitilde/Applications}); run again,
+it updates it, and \texttt{install/install.sh -{}-uninstall} removes it. The
+program then needs, from the system, the Rubber Band Library (version 3 or
+later) and, on Linux, PortAudio:
+
+\begin{quote}
+Fedora: \texttt{sudo dnf install rubberband-libs portaudio}\\
+Debian, Ubuntu: \texttt{sudo apt install librubberband2 libportaudio2}\\
+macOS: \texttt{brew install rubberband}
+\end{quote}
+
+\noindent\index{uv}%
+To run it from the source without installing it, with \texttt{uv}:
+\texttt{uv run py-slowdown [FILE]}. There is no version for Windows yet.
+
+\subsection{Checking the files of a release}
+\label{sec:signatures}
+
+\index{signatures}%
+Each file of a release has a signature (\texttt{FILE.asc}), and
+\texttt{SHA256SUMS} lists the sums of all of them, with its own signature.
+They are checked with the public key published with the release:
+
+\begin{quote}
+\texttt{gpg -{}-import RPM-GPG-KEY-py-slowdown}\\
+\texttt{gpg -{}-verify FILE.asc FILE}
+\end{quote}
+
+\noindent The RPM is also signed inside; \texttt{dnf} checks it once the
+key is imported (\texttt{sudo rpm -{}-import RPM-GPG-KEY-py-slowdown}).
+
+\section{Starting the program}
+
+\index{starting}\index{command line}%
+The program is in the menu of applications, as \menu{py-slowdown}. From a
+terminal, \texttt{py-slowdown} opens the window, and
+\texttt{py-slowdown FILE} opens it with that file;
+\texttt{py-slowdown -{}-help} prints the help, and \texttt{-{}-version} the version.
+An audio file can also be dropped on the window, or opened with
+\menu{File\then Open} (\key{Ctrl+O}) or \menu{File\then Open recent}.
+
+\section{The window}
+
+\shot{window_en}{1}{The window, with a recording at 0.75\,× and two bookmarks}
+
+\index{window}\index{waveform}\index{controls}\index{bookmarks!panel}%
+The waveform takes most of the window (figure~\ref{fig:window_en}). Above
+it is a ruler of times; the red line is the position, the point that is
+heard; what was already played is darker. The bookmarks are dashed lines,
+with their labels on top. Under the waveform are the controls, the time,
+the speed and the volume; on the right, the panel of the bookmarks, which
+can be closed, moved or left floating (\menu{View\then Bookmarks} brings it
+back). The status bar says what is being read, and then the format of the
+file: its codec, its sample rate, mono or stereo, and its length.
+
+\section{Opening a file}
+
+\index{formats}\index{video files}%
+The program opens whatever FFmpeg reads: MP3, M4A and AAC, MP4, FLAC, WAV,
+AIFF, Ogg, Opus, WMA and many more, and the sound of video files (MP4, MKV,
+WebM, MOV). A file with more than two channels is mixed down to stereo.
+
+\index{long files}\index{reading}%
+A file is read in the background. While it is read, the status bar shows
+how much is done, the waveform fills in from the left, and what is already
+read can be played. A lecture of two hours takes a few seconds. The
+decoded sound is kept in a temporary file in the cache folder, not in the
+memory (two hours of stereo take about 2.5\,GB there), and the temporary
+file goes away when the file is closed, or when the program ends.
+
+\index{position, remembered}%
+When a file is closed (or another one is opened, or the program ends), the
+program keeps the point where it was, and the next time the file is opened
+it goes on from there. A file left at its end starts again from the
+beginning.
+
+\section{Playing}
+
+\shot{controls_en}{1}{The controls}
+
+\index{controls}\index{playing}\index{keys}%
+The controls (figure~\ref{fig:controls_en}) are, from the left:
+
+\begin{description}
+\item[Go to the start] (\key{Home}).
+\item[Back] by the skip length (\key{←}); held down, it keeps going back,
+  to run through the file.
+\item[Play and pause] (\key{Space}).
+\item[Stop] and go back to the start (\key{S}).
+\item[Forward] by the skip length (\key{→}); held down, it keeps going.
+\item[Go to the end] (\key{End}).
+\item[Bookmark] adds one at the position (\key{B}).
+\end{description}
+
+\noindent\index{skip length}%
+The skip length is 5 seconds unless another is chosen in
+\menu{Settings\then Skip length} (1 to 60 seconds).
+\key{Shift+←} and \key{Shift+→} go back and forward one second, which is
+what is most often needed when transcribing. At the end of the file the
+playing stops; \key{Space} then plays it again from the start.
+
+\index{volume}%
+The volume is the slider on the right. It only lowers the sound of the
+program, never raises it above that of the file.
+
+\section{The speed}
+
+\index{speed}%
+The speed goes from 0.25\,× (four times slower) to 3\,× (three times
+faster). It is changed with the slider, by writing it in the box beside it,
+or with the keys \key{↓} and \key{↑} (or \key{−} and \key{+}), by
+steps of 0.05; \key{N}, or the button \menu{1×}, brings back the normal
+speed. It can be changed while the recording plays; the change is heard
+after about 0.15 seconds, the sound already prepared at the old speed.
+
+\index{quality}\index{rubber band@Rubber Band}%
+The pitch does not change: a voice at 0.5\,× says the words more slowly,
+but with its own voice. The quality is that of Rubber Band's R3 engine,
+which keeps speech clear and music natural, even far from 1\,×; at very
+slow speeds the attacks of the sounds (consonants, the strokes of a
+guitar) are somewhat softened, as with any method of its kind. At 1\,× the
+file is played as it is.
+
+\index{speed!not available}%
+If the Rubber Band Library is not installed (which can happen only when the
+program is installed from the source), the window says so in the status
+bar, and the speed stays at 1\,×.
+
+\section{The waveform}
+
+\index{waveform}\index{position}%
+A click on the waveform takes the position there, and dragging moves it,
+whether the recording plays or not. The waveform is scaled to the loudest
+point of the file, so that a quiet recording does not look flat.
+
+\shot{zoom_en}{0.85}{A closer view, around a bookmark}
+
+\index{zoom}\index{follow the position}%
+\key{Ctrl+wheel} zooms in or out around the pointer
+(figure~\ref{fig:zoom_en}); \key{Ctrl++} and \key{Ctrl+−} do the same
+around the position, and \key{Ctrl+0} shows the whole file again. Up close
+the samples themselves are drawn, down to one per pixel. When the view is
+closer than the whole file, a scroll bar appears under it, and the wheel
+moves the view; while the recording plays, the view turns to the next page
+when the position leaves it, unless \menu{View\then Follow the position}
+is turned off.
+
+\section{Bookmarks}
+
+\index{bookmarks}%
+A bookmark marks a point of the file, with a label if one wants. \key{B},
+the button \menu{Bookmark} or \menu{Bookmarks\then Add a bookmark} put one
+at the position; a right click on the waveform puts one where the pointer
+is (figure~\ref{fig:context_en}). Two bookmarks are never put at the same
+point: if there is one already, that one is chosen.
+
+\shot{context_en}{0.35}{The menu of a right click over a bookmark}
+
+\index{bookmarks!label}%
+The label is written in the panel, with a double click on it, or in the
+dialog that a double click on the bookmark in the waveform opens, as does
+\menu{Rename the bookmark} in the menu of the right click
+(figure~\ref{fig:rename_en}). A bookmark without a label shows its number.
+
+\shot{rename_en}{0.35}{The label of a bookmark}
+
+\shot{panel_en}{0.45}{The panel of the bookmarks}
+
+\index{bookmarks!panel}\index{bookmarks!going to}%
+The panel (figure~\ref{fig:panel_en}) lists the bookmarks in order, with
+their times. A double click on a time takes the position there; a click on
+a bookmark in the waveform, on its label, does the same.
+\key{Ctrl+←} and \key{Ctrl+→} (or \key{PgUp} and \key{PgDn}) go to the
+previous and the next bookmark. While the recording plays, the previous one
+is the one before the bookmark just passed, so that a passage can be heard
+again from its bookmark with one key.
+
+\index{bookmarks!removing}\index{bookmarks!exporting}%
+\menu{Remove} in the panel, or \menu{Remove the bookmark} in the menu of
+the right click, removes one. \menu{Export} in the panel, or
+\menu{Bookmarks\then Export the bookmarks}, saves them as a text file, one
+per line: the time, a tab, and the label. That text can be pasted into a
+transcription or a spreadsheet.
+
+\index{bookmarks!kept}%
+The bookmarks are saved as soon as they change, for each file, by its full
+path (section~\ref{sec:files-kept}). The audio file is never changed. A
+file that is moved or renamed is a new file for the program, without
+bookmarks.
+
+\section{Settings}
+
+\shot{menu_settings_en}{0.35}{The menu Settings}
+
+\index{settings}\index{language of the interface}\index{skip length}%
+The menu \menu{Settings} (figure~\ref{fig:menu_settings_en}) has the skip
+length of \menu{Back} and \menu{Forward}, and the language of the
+interface. The language follows that of the system unless one is chosen;
+a new one is used when the program starts again. The program also
+remembers the size and place of the window and of its panel, the volume,
+whether the view follows the position, the folder of the last file opened,
+and the recent files.
+
+\section{The files it keeps}
+\label{sec:files-kept}
+
+\index{configuration files}\index{bookmarks!kept}%
+\begin{description}
+\item[\texttt{\textasciitilde/.config/py-slowdown/py-slowdown.conf}] the
+  settings. Deleting it, with the program closed, brings back the
+  defaults.
+\item[\texttt{\textasciitilde/.local/share/py-slowdown/bookmarks.json}] the
+  bookmarks and the point where each file was left (in
+  \texttt{\$XDG\_DATA\_HOME}, if it is set). It is a JSON file that can be
+  copied to another computer, or read by other programs.
+\item[\texttt{\textasciitilde/.cache/py-slowdown/}] the decoded sound of the
+  file open, in a temporary file without a name, which goes away with it.
+\end{description}
+
+\section{Keys}
+
+\index{keys}%
+\begin{longtable}{@{}p{0.42\textwidth}p{0.52\textwidth}@{}}
+\toprule
+\textbf{Keys} & \textbf{What they do}\\
+\midrule
+\endhead
+\key{Space} & play or pause\\
+\key{S} & stop and go back to the start\\
+\key{Home}, \key{End} & go to the start, to the end\\
+\key{←}, \key{→} & back, forward (the skip length)\\
+\key{Shift+←}, \key{Shift+→} & back, forward one second\\
+\key{↓}, \key{↑} (or \key{−}, \key{+}) & slower, faster (by 0.05\,×)\\
+\key{N} & normal speed\\
+\key{B} (or \key{Ctrl+B}) & add a bookmark at the position\\
+\key{Ctrl+←}, \key{Ctrl+→} (or \key{PgUp}, \key{PgDn}) & previous, next bookmark\\
+\key{Ctrl++}, \key{Ctrl+−}, \key{Ctrl+0} & zoom in, zoom out, the whole file\\
+\key{Ctrl+wheel} & zoom around the pointer\\
+\key{Ctrl+O} & open a file\\
+\key{Ctrl+W} & close the file\\
+\key{F1} & the list of the keys\\
+\bottomrule
+\end{longtable}
+
+\section{When something goes wrong}
+
+\index{troubleshooting}%
+\begin{description}
+\item[There is no sound] check the volume of the program and that of the
+  system, and that the right output is chosen in the settings of the
+  system's sound; the program plays through the default output.
+\item[The speed cannot be changed] the Rubber Band Library is not
+  installed (the status bar says so): install it as in
+  section~\ref{sec:installing}.
+\item[A file is not opened] FFmpeg could not read it: it may be damaged,
+  or not be audio. A file damaged halfway is opened up to where it can be
+  read, and the status bar says so.
+\item[The bookmarks of a file are gone] the file was moved or renamed; its
+  bookmarks are still in \texttt{bookmarks.json}, under its old path, and
+  can be moved to the new one there, with the program closed.
+\item[A setting is wrong] delete \texttt{py-slowdown.conf}
+  (section~\ref{sec:files-kept}).
+\end{description}
+
+\noindent
+Problems and wishes can be written as issues on GitHub or
+Codeberg (the addresses are on the first page), or sent to
+\href{mailto:nicolasvaughan@proton.me}{\texttt{nicolasvaughan@proton.me}}.
+
+\printindex
+
+\end{document}
+
+% ===============================================
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
