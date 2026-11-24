@@ -315,3 +315,34 @@ def test_pitch_controls(window, app, wav):
     window.a_original_pitch.trigger()
     assert window.player.pitch == 0.0 and not window.b_pitch.isEnabled()
     assert window.player.speed == 1.0  # (la velocidad no cambió)
+
+
+def test_count_in_settings_are_easy_to_reach(window, app, monkeypatch):
+    """The settings of the count-in: in the arrow of its button, in Playback and in Settings; the button's tooltip
+    says what they are now."""
+    from PySide6.QtWidgets import QToolButton
+
+    from py_slowdown.countin import CountIn
+
+    assert window.b_count.popupMode() == QToolButton.ToolButtonPopupMode.MenuButtonPopup
+    assert window.a_count_settings in window.b_count.menu().actions()
+    menus = {a.text(): a.menu() for a in window.menuBar().actions()}
+    assert window.a_count_options in menus["&Settings"].actions()
+    assert window.a_count_settings in menus["&Playback"].actions()
+    assert "4 clicks at 100 BPM, following the speed" in window.b_count.toolTip()
+
+    class Accepting:
+        def __init__(self, *args):
+            pass
+
+        def exec(self):
+            return True
+
+        def value(self):
+            return CountIn(True, 3, 132, False)
+
+    monkeypatch.setattr("py_slowdown.window.CountInDialog", Accepting)
+    window.a_count_options.trigger()
+    assert window.count == CountIn(True, 3, 132, False) and window.b_count.isChecked()
+    assert "3 clicks at 132 BPM." in window.b_count.toolTip()
+    assert CountIn.load(window.settings) == CountIn(True, 3, 132, False)  # (guardados)

@@ -19,6 +19,9 @@ Debian package, the RPM, the wheel and the source, are on
   before the first click, and keeps it between the clicks; the clicks are
   fuller (60 ms, a tone and its octave). The beat appears on the waveform
   with the first click.
+- **The settings of the count-in are easy to find**: an arrow beside the
+  button Count-in opens them, and so does Settings > Count-in (besides
+  Playback > Count-in settings); the button's tooltip says what they are.
 - The controls are in two rows, the speed, the pitch and the volume under
   the others: in one, the window did not fit a screen 1366 pixels wide.
 

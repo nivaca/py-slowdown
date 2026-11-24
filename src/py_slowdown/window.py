@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QLabel,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QSlider,
     QStyle,
@@ -197,9 +198,10 @@ class Window(QMainWindow):
         self.b_count = QToolButton(self)
         self.b_count.setText(tr("Count-in"))
         self.b_count.setCheckable(True)
-        self.b_count.setToolTip(tr("Count in before playing (C); right click: how many counts, and the tempo"))
         self.b_count.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.b_count.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        # Un botón partido: el botón enciende o apaga la cuenta; la flecha de al lado abre sus ajustes.
+        self.b_count.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         row.addWidget(self.b_repeat)
         row.addWidget(self.b_count)
         row.addSpacing(12)
@@ -308,6 +310,7 @@ class Window(QMainWindow):
         self.a_count = a(tr("&Count in before playing"), self._set_count_on, ["C"], checkable=True)
         self.a_count.setChecked(self.count.on)
         self.a_count_settings = a(tr("Co&unt-in settings…"), self.count_settings)
+        self.a_count_options = a(tr("&Count-in…"), self.count_settings)  # (el mismo, en Configuración)
         self.a_mark = a(tr("&Add a bookmark"), self.add_bookmark, ["B", "Ctrl+B"])
         self.a_prev_mark = a(tr("&Previous bookmark"), lambda: self.goto_bookmark(-1), ["Ctrl+Left", "PgUp"])
         self.a_next_mark = a(tr("&Next bookmark"), lambda: self.goto_bookmark(1), ["Ctrl+Right", "PgDown"])
@@ -351,6 +354,8 @@ class Window(QMainWindow):
         view.addAction(self.dock.toggleViewAction())
 
         settings = bar.addMenu(tr("&Settings"))
+        settings.addAction(self.a_count_options)
+        settings.addSeparator()
         skips = settings.addMenu(tr("&Skip length"))
         group = QActionGroup(self)
         for seconds in SKIPS:
@@ -400,6 +405,10 @@ class Window(QMainWindow):
         self.a_count.toggled.connect(self.b_count.setChecked)
         self.b_count.setChecked(self.count.on)
         self.b_count.customContextMenuRequested.connect(lambda _pos: self.count_settings())
+        count_menu = QMenu(self.b_count)
+        count_menu.addAction(self.a_count_settings)
+        self.b_count.setMenu(count_menu)
+        self._update_count_tip()
         self.panel.activated.connect(lambda row: self.seek(self.bookmarks[row].time))
         self.panel.addRequested.connect(self.add_bookmark)
         self.panel.removeRequested.connect(self.remove_bookmark)
@@ -516,6 +525,17 @@ class Window(QMainWindow):
             self.count = dialog.value()
             self.count.save(self.settings)
             self.a_count.setChecked(self.count.on)
+            self._update_count_tip()
+
+    def _update_count_tip(self) -> None:
+        # Lo que la cuenta hace ahora, a la vista al pasar sobre el botón.
+        count = self.count
+        if count.follow:
+            what = tr("{beats} clicks at {bpm} BPM, following the speed", beats=count.beats, bpm=count.bpm)
+        else:
+            what = tr("{beats} clicks at {bpm} BPM", beats=count.beats, bpm=count.bpm)
+        self.b_count.setToolTip(tr("Count in before playing (C): {what}. The arrow beside it changes them.",
+                                   what=what))
 
     def set_selection(self, selection: tuple[float, float] | None) -> None:
         """The selection (start and end, in seconds), or none; it is repeated if Repeat is on."""

@@ -464,10 +464,6 @@
     <tr>Contar antes de tocar</tr>
   </text>
   <text>
-    <en>Count in before playing (C); right click: how many counts, and the tempo</en>
-    <tr>Contar antes de tocar (C); clic derecho: cuántos golpes, y el tempo</tr>
-  </text>
-  <text>
     <en>Count-in</en>
     <tr>Cuenta previa</tr>
   </text>
@@ -570,5 +566,21 @@
   <text>
     <en>Original pitch (Shift+N)</en>
     <tr>Altura original (Mayús+N)</tr>
+  </text>
+  <text>
+    <en>&amp;Count-in…</en>
+    <tr>&amp;Cuenta previa…</tr>
+  </text>
+  <text>
+    <en>{beats} clicks at {bpm} BPM, following the speed</en>
+    <tr>{beats} golpes a {bpm} BPM, siguiendo la velocidad</tr>
+  </text>
+  <text>
+    <en>{beats} clicks at {bpm} BPM</en>
+    <tr>{beats} golpes a {bpm} BPM</tr>
+  </text>
+  <text>
+    <en>Count in before playing (C): {what}. The arrow beside it changes them.</en>
+    <tr>Contar antes de tocar (C): {what}. La flecha de al lado los cambia.</tr>
   </text>
 </interface>

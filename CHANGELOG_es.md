@@ -20,6 +20,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   tenue, 0,4 s antes del primer golpe, y lo mantiene entre los golpes; los
   golpes son más llenos (60 ms, una nota y su octava). El pulso aparece en
   la forma de onda con el primer golpe.
+- **Los ajustes de la cuenta previa se encuentran fácil**: una flecha junto
+  al botón Cuenta previa los abre, y también Configuración > Cuenta previa
+  (además de Reproducción > Ajustes de la cuenta previa); la etiqueta del
+  botón dice cuáles son.
 - Los mandos están en dos filas, la velocidad, la altura y el volumen debajo
   de los demás: en una sola, la ventana no cabía en una pantalla de 1366
   píxeles.
