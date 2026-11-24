@@ -42,7 +42,8 @@ What it does
   the tempo are chosen, and the tempo can follow the speed; the tempo can
   be measured by tapping with the beat (T).
 - Remembers, for each file, its bookmarks and the point where it was left,
-  and goes on from there the next time.
+  and goes on from there the next time; it can also reopen the last file
+  when it starts (Settings > Reopen the last file when starting).
 - Interface in English and in Spanish (Settings > Language).
 
 Keyboard

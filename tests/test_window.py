@@ -459,3 +459,39 @@ def test_first_beat_on_the_waveform(window, app, wav, monkeypatch):
     window.wave.firstBeatRequested.emit(None)
     window._tick()
     assert window.count.offset == 0.0 and window.wave.first_beat is None
+
+
+def test_reopen_the_last_file(app, output, tmp_path, monkeypatch, wav):
+    """Settings > Reopen the last file when starting: the last file is opened again, unless another is named,
+    or it is gone; off (as at first), nothing is opened."""
+    monkeypatch.setattr("py_slowdown.window.Output", type(output))
+    settings = QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat)
+
+    def window():
+        return Window(player=Player(output), store=Store(tmp_path / "b.json"), settings=settings)
+
+    first = window()
+    assert not first.a_reopen.isChecked()
+    first.open_file(wav)
+    first.close()
+    second = window()
+    second.open_at_start(None)
+    assert second.audio is None  # (apagado: nada)
+    second.a_reopen.trigger()
+    second.close()
+    third = window()
+    assert third.a_reopen.isChecked()
+    third.open_at_start(None)
+    assert third.audio is not None and third.audio.path == wav
+    third.close()
+    other = tmp_path / "other.wav"
+    other.write_bytes(wav.read_bytes())
+    fourth = window()
+    fourth.open_at_start(str(other))  # (uno nombrado en la línea de órdenes, primero)
+    assert fourth.audio.path == other
+    fourth.close()
+    other.unlink()  # (el último ya no está: nada, sin error)
+    fifth = window()
+    fifth.open_at_start(None)
+    assert fifth.audio is None
+    fifth.close()

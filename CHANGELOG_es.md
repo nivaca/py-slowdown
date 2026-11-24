@@ -26,6 +26,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   (negativo) o después (positivo), hasta 2 segundos de la grabación, para
   que entre en el pulso a cualquier velocidad; antes, solo hasta el último
   golpe, que no se corta.
+- **Reabrir el último archivo al empezar** (Configuración): el programa
+  vuelve a abrir el último archivo, donde se dejó, salvo que se nombre otro
+  en la línea de órdenes. Al principio, desactivado.
 - **El primer pulso sobre la forma de onda**: un clic derecho sobre el
   primer pulso de la grabación, Cuenta previa: el primer pulso está aquí,
   fija el desfase de la posición a él (y activa la cuenta previa); una línea

@@ -44,7 +44,8 @@ Lo que hace
   y el tempo, que puede seguir la velocidad; el tempo se puede medir
   marcando el pulso (T).
 - Recuerda, por archivo, sus marcadores y el punto donde se dejó, y la vez
-  siguiente sigue desde allí.
+  siguiente sigue desde allí; también puede reabrir el último archivo al
+  empezar (Configuración > Reabrir el último archivo al empezar).
 - Interfaz en inglés y en español (Configuración > Idioma).
 
 Teclado

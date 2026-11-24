@@ -24,6 +24,9 @@ Debian package, the RPM, the wheel and the source, are on
   of the count-in, brings it in earlier (negative) or later (positive), by
   up to 2 seconds of the recording, so that it comes in on the beat at any
   speed; earlier only up to the last click, which is not cut.
+- **Reopen the last file when starting** (Settings): the program opens again
+  the file that was open last, where it was left, unless another is named
+  on the command line. Off at first.
 - **The first beat on the waveform**: a right click on the recording's first
   beat, Count-in: the first beat is here, sets the offset from the position
   to it (and turns the count-in on); a green line marked 1 shows where the

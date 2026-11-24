@@ -84,7 +84,8 @@ def main(argv: list[str] | None = None) -> int:
     window = Window(settings=config)
     window.show()
     app.window = window
-    for path in ([args.file] if args.file else []) + app.waiting:
+    window.open_at_start(args.file)
+    for path in app.waiting:
         window.open_file(path)
     return app.exec()
 

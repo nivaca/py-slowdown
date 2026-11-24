@@ -320,6 +320,8 @@ class Window(QMainWindow):
         self.a_count_settings = a(tr("Co&unt-in settings…"), self.count_settings)
         self.a_count_options = a(tr("&Count-in…"), self.count_settings)  # (el mismo, en Configuración)
         self.a_tap = a(tr("Tap the tempo"), self.tap_tempo, ["T"])
+        self.a_reopen = a(tr("&Reopen the last file when starting"), self._set_reopen, checkable=True)
+        self.a_reopen.setChecked(self.settings.value("reopen", False, type=bool))
         self.a_mark = a(tr("&Add a bookmark"), self.add_bookmark, ["B", "Ctrl+B"])
         self.a_prev_mark = a(tr("&Previous bookmark"), lambda: self.goto_bookmark(-1), ["Ctrl+Left", "PgUp"])
         self.a_next_mark = a(tr("&Next bookmark"), lambda: self.goto_bookmark(1), ["Ctrl+Right", "PgDown"])
@@ -364,6 +366,7 @@ class Window(QMainWindow):
 
         settings = bar.addMenu(tr("&Settings"))
         settings.addAction(self.a_count_options)
+        settings.addAction(self.a_reopen)
         settings.addSeparator()
         skips = settings.addMenu(tr("&Skip length"))
         group = QActionGroup(self)
@@ -470,6 +473,21 @@ class Window(QMainWindow):
         self._update_enabled()
         self.statusBar().showMessage(tr("Reading {name}…", name=path.name))
         return True
+
+    def open_at_start(self, path: str | None = None) -> None:
+        """The file to open when the program starts: PATH, or else the last one opened, if Settings > Reopen the
+        last file when starting is on and it is still there (it goes on where it was left)."""
+        if path:
+            self.open_file(path)
+            return
+        if not self.a_reopen.isChecked():
+            return
+        recent = self.settings.value("recent", [], type=list)
+        if recent and Path(recent[0]).is_file():
+            self.open_file(recent[0])
+
+    def _set_reopen(self, on: bool) -> None:
+        self.settings.setValue("reopen", on)
 
     def close_file(self) -> None:
         if self.audio is None:

@@ -667,4 +667,8 @@
     <en>At this tempo it can come in at most {seconds} s earlier.</en>
     <tr>A este tempo puede entrar a lo sumo {seconds} s antes.</tr>
   </text>
+  <text>
+    <en>&amp;Reopen the last file when starting</en>
+    <tr>&amp;Reabrir el último archivo al empezar</tr>
+  </text>
 </interface>
