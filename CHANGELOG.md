@@ -13,6 +13,12 @@ Debian package, the RPM, the wheel and the source, are on
   option for pitch that changes as it plays). The box Pitch, beside the
   speed; Ctrl+↑ and Ctrl+↓; Shift+N, or the button 0, for the original
   pitch. Measured, a tone lands within a cent of the pitch asked for.
+- **The count-in is heard on Bluetooth earphones**: many of them mute
+  themselves while they receive silence and wake too late for a short click,
+  so they swallowed the count. It now begins with a very faint hiss, 0.4 s
+  before the first click, and keeps it between the clicks; the clicks are
+  fuller (60 ms, a tone and its octave). The beat appears on the waveform
+  with the first click.
 - The controls are in two rows, the speed, the pitch and the volume under
   the others: in one, the window did not fit a screen 1366 pixels wide.
 

@@ -255,6 +255,10 @@ def test_count_shown_on_the_waveform(window, app, wav, output):
     window.a_count.setChecked(True)
     window.toggle()
     window._tick()
+    assert window.wave.count is None  # (el soplo antes del primer golpe: todavía nada)
+    block = window.player._queue[0]
+    block.used = block.count[0]  # (como si ya sonara el primer golpe)
+    window._tick()
     assert window.wave.count == 1
     window.grab()  # (se dibuja)
     window.toggle()

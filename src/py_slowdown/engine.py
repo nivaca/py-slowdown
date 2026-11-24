@@ -75,8 +75,13 @@ class Block:
 
 LOOP_FADE = 0.01  # segundos del fundido con que el final de una selección repetida entra en su principio
 MIN_LOOP = 0.1  # segundos: una selección más corta no se repite
-COUNT_LEAD = 0.06  # segundos de silencio antes del primer pulso: la rampa de arranque no lo recorta
-CLICK = 0.035  # duración de cada golpe de la cuenta
+# La cuenta previa empieza con un soplo casi inaudible (unos -54 dB) y lo mantiene, más bajo, entre los golpes:
+# muchos auriculares Bluetooth se silencian mientras reciben silencio y tardan en despertar, y se tragaban los
+# golpes, cortos y aislados. El soplo los despierta antes del primero.
+COUNT_LEAD = 0.4  # segundos antes del primer golpe (también: la rampa de arranque no lo recorta)
+WAKE_LEVEL = 0.002  # el soplo del principio
+KEEP_LEVEL = 0.0008  # el soplo entre los golpes
+CLICK = 0.06  # duración de cada golpe de la cuenta
 MIN_BPM, MAX_BPM = 20, 300
 MAX_BEATS = 16
 
@@ -88,12 +93,19 @@ def count_in(rate: int, channels: int, beats: int, bpm: float) -> Block:
     bpm = min(max(MIN_BPM, float(bpm)), MAX_BPM)
     lead = int(COUNT_LEAD * rate)
     beat = round(rate * 60.0 / bpm)
-    frames = np.zeros((lead + beats * beat, channels), np.float32)
+    length = lead + beats * beat
+    noise = np.random.default_rng(7).uniform(-1.0, 1.0, length).astype(np.float32)
+    level = np.full(length, KEEP_LEVEL, np.float32)
+    level[:lead] = WAKE_LEVEL
+    frames = np.repeat((noise * level)[:, None], channels, axis=1)
     t = np.arange(int(CLICK * rate)) / rate
-    envelope = np.exp(-t / 0.008)
+    envelope = np.exp(-t / 0.015)
+    envelope[: int(0.002 * rate)] *= np.linspace(0.0, 1.0, int(0.002 * rate))  # (sin chasquido al empezar)
     for n in range(beats):
-        pitch, level = (1760.0, 0.5) if n == 0 else (1320.0, 0.35)
-        click = (level * envelope * np.sin(2 * np.pi * pitch * t)).astype(np.float32)
+        pitch, level_ = (1760.0, 0.55) if n == 0 else (1320.0, 0.4)
+        # Un golpe de madera, más o menos: la nota y su octava, que se apagan pronto
+        tone = np.sin(2 * np.pi * pitch * t) + 0.35 * np.sin(2 * np.pi * 2 * pitch * t)
+        click = (level_ / 1.35 * envelope * tone).astype(np.float32)
         start = lead + n * beat
         frames[start:start + len(click)] += click[:, None]
     return Block(frames, 0.0, 0.0, (lead, beat, beats))
@@ -445,13 +457,16 @@ class Player:
         self.seek(here if frames is None or inside else frames[0] / self.audio.rate)
 
     def counting(self) -> tuple[int, int] | None:
-        """(the beat that sounds, of how many) while a count-in is heard; None otherwise."""
+        """(the beat that sounds, of how many) while a count-in is heard, 0 before its first click; None
+        otherwise."""
         with self._lock:
             block = self._queue[0] if self._queue else None
             if not self.playing or block is None or not block.count:
                 return None
             lead, beat, beats = block.count
-            return min(beats, max(0, block.used - lead) // beat + 1), beats
+            if block.used < lead:
+                return 0, beats  # (antes del primer golpe: el soplo que despierta los auriculares)
+            return min(beats, (block.used - lead) // beat + 1), beats
 
     def pause(self) -> None:
         self.playing = False

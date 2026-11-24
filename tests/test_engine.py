@@ -182,7 +182,13 @@ def test_count_in_block():
     loud = np.abs(block.frames[:, 0])
     starts = [lead + n * beat for n in range(4)]
     assert all(loud[s:s + 200].max() > 0.2 for s in starts)  # a click at each beat
-    assert loud[:lead].max() == 0.0 and loud[starts[0]:starts[0] + 400].max() > loud[starts[1]:starts[1] + 400].max()
+    assert loud[starts[0]:starts[0] + 400].max() > loud[starts[1]:starts[1] + 400].max()
+    # Antes del primer golpe, y entre los golpes, un soplo casi inaudible, nunca silencio exacto (para los
+    # auriculares Bluetooth que se silencian mientras no les llega nada)
+    lead_part = loud[: lead - 10]
+    assert 0 < lead_part.max() < 0.003 and (lead_part > 0).mean() > 0.99
+    between = loud[starts[0] + 4000: starts[1] - 10]
+    assert 0 < between.max() < 0.002
     assert count_in(RATE, 1, 99, 1000).count[2] == 16  # (limits)
 
 
@@ -192,13 +198,14 @@ def test_player_counts_in(audio, output):
     try:
         player.seek(2.0)
         wait_for(player, output, lambda: player._queued > 0)
-        player.play(beats=2, bpm=240)  # two beats of a quarter of a second each
-        assert player.counting() == (1, 2)
-        heard = []
-        for _ in range(30):  # about 0.35 s: still counting, and the position stays
+        player.play(beats=2, bpm=240)  # two beats of a quarter of a second each, after the lead
+        assert player.counting() == (0, 2)  # (antes del primer golpe)
+        heard, beats = [], []
+        for _ in range(60):  # about 0.7 s: the lead and the two beats; the position stays
             heard.append(output.pull(512))
+            beats.append(player.counting())
             time.sleep(0.001)
-        assert player.counting() == (2, 2) and player.position == 2.0
+        assert [b for b in dict.fromkeys(beats) if b] == [(0, 2), (1, 2), (2, 2)] and player.position == 2.0
         assert np.abs(np.concatenate(heard)).max() > 0.3  # the clicks are heard
         assert wait_for(player, output, lambda: player.position > 2.05)  # then the recording
         assert player.counting() is None

@@ -8,7 +8,7 @@ lectures and interviews, where one needs to hear a passage again and again
 at a speed one can follow; it follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in ten stages.
+in eleven stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -331,6 +331,24 @@ The pitch box made the row of controls too wide: the window could not be
 narrower than 1350 pixels, more than a common laptop screen. The speed,
 the pitch and the volume are now in a second row, and the window can be
 800 pixels wide.
+
+11. A count-in that was not heard
+---------------------------------
+
+The count-in did not work for me: I heard no clicks. Recorded in the
+callback, with the real window and sound card, the four clicks were there,
+at the tempo set, before the music. So the sound was followed further, into
+a silent virtual output of PipeWire made for the test, with the program
+playing into it: there too the clicks arrived whole. They were lost after
+PipeWire, in my Bluetooth earphones, which, like many, mute themselves
+while they receive silence and take a moment to wake: a click of 35
+milliseconds after silence did not wake them, and the music, which goes
+on, did. The count now begins with a very faint hiss (about −58 dB), four
+tenths of a second before the first click, and keeps it, fainter, between
+the clicks, so that the output is never exact silence while it counts; the
+clicks are fuller, a tone and its octave for 60 milliseconds. Through the
+virtual output, the hiss and the clicks arrive as they should; whether the
+earphones keep them is what I tried by ear.
 
 Testing
 -------

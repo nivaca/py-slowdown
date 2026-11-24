@@ -614,7 +614,7 @@ class Window(QMainWindow):
         position = self.player.position
         self.wave.set_position(position, self.player.playing)
         counting = self.player.counting()
-        self.wave.set_count(counting[0] if counting else None)
+        self.wave.set_count(counting[0] if counting and counting[0] else None)
         self.time_label.setText(f"{clock(position, tenths=True)} / {clock(audio.duration, tenths=True)}")
         if self.b_play.property("playing") != self.player.playing:
             self._update_play_button()

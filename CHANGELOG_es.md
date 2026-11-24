@@ -14,6 +14,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   junto a la velocidad; Ctrl+↑ y Ctrl+↓; Mayús+N, o el botón 0, para la
   altura original. Medido, un tono queda a menos de un centésimo de
   semitono de la altura pedida.
+- **La cuenta previa se oye en los auriculares Bluetooth**: muchos se
+  silencian mientras reciben silencio y despiertan tarde para un golpe
+  corto, así que se tragaban la cuenta. Ahora empieza con un soplo muy
+  tenue, 0,4 s antes del primer golpe, y lo mantiene entre los golpes; los
+  golpes son más llenos (60 ms, una nota y su octava). El pulso aparece en
+  la forma de onda con el primer golpe.
 - Los mandos están en dos filas, la velocidad, la altura y el volumen debajo
   de los demás: en una sola, la ventana no cabía en una pantalla de 1366
   píxeles.
