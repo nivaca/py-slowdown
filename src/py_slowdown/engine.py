@@ -150,7 +150,7 @@ class Renderer:
         loop = self.loop if self.loop and start < self.loop[1] else None
         if loop:
             frames = min(frames, loop[1] - start)
-        data = np.array(audio.frames(start, start + frames), dtype=np.float32)
+        data = audio.frames(start, start + frames)  # (una copia propia: el fundido la cambia)
         if loop and len(data):
             begin, end = loop
             x = self._xfade

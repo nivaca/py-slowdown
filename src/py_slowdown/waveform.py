@@ -13,6 +13,7 @@ corre. Durante la cuenta previa, el pulso se ve en grande. WaveformView le pone 
 from __future__ import annotations
 
 import math
+import time
 
 import numpy as np
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
@@ -30,6 +31,9 @@ MIN_FPP = 1.0  # a lo sumo un cuadro por píxel
 GRAB = 5  # píxeles a cada lado de un marcador que cuentan como suyos
 
 # Pasos de la regla, en segundos: se usa el primero que deje unos 90 píxeles entre marcas.
+# Mientras se lee un archivo, la onda se redibuja a lo sumo cada tanto (segundos): cada vez se rehacen sus imágenes.
+READ_REDRAW = 0.2
+
 STEPS = (0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600)
 
 
@@ -95,6 +99,8 @@ class Waveform(QWidget):
         self._cache_key = None
         self._cache: tuple[np.ndarray, np.ndarray] | None = None
         self._reading = None  # lo que se dibujó de la lectura: (columna de lo leído, largo, terminado)
+        self._read_drawn = 0.0  # cuándo (time.monotonic) se pidió el último dibujo por la lectura
+        self._loudest = (0, 0.0)  # (picos revisados, el mayor de ellos): se revisan solo los nuevos
         self.setMinimumHeight(120)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -109,6 +115,7 @@ class Waveform(QWidget):
         self.fpp = 0.0
         self._cache_key = None
         self._reading = None
+        self._loudest = (0, 0.0)
         self.viewChanged.emit()
         self.update()
 
@@ -126,12 +133,28 @@ class Waveform(QWidget):
                 self.fpp = 0.0
             self.set_start(self.start)
             self.viewChanged.emit()
-        # Solo cuando lo leído avanza una columna dentro de la vista: cada dibujo rehace las imágenes de la onda.
-        column = min(max(int((audio.decoded - self.start) / self.current_fpp()), -1), self.width() + 1)
-        reading = (column, length, audio.done)
-        if reading != self._reading:
+        # Solo cuando lo leído avanza una columna dentro de la vista, y no más de una vez cada READ_REDRAW
+        # segundos (en una pantalla 4K cada dibujo rehace imágenes por unos 10 ms); al terminar, enseguida.
+        reading = (self._read_column(self.width()), length, audio.done)
+        now = time.monotonic()
+        if reading != self._reading and (audio.done or now - self._read_drawn >= READ_REDRAW):
             self._reading = reading
+            self._read_drawn = now
             self.update()
+
+    def _read_column(self, w: int) -> int:
+        """The column where what is read ends, -1 before the view and W + 1 past it."""
+        return min(max(int((self.audio.decoded - self.start) / self.current_fpp()), -1), w + 1)
+
+    def _loudest_peak(self) -> float:
+        # El mayor pico leído hasta ahora, revisando solo los que llegaron desde la última vez.
+        peaks = self.audio.peaks
+        seen, loudest = self._loudest
+        if peaks.count > seen:
+            loudest = max(loudest, float(np.abs(peaks.lo[seen:peaks.count]).max()),
+                          float(np.abs(peaks.hi[seen:peaks.count]).max()))
+            self._loudest = (peaks.count, loudest)
+        return loudest
 
     def fit_fpp(self) -> float:
         if not self.audio:
@@ -339,8 +362,10 @@ class Waveform(QWidget):
         # La onda se dibuja una vez, con NumPy, en dos imágenes (la parte tocada y la otra), y en cada
         # movimiento de la posición solo se copian: rellenar con Qt un polígono de miles de picos tardaba
         # más de 100 ms, con el GIL tomado, y el sonido se cortaba cada vez que la línea avanzaba un píxel.
-        key = (self.start, fpp, w, height, audio.decoded, audio.peaks.count, colors["wave"].rgba(),
-               colors["played"].rgba())
+        # Lo leído cuenta solo por la columna donde termina dentro de la vista y por el mayor pico (la escala):
+        # mientras se lee, mover la posición en una parte ya leída no rehace las imágenes.
+        key = (self.start, fpp, w, height, self._read_column(w), self._loudest_peak(), audio.done,
+               colors["wave"].rgba(), colors["played"].rgba())
         if key != self._cache_key:
             self._cache = self._wave_images(colors, w, height)
             self._cache_key = key
@@ -367,9 +392,7 @@ class Waveform(QWidget):
         if height < 4 or not ok.any():
             return None
         # A escala del pico del archivo (lo leído hasta ahora): una grabación baja no se ve plana.
-        peaks = audio.peaks
-        loudest = max(float(np.abs(peaks.lo[:peaks.count]).max(initial=0)),
-                      float(np.abs(peaks.hi[:peaks.count]).max(initial=0)), 0.05)
+        loudest = max(self._loudest_peak(), 0.05)
         mid = height / 2
         half = (height / 2 - 2) / min(1.0, loudest)
         limit = height / 2 - 2
@@ -377,14 +400,18 @@ class Waveform(QWidget):
         y_lo = np.where(ok, mid - np.clip(np.nan_to_num(lo) * half, -limit, limit), -1)
         # Una columna muy baja se ve al menos como una línea de un píxel.
         y_lo = np.maximum(y_lo, y_hi + 1)
-        rows = np.arange(height, dtype=np.float32)[:, None]
-        mask = (rows >= np.floor(y_hi)[None, :]) & (rows <= np.ceil(y_lo)[None, :])
+        # Un solo mapa de bytes (1 donde hay onda) con dos tablas de dos colores: Qt (en C++) hace cada imagen
+        # en color. Pintar con NumPy las dos imágenes de 32 bits tardaba el doble.
+        rows = np.arange(height, dtype=np.int16)[:, None]
+        top = np.floor(y_hi).astype(np.int16)[None, :]
+        bottom = np.ceil(y_lo).astype(np.int16)[None, :]
+        mask = np.ascontiguousarray(((rows >= top) & (rows <= bottom)).view(np.uint8))
+        indexed = QImage(mask.data, w, height, w, QImage.Format.Format_Indexed8)
         images = []
         for color in (colors["played"], colors["wave"]):
-            pixels = np.zeros((height, w), np.uint32)
-            pixels[mask] = color.rgba() | 0xFF000000
-            image = QImage(pixels.data, w, height, w * 4, QImage.Format.Format_ARGB32_Premultiplied)
-            images.append(image.copy())  # (la copia es de Qt: el arreglo de NumPy puede irse)
+            indexed.setColorTable([0, color.rgba() | 0xFF000000])
+            # (convertToFormat hace una imagen nueva, de Qt: el arreglo de NumPy puede irse)
+            images.append(indexed.convertToFormat(QImage.Format.Format_ARGB32_Premultiplied))
         return images[0], images[1]
 
 

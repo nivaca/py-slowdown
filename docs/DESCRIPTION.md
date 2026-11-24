@@ -393,10 +393,40 @@ last file when starting, off at first, opens the last file again, at its
 place, unless another is named on the command line, or the last one is
 gone.
 
+14. A waveform that stayed half drawn
+-------------------------------------
+
+After 1.0.0, a file just opened sometimes showed a waveform that did not
+fill the window. It was drawn while the file was still being read, and
+nothing asked it to be drawn again: neither the reading, as it went on,
+nor its end, when the real length took the place of the announced one. It
+stayed so until a click or a resize redrew it. Now the waveform follows the
+reading.
+
+That fix had a cost that I measured before going on. Each drawing during
+the reading makes the two images of the waveform again, and on a screen
+of 3800 pixels that took 18 ms, up to thirty times a second, with the GIL
+held: the same kind of load that broke the sound after 0.1.0. Three
+changes followed. While a file is read, the waveform is drawn at most five
+times a second, and once more at the end. The images are kept while only
+the position moves, even during the reading: they are made again only when
+the column where the reading ends, within the view, or the loudest peak
+read so far (the scale) changes. And instead of filling two 32-bit images
+with NumPy, the program makes one map of bytes and lets Qt colour it twice,
+from a table of two colours. At 3800 pixels the images take 2.7 ms instead
+of 12, and reading a file of 30 minutes makes them 13 times, not about 75.
+
+The decoded samples went from 32-bit floats to 16-bit integers in the
+temporary file, which is half the size: 1.3 GB for two hours of stereo. A
+16-bit file, by far the most common, is kept exactly, sample for sample;
+other files lose what is below about -96 dB, less than the noise of any
+recording. What goes past full scale, as some decoded MP3s do, is clipped,
+as the sound card would clip it anyway.
+
 Testing
 -------
 
-The program has 111 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 114 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

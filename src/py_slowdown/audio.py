@@ -3,9 +3,9 @@
 Audio abre un archivo (MP3, MP4, M4A, FLAC, WAV, Ogg, Opus... lo que FFmpeg lea,
 mediante PyAV o, donde PyAV no está, con el programa ffmpeg) y lo decodifica en un hilo aparte, a muestras float32 entrelazadas
 (cuadros × canales; uno o dos canales: los demás se mezclan en estéreo). Las
-muestras van a un archivo temporal sin nombre, mapeado en memoria: una grabación
-de dos horas ocupa más de un gigabyte en float32, y así el sistema guarda en la
-memoria solo lo que se lee. Mientras decodifica, Audio calcula los picos de la
+muestras van, en 16 bits, a un archivo temporal sin nombre, mapeado en memoria:
+una grabación de dos horas en estéreo ocupa unos 1,3 GB (el doble en float32), y así el
+sistema guarda en la memoria solo lo que se lee; frames() las devuelve en float32. Mientras decodifica, Audio calcula los picos de la
 forma de onda (Peaks) y cuenta los cuadros listos (decoded), de modo que la
 ventana (que pregunta cada tanto) puede dibujar y tocar lo que ya está, sin
 esperar el final.
@@ -26,6 +26,11 @@ import numpy as np
 
 # Frames per peak: the waveform keeps the minimum and the maximum of each group of BUCKET frames.
 BUCKET = 256
+
+# Las muestras se guardan en enteros de 16 bits: x * SCALE. Las de un archivo de 16 bits quedan exactas (FFmpeg
+# las da como s / 32768), y las demás pierden lo que está debajo de unos -96 dB, menos que el ruido de una
+# grabación; lo que pase de 1.0 (algunos MP3 decodificados) se recorta, como lo recortaría la tarjeta de sonido.
+SCALE = 32768.0
 
 # Extensiones que el diálogo Abrir ofrece; FFmpeg lee muchas más, y cualquier archivo se puede intentar.
 EXTENSIONS = (
@@ -262,18 +267,20 @@ class Audio:
         return round(self.duration * self.rate)
 
     def frames(self, start: int, stop: int) -> np.ndarray:
-        """The decoded frames from START to STOP (fewer at the end), a view."""
+        """The decoded frames from START to STOP (fewer at the end), a new float32 array."""
         start = max(0, start)
         stop = min(stop, self.decoded)
         data = self._data  # (puede ser reemplazado por otro más grande mientras se lee)
-        return data[start:max(start, stop)]
+        out = data[start:max(start, stop)].astype(np.float32)
+        out *= 1.0 / SCALE  # (una potencia de dos: exacto)
+        return out
 
     # --- decodificación
 
     def _map(self, frames: int) -> np.ndarray:
-        size = frames * self.channels * 4
+        size = frames * self.channels * 2
         self._file.truncate(size)
-        return np.memmap(self._file, dtype=np.float32, mode="r+", shape=(frames, self.channels))
+        return np.memmap(self._file, dtype=np.int16, mode="r+", shape=(frames, self.channels))
 
     def _grow(self, needed: int) -> None:
         # Un archivo más largo de lo anunciado: el archivo temporal crece y se mapea de nuevo; lo escrito queda.
@@ -296,7 +303,9 @@ class Audio:
         end = self.decoded + samples.shape[0]
         if end > self._data.shape[0]:
             self._grow(end)
-        self._data[self.decoded:end] = samples
+        scaled = np.rint(samples * SCALE)
+        np.clip(scaled, -SCALE, SCALE - 1, out=scaled)
+        self._data[self.decoded:end] = scaled
         self.peaks.add(samples)
         self.decoded = end
 

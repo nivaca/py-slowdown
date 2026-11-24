@@ -12,6 +12,14 @@ Debian package, the RPM, the wheel and the source, are on
   or at the scale of the length the file announced, until something else
   (a click, a resize) drew it again. It is now drawn again as the file is
   read, and at its real length once it is all read.
+- **Lighter waveform**: while a file is read it is drawn again at most five
+  times a second; moving the position no longer makes its images again
+  during the reading; and the images are made by Qt from one map of bytes,
+  more than twice as fast (2.7 ms instead of 12 on a screen 3800 pixels
+  wide).
+- **Half the space for the decoded samples**: they are kept in 16 bits, not
+  in 32-bit floats (1.3 GB for two hours of stereo, not 2.5 GB). A 16-bit
+  file is kept sample for sample; what goes past full scale is clipped.
 
 ## 1.0.0 — 2026-11-24
 

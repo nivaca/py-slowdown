@@ -13,6 +13,15 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   (un clic, cambiar el tamaño de la ventana) la volviera a dibujar. Ahora
   se redibuja a medida que el archivo se lee, y con su duración real cuando
   termina de leerse.
+- **Una forma de onda más liviana**: mientras se lee un archivo se
+  redibuja a lo sumo cinco veces por segundo; mover la posición ya no
+  rehace sus imágenes durante la lectura, y Qt las hace de un solo mapa de
+  bytes, más del doble de rápido (2,7 ms en vez de 12 en una pantalla de
+  3800 píxeles).
+- **La mitad del espacio para las muestras decodificadas**: se guardan en 16
+  bits, no en coma flotante de 32 (1,3 GB para dos horas en estéreo, no
+  2,5 GB). Un archivo de 16 bits se guarda muestra por muestra; lo que pase
+  del máximo se recorta.
 
 ## 1.0.0 — 2026-11-24
 

@@ -150,7 +150,7 @@ Dónde se guarda todo
   archivo temporal sin nombre en la carpeta de caché
   (`~/.cache/py-slowdown/`, `%LOCALAPPDATA%\py-slowdown\cache`,
   `~/Library/Caches/py-slowdown/`), que desaparece al cerrarlo (dos horas en
-  estéreo ocupan allí unos 2,5 GB, pero en la memoria queda solo lo que se
+  estéreo ocupan allí unos 1,3 GB, pero en la memoria queda solo lo que se
   lee).
 
 Desinstalar el programa nunca los quita.

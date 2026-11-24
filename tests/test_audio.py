@@ -1,4 +1,5 @@
 import shutil
+import wave
 
 import numpy as np
 import pytest
@@ -52,6 +53,26 @@ def test_samples_exact(wav, decoder):
     assert got.shape == expected.shape
     assert np.abs(got - expected).max() < 1e-4  # (16 bits)
     audio.close()
+
+
+def test_kept_in_16_bits(wav, decoder):
+    """The decoded samples are kept in 16 bits (half the space of float32): those of a 16-bit file exactly,
+    and what goes past full scale is clipped."""
+    audio = Audio(wav)
+    audio.wait(10)
+    assert audio._data.dtype == np.int16
+    with wave.open(str(wav)) as source:  # (las muestras que el WAV guarda, en 16 bits)
+        raw = np.frombuffer(source.readframes(source.getnframes()), "<i2").reshape(-1, source.getnchannels())
+    assert np.array_equal(audio._data[:audio.decoded], raw)
+    assert np.array_equal(audio.frames(0, audio.decoded), raw / np.float32(32768))
+    assert audio.frames(0, 10).dtype == np.float32
+    audio.close()
+    loud = Audio(wav)
+    loud.wait(10)
+    before = loud.decoded
+    loud._take(np.array([[1.5, -1.5], [0.25, -1.0]], np.float32))
+    assert loud.frames(before, before + 2).tolist() == [[32767 / 32768, -1.0], [0.25, -1.0]]
+    loud.close()
 
 
 def test_mono_and_resampled(tmp_path, decoder):

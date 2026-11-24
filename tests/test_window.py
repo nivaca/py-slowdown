@@ -300,16 +300,20 @@ def test_moving_the_position_does_not_redraw_the_wave(app):
     assert (clock.perf_counter() - start) / 9 < 0.05
 
 
-def test_the_wave_follows_the_reading(app):
+def test_the_wave_follows_the_reading(app, monkeypatch):
     """The waveform drawn when the file was opened, half read, stayed so (not filling the window) until something
-    else redrew it; and so did the scale of the announced length, once the real one, shorter, was known."""
+    else redrew it; and so did the scale of the announced length, once the real one, shorter, was known. While
+    the file is read it is redrawn at most every READ_REDRAW seconds, and at once when the reading ends."""
     from types import SimpleNamespace
 
     import numpy as np
 
+    from py_slowdown import waveform
     from py_slowdown.audio import Peaks
-    from py_slowdown.waveform import Waveform
+    from py_slowdown.waveform import READ_REDRAW, Waveform
 
+    now = [100.0]
+    monkeypatch.setattr(waveform.time, "monotonic", lambda: now[0])
     # Anunciada de 60 s, mide 50; al abrirla solo se han leído 10.
     count = 50 * RATE // 256
     peaks = Peaks(count)
@@ -340,20 +344,61 @@ def test_the_wave_follows_the_reading(app):
     calls.clear()
     wave.follow_reading()
     assert not calls  # (sin cambios, nada que redibujar)
-    read(30)
+    read(20)
+    now[0] += READ_REDRAW / 2
+    wave.follow_reading()
+    assert not calls  # (demasiado pronto: espera)
+    now[0] += READ_REDRAW
     wave.follow_reading()
     assert calls  # (se leyó más: se redibuja)
     calls.clear()
     read(50)
     audio.done, audio.length, audio.duration = True, audio.decoded, 50.0
     wave.follow_reading()
-    assert calls  # (terminó, con su largo real)
+    assert calls  # (terminó, con su largo real: enseguida)
     wave.update = update
     assert drawn(wave) >= 998  # (la onda entera llena la ventana)
     calls.clear()
     wave.update = lambda: calls.append(1)
+    now[0] += READ_REDRAW
     wave.follow_reading()
     assert not calls  # (sin cambios, nada que redibujar)
+
+
+def test_reading_elsewhere_does_not_redraw_the_wave(app):
+    """While the file is read, a view of a part already read keeps its images when the position moves: only the
+    column where the reading ends within the view, and the loudest peak (the scale), make them again."""
+    from types import SimpleNamespace
+
+    import numpy as np
+
+    from py_slowdown.audio import Peaks
+    from py_slowdown.waveform import Waveform
+
+    count = 600 * RATE // 256
+    peaks = Peaks(count)
+    peaks.lo[:count] = -0.5
+    peaks.hi[:count] = 0.5
+    peaks.count = count // 4
+    audio = SimpleNamespace(rate=RATE, decoded=peaks.count * 256, done=False, length=count * 256,
+                            duration=600.0, peaks=peaks, frames=lambda a, b: np.zeros((0, 2), np.float32))
+    wave = Waveform()
+    wave.resize(1000, 300)
+    wave.set_audio(audio)
+    wave.zoom(50, 0)  # (los primeros 12 segundos, ya leídos)
+    wave.grab()
+    images = wave._cache
+    for seconds in (2, 4, 6):
+        peaks.count += 1000
+        audio.decoded = peaks.count * 256
+        wave.set_position(float(seconds))
+        wave.grab()
+    assert wave._cache is images
+    peaks.hi[peaks.count] = 0.9  # (un pico mayor cambia la escala)
+    peaks.count += 1
+    audio.decoded = peaks.count * 256
+    wave.grab()
+    assert wave._cache is not images
 
 
 def test_pitch_controls(window, app, wav):
