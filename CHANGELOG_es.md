@@ -5,6 +5,15 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+- **La forma de onda llena la ventana al abrir un archivo**: se dibujaba
+  mientras el archivo todavía se leía, y a veces se quedaba así, a medias o
+  a la escala de la duración que el archivo anunciaba, hasta que otra cosa
+  (un clic, cambiar el tamaño de la ventana) la volviera a dibujar. Ahora
+  se redibuja a medida que el archivo se lee, y con su duración real cuando
+  termina de leerse.
+
 ## 1.0.0 — 2026-11-24
 
 La primera versión estable.

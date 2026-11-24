@@ -5,6 +5,14 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Unreleased
+
+- **The waveform fills the window when a file is opened**: it was drawn
+  while the file was still being read, and sometimes stayed so, half drawn
+  or at the scale of the length the file announced, until something else
+  (a click, a resize) drew it again. It is now drawn again as the file is
+  read, and at its real length once it is all read.
+
 ## 1.0.0 — 2026-11-24
 
 The first stable version.

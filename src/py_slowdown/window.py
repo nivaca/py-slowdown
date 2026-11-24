@@ -711,6 +711,7 @@ class Window(QMainWindow):
             self.player.ended = False
             self._update_play_button()
         position = self.player.position
+        self.wave.follow_reading()
         self.wave.set_position(position, self.player.playing)
         counting = self.player.counting()
         self.wave.set_count(counting[0] if counting and counting[0] else None)

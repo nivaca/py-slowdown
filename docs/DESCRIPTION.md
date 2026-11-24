@@ -396,7 +396,7 @@ gone.
 Testing
 -------
 
-The program has 110 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 111 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

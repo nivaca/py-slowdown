@@ -94,6 +94,7 @@ class Waveform(QWidget):
         self._selecting: float | None = None  # where a Shift+drag began
         self._cache_key = None
         self._cache: tuple[np.ndarray, np.ndarray] | None = None
+        self._reading = None  # lo que se dibujó de la lectura: (columna de lo leído, largo, terminado)
         self.setMinimumHeight(120)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -107,8 +108,30 @@ class Waveform(QWidget):
         self.start = 0.0
         self.fpp = 0.0
         self._cache_key = None
+        self._reading = None
         self.viewChanged.emit()
         self.update()
+
+    def follow_reading(self) -> None:
+        """Redraw while the file is read: what was just read, and the whole file at its real length at the end."""
+        # Sin esto la onda se quedaba como se dibujó al abrir el archivo, a medio leer o a la escala del largo
+        # anunciado, hasta que otra cosa la redibujara (un clic, la ventana cambiada de tamaño).
+        audio = self.audio
+        if audio is None:
+            return
+        length = audio.length
+        if self._reading is not None and self._reading[1] != length:
+            # El largo cambió (el real, al terminar, o uno mayor que el anunciado): la vista entera lo sigue.
+            if self.fpp and self.fpp >= self.fit_fpp():
+                self.fpp = 0.0
+            self.set_start(self.start)
+            self.viewChanged.emit()
+        # Solo cuando lo leído avanza una columna dentro de la vista: cada dibujo rehace las imágenes de la onda.
+        column = min(max(int((audio.decoded - self.start) / self.current_fpp()), -1), self.width() + 1)
+        reading = (column, length, audio.done)
+        if reading != self._reading:
+            self._reading = reading
+            self.update()
 
     def fit_fpp(self) -> float:
         if not self.audio:

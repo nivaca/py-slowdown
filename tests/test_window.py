@@ -300,6 +300,62 @@ def test_moving_the_position_does_not_redraw_the_wave(app):
     assert (clock.perf_counter() - start) / 9 < 0.05
 
 
+def test_the_wave_follows_the_reading(app):
+    """The waveform drawn when the file was opened, half read, stayed so (not filling the window) until something
+    else redrew it; and so did the scale of the announced length, once the real one, shorter, was known."""
+    from types import SimpleNamespace
+
+    import numpy as np
+
+    from py_slowdown.audio import Peaks
+    from py_slowdown.waveform import Waveform
+
+    # Anunciada de 60 s, mide 50; al abrirla solo se han leído 10.
+    count = 50 * RATE // 256
+    peaks = Peaks(count)
+    peaks.lo[:count] = -0.5
+    peaks.hi[:count] = 0.5
+    audio = SimpleNamespace(rate=RATE, decoded=0, done=False, length=60 * RATE, duration=60.0, peaks=peaks,
+                            frames=lambda a, b: np.zeros((0, 2), np.float32))
+
+    def read(seconds):
+        peaks.count = int(seconds * RATE) // 256
+        audio.decoded = peaks.count * 256
+
+    def drawn(wave):
+        # Las columnas en que hay onda, en la imagen de lo que no ha sonado
+        wave.grab()
+        image = wave._cache[1]
+        return sum(1 for x in range(image.width()) if image.pixel(x, image.height() // 2) >> 24)
+
+    wave = Waveform()
+    wave.resize(1000, 300)
+    read(10)
+    wave.set_audio(audio)
+    assert abs(drawn(wave) - 1000 * 10 / 60) <= 2
+    calls = []
+    update = wave.update
+    wave.update = lambda: calls.append(1)
+    wave.follow_reading()
+    calls.clear()
+    wave.follow_reading()
+    assert not calls  # (sin cambios, nada que redibujar)
+    read(30)
+    wave.follow_reading()
+    assert calls  # (se leyó más: se redibuja)
+    calls.clear()
+    read(50)
+    audio.done, audio.length, audio.duration = True, audio.decoded, 50.0
+    wave.follow_reading()
+    assert calls  # (terminó, con su largo real)
+    wave.update = update
+    assert drawn(wave) >= 998  # (la onda entera llena la ventana)
+    calls.clear()
+    wave.update = lambda: calls.append(1)
+    wave.follow_reading()
+    assert not calls  # (sin cambios, nada que redibujar)
+
+
 def test_pitch_controls(window, app, wav):
     loaded(window, app, wav)
     assert window.pitch_box.value() == 0.0 and not window.b_pitch.isEnabled()
