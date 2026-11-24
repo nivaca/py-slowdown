@@ -259,3 +259,37 @@ def test_count_shown_on_the_waveform(window, app, wav, output):
     window.toggle()
     window._tick()
     assert window.wave.count is None
+
+
+def test_moving_the_position_does_not_redraw_the_wave(app):
+    """The waveform is drawn once into images, and a move of the position only copies them: drawing it each
+    time (a polygon of thousands of peaks) took more than 100 ms with the GIL held, and the sound broke off
+    every time the line advanced a pixel in a long file."""
+    import time as clock
+    from types import SimpleNamespace
+
+    import numpy as np
+
+    from py_slowdown.audio import Peaks
+    from py_slowdown.waveform import Waveform
+
+    # Una grabación de 20 minutos, solo en picos (lo que la vista entera usa)
+    count = 20 * 60 * RATE // 256
+    peaks = Peaks(count)
+    peaks.lo[:count] = -np.abs(np.sin(np.arange(count) / 50)).astype(np.float32)
+    peaks.hi[:count] = -peaks.lo[:count]
+    peaks.count = count
+    audio = SimpleNamespace(rate=RATE, decoded=count * 256, done=True, length=count * 256, duration=count * 256 / RATE,
+                            peaks=peaks, frames=lambda a, b: np.zeros((0, 2), np.float32))
+    wave = Waveform()
+    wave.resize(1600, 500)
+    wave.set_audio(audio)
+    wave.grab()
+    images = wave._cache
+    assert images is not None
+    start = clock.perf_counter()
+    for seconds in range(60, 600, 60):
+        wave.set_position(float(seconds))
+        wave.grab()
+    assert wave._cache is images  # (copiadas, no dibujadas otra vez)
+    assert (clock.perf_counter() - start) / 9 < 0.05

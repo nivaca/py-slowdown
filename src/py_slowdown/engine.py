@@ -31,6 +31,7 @@ MIN_SPEED = 0.25
 MAX_SPEED = 3.0
 BLOCK = 1024  # output frames per block
 FADE = 192  # cuadros de cada rampa contra chasquidos (unos 4 ms)
+OUTPUT_LATENCY = 0.1  # segundos del búfer de la tarjeta: margen para cuando Python tarda en atenderla
 QUEUE_SECONDS = 0.15  # audio preparado de antemano: también el retraso de un cambio de velocidad
 
 OPTIONS = (
@@ -290,7 +291,7 @@ class Output:
             callback(outdata)
 
         self._stream = sounddevice().OutputStream(
-            samplerate=rate, channels=channels, dtype="float32", callback=call, latency="high"
+            samplerate=rate, channels=channels, dtype="float32", callback=call, latency=OUTPUT_LATENCY
         )
         self._stream.start()
         self.latency = float(self._stream.latency)

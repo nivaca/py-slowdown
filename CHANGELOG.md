@@ -17,6 +17,11 @@ Debian package, the RPM, the wheel and the source, are on
 - **An installer for any Linux** (`.run`), made from the AppImage: for the
   user, or with sudo for everyone, with the command, the menu entry, the
   icons, the manual pages and an uninstaller.
+- **The sound no longer breaks off while playing** (in 0.1.0, about once a
+  second in a long file): each time the position moved a pixel, the
+  waveform was drawn again, which took more than 100 ms and kept the sound
+  from reaching the sound card. It is now drawn once, and only copied as
+  the position moves; the sound card also has a larger buffer (0.1 s).
 - **Repeat a selection, without a gap**: Shift+drag on the waveform, I and
   O at the position, or "Select from here to the next bookmark"; then
   Playback > Repeat the selection (L), or its button. The end of the

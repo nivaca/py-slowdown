@@ -16,7 +16,7 @@ import math
 
 import numpy as np
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPalette, QPen, QPolygonF
+from PySide6.QtGui import QColor, QFontMetrics, QImage, QPainter, QPalette, QPen
 from PySide6.QtWidgets import QMenu, QScrollBar, QSizePolicy, QVBoxLayout, QWidget
 
 from .audio import BUCKET, Audio
@@ -289,43 +289,24 @@ class Waveform(QWidget):
     def _paint_wave(self, painter: QPainter, colors, w: int, top: int, height: int) -> None:
         audio = self.audio
         fpp = self.current_fpp()
-        key = (self.start, fpp, w, audio.decoded, audio.peaks.count)
-        if key != self._cache_key:
-            self._cache = columns(audio, self.start, fpp, w)
-            self._cache_key = key
-        lo, hi = self._cache
         mid = top + height / 2
-        # A escala del pico del archivo (lo leído hasta ahora): una grabación baja no se ve plana.
-        peaks = audio.peaks
-        loudest = max(float(np.abs(peaks.lo[:peaks.count]).max(initial=0)),
-                      float(np.abs(peaks.hi[:peaks.count]).max(initial=0)), 0.05)
-        half = (height / 2 - 2) / min(1.0, loudest)
         painter.setPen(colors["faint"])
         painter.drawLine(QPointF(0, mid), QPointF(w, mid))
-        ok = ~np.isnan(lo)
-        if not ok.any():
-            return
-        xs = np.flatnonzero(ok)
-        # Una columna muy baja se ve al menos como una línea de un píxel.
-        limit = height / 2 - 2
-        y_hi = mid - np.clip(hi[xs] * half, -limit, limit)
-        y_lo = mid - np.clip(lo[xs] * half, -limit, limit)
-        y_lo = np.maximum(y_lo, y_hi + 1)
-        points = [QPointF(float(x) + 0.5, float(y)) for x, y in zip(xs, y_hi)]
-        points += [QPointF(float(x) + 0.5, float(y)) for x, y in zip(xs[::-1], y_lo[::-1])]
-        polygon = QPolygonF(points)
-        cursor = self.x_of(self.position)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
-        for color, clip in ((colors["played"], QRectF(0, top, max(0, cursor), height)),
-                            (colors["wave"], QRectF(cursor, top, max(0, w - cursor), height))):
-            if clip.width() <= 0:
-                continue
-            painter.save()
-            painter.setClipRect(clip)
-            painter.setPen(QPen(color, 1))
-            painter.setBrush(color)
-            painter.drawPolygon(polygon)
-            painter.restore()
+        # La onda se dibuja una vez, con NumPy, en dos imágenes (la parte tocada y la otra), y en cada
+        # movimiento de la posición solo se copian: rellenar con Qt un polígono de miles de picos tardaba
+        # más de 100 ms, con el GIL tomado, y el sonido se cortaba cada vez que la línea avanzaba un píxel.
+        key = (self.start, fpp, w, height, audio.decoded, audio.peaks.count, colors["wave"].rgba(),
+               colors["played"].rgba())
+        if key != self._cache_key:
+            self._cache = self._wave_images(colors, w, height)
+            self._cache_key = key
+        if self._cache is not None:
+            played, rest = self._cache
+            cursor = min(max(0, round(self.x_of(self.position))), w)
+            if cursor > 0:
+                painter.drawImage(QPointF(0, top), played, QRectF(0, 0, cursor, height))
+            if cursor < w:
+                painter.drawImage(QPointF(cursor, top), rest, QRectF(cursor, 0, w - cursor, height))
         if not audio.done:
             # What is still to be read: a faint band.
             x = (audio.decoded - self.start) / fpp
@@ -333,6 +314,35 @@ class Waveform(QWidget):
                 shade = QColor(colors["faint"])
                 shade.setAlpha(40)
                 painter.fillRect(QRectF(max(0, x), top, w - max(0, x), height), shade)
+
+    def _wave_images(self, colors, w: int, height: int):
+        """(played, not yet played): the waveform drawn in each colour, as images of W × HEIGHT."""
+        audio = self.audio
+        lo, hi = columns(audio, self.start, self.current_fpp(), w)
+        ok = ~np.isnan(lo)
+        if height < 4 or not ok.any():
+            return None
+        # A escala del pico del archivo (lo leído hasta ahora): una grabación baja no se ve plana.
+        peaks = audio.peaks
+        loudest = max(float(np.abs(peaks.lo[:peaks.count]).max(initial=0)),
+                      float(np.abs(peaks.hi[:peaks.count]).max(initial=0)), 0.05)
+        mid = height / 2
+        half = (height / 2 - 2) / min(1.0, loudest)
+        limit = height / 2 - 2
+        y_hi = np.where(ok, mid - np.clip(np.nan_to_num(hi) * half, -limit, limit), height)
+        y_lo = np.where(ok, mid - np.clip(np.nan_to_num(lo) * half, -limit, limit), -1)
+        # Una columna muy baja se ve al menos como una línea de un píxel.
+        y_lo = np.maximum(y_lo, y_hi + 1)
+        rows = np.arange(height, dtype=np.float32)[:, None]
+        mask = (rows >= np.floor(y_hi)[None, :]) & (rows <= np.ceil(y_lo)[None, :])
+        images = []
+        for color in (colors["played"], colors["wave"]):
+            pixels = np.zeros((height, w), np.uint32)
+            pixels[mask] = color.rgba() | 0xFF000000
+            image = QImage(pixels.data, w, height, w * 4, QImage.Format.Format_ARGB32_Premultiplied)
+            images.append(image.copy())  # (la copia es de Qt: el arreglo de NumPy puede irse)
+        return images[0], images[1]
+
 
     def _paint_marks(self, painter: QPainter, colors, h: int) -> None:
         metrics = QFontMetrics(painter.font())

@@ -8,7 +8,7 @@ lectures and interviews, where one needs to hear a passage again and again
 at a speed one can follow; it follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in eight stages.
+in nine stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -282,10 +282,32 @@ volume slider to nothing, so the speed slider is now narrower. In the
 dialog of the count-in, the numbers are written as the language of the
 interface writes them (0,75× in Spanish).
 
+9. A sound that broke off
+-------------------------
+
+After 0.1.0 was published, the sound broke off about once a second while
+it played. My checks on the real sound card had driven the player without
+the window, so they had not seen it. Run with the window, a long file and
+the sound card, and with each part timed, the cause was plain: the
+callback that feeds the sound card took less than two milliseconds, but it
+ran late. It is Python code, and must wait for Python's lock; and each time
+the red line of the position moved a pixel (every 1.3 seconds in a file of
+twenty minutes), the window drew the waveform again, as a polygon of
+thousands of peaks that Qt filled in 110 to 265 milliseconds, with the lock
+held. The sound card's buffer held 35 milliseconds.
+
+The waveform is now drawn once, with NumPy, into two images, the played
+part and the rest, and when the position moves they are only copied; a
+drawing takes two to five milliseconds, and a move of the position less.
+The buffer of the sound card is also 0.1 seconds now, for room. With a
+large window, while the file is still read, and zoomed in to the samples,
+there were no breaks in the sound, even with the old buffer. A test keeps
+the waveform from being drawn again when the position moves.
+
 Testing
 -------
 
-The program has 92 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 93 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

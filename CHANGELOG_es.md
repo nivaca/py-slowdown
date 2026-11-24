@@ -18,6 +18,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 - **Un instalador para cualquier Linux** (`.run`), hecho de la AppImage:
   para el usuario o, con sudo, para todos, con la orden, la entrada del
   menú, los íconos, las páginas de manual y un desinstalador.
+- **El sonido ya no se corta mientras suena** (en la 0.1.0, más o menos una
+  vez por segundo en un archivo largo): cada vez que la posición avanzaba un
+  píxel, la forma de onda se dibujaba otra vez, lo que tardaba más de 100 ms
+  e impedía que el sonido llegara a la tarjeta. Ahora se dibuja una vez, y
+  al moverse la posición solo se copia; la tarjeta tiene además un búfer
+  mayor (0,1 s).
 - **Repetir una selección, sin pausa**: Mayús+arrastrar sobre la forma de
   onda, I y O en la posición, o «Seleccionar de aquí al marcador
   siguiente»; luego Reproducción > Repetir la selección (L), o su botón. El
