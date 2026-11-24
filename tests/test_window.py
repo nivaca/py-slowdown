@@ -430,3 +430,32 @@ def test_count_in_offset_setting(window, app, wav, monkeypatch):
     monkeypatch.setattr(window.player, "play", lambda *args: calls.append(args))
     window.toggle()
     assert calls == [(4, 120.0, 0.15)]
+
+
+def test_first_beat_on_the_waveform(window, app, wav, monkeypatch):
+    """Right click > Count-in: the first beat is here: the offset from the position to that point."""
+    from py_slowdown.countin import CountIn
+
+    loaded(window, app, wav)
+    window.seek(2.0)
+    window.wave.firstBeatRequested.emit(2.3)  # (el menú del clic derecho, sobre 2.3 s)
+    assert window.count.on and window.a_count.isChecked()
+    assert window.count.offset == pytest.approx(-0.3)  # (la grabación entra 0,3 s antes del pulso)
+    assert "0.3 s before the beat" in window.statusBar().currentMessage()
+    assert CountIn.load(window.settings).offset == pytest.approx(-0.3)
+    window._tick()
+    assert window.wave.first_beat == pytest.approx(2.3)  # (la línea verde, donde la espera)
+    window.grab()
+    # Antes de la posición: entra después
+    window.wave.firstBeatRequested.emit(1.9)
+    assert window.count.offset == pytest.approx(0.1) and "after" in window.statusBar().currentMessage()
+    # Demasiado lejos: no cambia
+    window.wave.firstBeatRequested.emit(5.0)
+    assert window.count.offset == pytest.approx(0.1) and "within" in window.statusBar().currentMessage()
+    # Más antes de lo que cabe a este tempo (100 BPM: unas 0,53 s): lo dice
+    window.wave.firstBeatRequested.emit(3.5)
+    assert window.count.offset == pytest.approx(-1.5) and "at most" in window.statusBar().currentMessage()
+    # En la posición: sin desfase, y sin línea
+    window.wave.firstBeatRequested.emit(None)
+    window._tick()
+    assert window.count.offset == 0.0 and window.wave.first_beat is None

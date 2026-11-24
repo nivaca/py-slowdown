@@ -35,8 +35,8 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Store, export_text
-from .countin import CountIn, CountInDialog, TapTempo, number, recording_tempo
-from .engine import MAX_PITCH, MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player
+from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, number, recording_tempo
+from .engine import MAX_PITCH, MAX_SPEED, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
 from .interface import tr
 from .panel import BookmarkPanel
 from .timefmt import clock
@@ -408,6 +408,7 @@ class Window(QMainWindow):
         self.wave.removeBookmarkRequested.connect(self.remove_bookmark)
         self.wave.renameBookmarkRequested.connect(self.rename_bookmark)
         self.wave.selectionChanged.connect(self.set_selection)
+        self.wave.firstBeatRequested.connect(self.set_first_beat)
         self.b_repeat.toggled.connect(self.a_repeat.setChecked)
         self.a_repeat.toggled.connect(self.b_repeat.setChecked)
         self.b_count.toggled.connect(self.a_count.setChecked)
@@ -556,6 +557,34 @@ class Window(QMainWindow):
             message = tr("Tempo: {bpm} BPM ({taps} taps)", bpm=self.count.bpm, taps=taps)
         self.statusBar().showMessage(message, 4000)
 
+    def set_first_beat(self, seconds: float | None) -> None:
+        """The count-in's offset from the recording's first beat, at SECONDS (None: at the position): the
+        recording then comes in on the beat after the count, from the position. The count-in is turned on."""
+        if not self.audio:
+            return
+        offset = 0.0 if seconds is None else round(self.player.position - seconds, 2)
+        if abs(offset) > MAX_OFFSET:
+            self.statusBar().showMessage(tr("The first beat must be within {limit} s of the position (this is "
+                                            "{seconds} s away).", limit=number(MAX_OFFSET),
+                                            seconds=number(abs(offset))), 6000)
+            return
+        self.count.offset = offset
+        self.a_count.setChecked(True)
+        self.count.save(self.settings)
+        self._update_count_tip()
+        if offset == 0.0:
+            message = tr("Count-in: the recording comes in on the beat, from the position.")
+        else:
+            message = tr("Count-in: the first beat at {time}; the recording comes in {seconds} s {when} the beat.",
+                         time=clock(seconds, tenths=True), seconds=number(abs(offset)),
+                         when=tr("before") if offset < 0 else tr("after"))
+            heard = -offset / self.player.speed
+            limit = max_earlier(self.audio.rate, self.count.tempo(self.player.speed))
+            if heard > limit:
+                message += " " + tr("At this tempo it can come in at most {seconds} s earlier.",
+                                    seconds=number(limit * self.player.speed))
+        self.statusBar().showMessage(message, 8000)
+
     def _update_count_tip(self) -> None:
         # Lo que la cuenta hace ahora, a la vista al pasar sobre el botón.
         count = self.count
@@ -667,6 +696,10 @@ class Window(QMainWindow):
         self.wave.set_position(position, self.player.playing)
         counting = self.player.counting()
         self.wave.set_count(counting[0] if counting and counting[0] else None)
+        # Con la cuenta previa, y sin sonar, dónde espera el primer pulso de la grabación.
+        offset = self.count.offset
+        beat = position - offset if self.count.on and offset and not self.player.playing else None
+        self.wave.set_first_beat(beat if beat is None or beat >= 0 else None)
         self.time_label.setText(f"{clock(position, tenths=True)} / {clock(audio.duration, tenths=True)}")
         if self.b_play.property("playing") != self.player.playing:
             self._update_play_button()

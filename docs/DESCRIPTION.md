@@ -381,10 +381,16 @@ for. Being in seconds of the recording, the offset is divided by the speed
 before it is heard: a first beat 0.2 seconds after the position, at half
 speed, comes 0.4 seconds later, and an offset of −0.2 is right at both.
 
+A number of seconds is not how one thinks of the place of a beat, so it
+can also be set on the waveform, where the beat is seen: a right click on
+the recording's first beat sets the offset from the position to that
+point, and a green line marked 1 shows where the count-in expects it, to
+check it by eye.
+
 Testing
 -------
 
-The program has 108 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 109 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

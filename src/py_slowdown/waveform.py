@@ -75,6 +75,7 @@ class Waveform(QWidget):
     removeBookmarkRequested = Signal(int)
     renameBookmarkRequested = Signal(int)
     selectionChanged = Signal(object)  # (start, end) in seconds, or None
+    firstBeatRequested = Signal(object)  # seconds: the recording's first beat, for the count-in; None: at the position
     viewChanged = Signal()
 
     def __init__(self, parent=None):
@@ -88,6 +89,7 @@ class Waveform(QWidget):
         self.selection: tuple[float, float] | None = None  # seconds
         self.repeating = False  # whether the selection is repeated (it is drawn stronger)
         self.count: int | None = None  # the beat of a count-in, drawn big
+        self.first_beat: float | None = None  # where the count-in expects the recording's first beat
         self._dragging = False
         self._selecting: float | None = None  # where a Shift+drag began
         self._cache_key = None
@@ -224,6 +226,7 @@ class Waveform(QWidget):
         self._paint_ruler(painter, colors, w)
         self._paint_wave(painter, colors, w, top, h - top)
         self._paint_selection(painter, colors, h)  # (encima de la onda, transparente: la tiñe)
+        self._paint_first_beat(painter, colors, h)
         self._paint_marks(painter, colors, h)
         x = self.x_of(self.position)
         painter.setPen(QPen(colors["cursor"], 2))
@@ -239,6 +242,24 @@ class Waveform(QWidget):
             painter.setPen(shade)
             painter.drawText(QRectF(0, RULER, w, h - RULER), Qt.AlignmentFlag.AlignCenter, str(self.count))
         painter.end()
+
+    def set_first_beat(self, seconds: float | None) -> None:
+        if seconds != self.first_beat:
+            self.first_beat = seconds
+            self.update()
+
+    def _paint_first_beat(self, painter: QPainter, colors, h: int) -> None:
+        # El primer pulso que la cuenta previa espera de la grabación: una línea de trazos y un «1» en la regla.
+        if self.first_beat is None:
+            return
+        x = self.x_of(self.first_beat)
+        color = colors["select"]
+        painter.setPen(QPen(color, 2, Qt.PenStyle.DashLine))
+        painter.drawLine(QPointF(x, RULER), QPointF(x, h))
+        box = QRectF(x - 8, RULER - 16, 16, 15)
+        painter.fillRect(box, color)
+        painter.setPen(colors["base"])
+        painter.drawText(box, Qt.AlignmentFlag.AlignCenter, "1")
 
     def set_count(self, beat: int | None) -> None:
         if beat != self.count:
@@ -426,6 +447,11 @@ class Waveform(QWidget):
                            lambda: self.selectionChanged.emit((here, later[0])))
         if self.selection:
             menu.addAction(tr("Clear the selection"), lambda: self.selectionChanged.emit(None))
+        menu.addSeparator()
+        menu.addAction(tr("Count-in: the first beat is here"), lambda: self.firstBeatRequested.emit(here))
+        if self.first_beat is not None:
+            menu.addAction(tr("Count-in: the first beat at the position"),
+                           lambda: self.firstBeatRequested.emit(None))
         menu.exec(event.globalPos())
 
     def wheelEvent(self, event) -> None:

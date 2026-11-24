@@ -635,4 +635,36 @@
     <en>; the recording {offset} s off the beat</en>
     <tr>; la grabación, {offset} s fuera del pulso</tr>
   </text>
+  <text>
+    <en>Count-in: the first beat is here</en>
+    <tr>Cuenta previa: el primer pulso está aquí</tr>
+  </text>
+  <text>
+    <en>Count-in: the first beat at the position</en>
+    <tr>Cuenta previa: el primer pulso en la posición</tr>
+  </text>
+  <text>
+    <en>The first beat must be within {limit} s of the position (this is {seconds} s away).</en>
+    <tr>El primer pulso debe estar a menos de {limit} s de la posición (este está a {seconds} s).</tr>
+  </text>
+  <text>
+    <en>Count-in: the recording comes in on the beat, from the position.</en>
+    <tr>Cuenta previa: la grabación entra en el pulso, desde la posición.</tr>
+  </text>
+  <text>
+    <en>Count-in: the first beat at {time}; the recording comes in {seconds} s {when} the beat.</en>
+    <tr>Cuenta previa: el primer pulso en {time}; la grabación entra {seconds} s {when} del pulso.</tr>
+  </text>
+  <text>
+    <en>before</en>
+    <tr>antes</tr>
+  </text>
+  <text>
+    <en>after</en>
+    <tr>después</tr>
+  </text>
+  <text>
+    <en>At this tempo it can come in at most {seconds} s earlier.</en>
+    <tr>A este tempo puede entrar a lo sumo {seconds} s antes.</tr>
+  </text>
 </interface>

@@ -97,8 +97,11 @@ def shoot(lang: str, audio: Path, folder: Path):
     # De cerca: unos diez segundos alrededor del primer marcador.
     w.wave.zoom(9.0, w.wave.x_of(21.5))
     w.seek(23.0)
+    w.set_first_beat(23.4)  # (la línea verde del primer pulso de la cuenta previa)
     settle(app)
     save(w.view, "zoom", lang)
+    w.set_first_beat(None)
+    w.a_count.setChecked(False)
     w.wave.fit()
 
     # Una selección que se repite, con la cuenta previa en su tercer golpe.
@@ -131,6 +134,9 @@ def shoot(lang: str, audio: Path, folder: Path):
     menu.addAction(tr("Rename the bookmark…"))
     menu.addAction(tr("Remove the bookmark"))
     menu.addAction(tr("Select from here to the next bookmark"))
+    menu.addSeparator()
+    menu.addAction(tr("Count-in: the first beat is here"))
+    menu.addAction(tr("Count-in: the first beat at the position"))
     menu_shot(app, menu, "context", lang)
 
     for title, name in ((tr("&Playback"), "menu_playback"), (tr("&Bookmarks"), "menu_bookmarks"),

@@ -26,6 +26,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   (negativo) o después (positivo), hasta 2 segundos de la grabación, para
   que entre en el pulso a cualquier velocidad; antes, solo hasta el último
   golpe, que no se corta.
+- **El primer pulso sobre la forma de onda**: un clic derecho sobre el
+  primer pulso de la grabación, Cuenta previa: el primer pulso está aquí,
+  fija el desfase de la posición a él (y activa la cuenta previa); una línea
+  verde con un 1 muestra dónde lo espera la cuenta.
 - **Marcar el tempo**: el botón Marcar, junto a Cuenta previa, o la tecla T,
   pulsados con el pulso mientras suena la música, miden su tempo (el valor
   del medio de los intervalos entre los ocho últimos golpes; una pausa de

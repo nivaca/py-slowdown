@@ -24,6 +24,10 @@ Debian package, the RPM, the wheel and the source, are on
   of the count-in, brings it in earlier (negative) or later (positive), by
   up to 2 seconds of the recording, so that it comes in on the beat at any
   speed; earlier only up to the last click, which is not cut.
+- **The first beat on the waveform**: a right click on the recording's first
+  beat, Count-in: the first beat is here, sets the offset from the position
+  to it (and turns the count-in on); a green line marked 1 shows where the
+  count-in expects it.
 - **Tap the tempo**: the button Tap, beside Count-in, or the key T, pressed
   with the beat while the music plays, measures its tempo (the middle value
   of the intervals between the last eight taps; a pause of over two seconds
