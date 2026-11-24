@@ -25,6 +25,13 @@ Debian package, the RPM, the wheel and the source, are on
   decodes in several threads where the codec allows it. A file of 30
   minutes is read in 1.3 s instead of 2.2 as MP3, and in 0.3 s instead of
   1.2 as FLAC.
+- **Long files are read in four parts at once**: a file of four minutes or
+  more in MP3, FLAC, Ogg Vorbis or Opus is read in parts, each by a process
+  of its own, and each part is joined to the one before only where a
+  second of both agrees sample for sample; if not, the file is read
+  straight on. The result is always that of a straight reading. A lecture
+  of 98 minutes in MP3 is read in 3.1 s instead of 7.5. AAC, and a file
+  played at another rate than its own, are read straight on.
 
 ## 1.0.0 — 2026-11-24
 

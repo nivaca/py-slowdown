@@ -4,6 +4,7 @@ y carpetas propias (configuración, caché, datos) para no tocar las del usuario
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import wave
 
@@ -25,19 +26,25 @@ def tone(seconds: float, rate: int = RATE, channels: int = 2) -> np.ndarray:
     return np.repeat(x[:, None], channels, axis=1)
 
 
-CODECS = {".wav": "pcm_s16le", ".flac": "flac", ".mp3": "libmp3lame", ".m4a": "aac", ".opus": "libopus"}
+CODECS = {".wav": "pcm_s16le", ".flac": "flac", ".mp3": "libmp3lame", ".m4a": "aac", ".opus": "libopus",
+          ".ogg": "libvorbis"}
 
 
 def write(path, samples: np.ndarray, rate: int = RATE) -> None:
     """Write SAMPLES (frames × channels) to PATH, with the codec its extension asks for.
 
-    With PyAV if it is installed; else (as in the RPM's %check, Fedora has no PyAV)
-    a WAV made by Python, converted by the ffmpeg program.
+    With PyAV if it is installed and has the codec; else (as in the RPM's %check,
+    Fedora has no PyAV, or for Vorbis, which PyAV's wheels lack) a WAV made by
+    Python, converted by the ffmpeg program.
     """
     codec = CODECS[os.path.splitext(str(path))[1]]
     try:
         import av
+
+        av.codec.Codec(codec, "w")
     except ImportError:
+        av = None
+    except Exception:  # noqa: BLE001 (un códec que el PyAV de la rueda no trae, como libvorbis)
         av = None
     if av is None:
         wav = str(path) + ".tmp.wav"
@@ -65,6 +72,25 @@ def write(path, samples: np.ndarray, rate: int = RATE) -> None:
                     container.mux(packet)
         for packet in stream.encode(None):
             container.mux(packet)
+
+
+def decoders():
+    """The decoders there are here: PyAV if installed, the ffmpeg program if installed."""
+    found = []
+    try:
+        import av  # noqa: F401
+        found.append("av")
+    except ImportError:
+        pass
+    if shutil.which("ffmpeg") and shutil.which("ffprobe"):
+        found.append("ffmpeg")
+    return found
+
+
+@pytest.fixture(params=decoders())
+def decoder(request, monkeypatch):
+    monkeypatch.setenv("PY_SLOWDOWN_DECODER", request.param)
+    return request.param
 
 
 @pytest.fixture(autouse=True)

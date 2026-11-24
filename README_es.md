@@ -151,7 +151,8 @@ Dónde se guarda todo
   (`~/.cache/py-slowdown/`, `%LOCALAPPDATA%\py-slowdown\cache`,
   `~/Library/Caches/py-slowdown/`), que desaparece al cerrarlo (dos horas en
   estéreo ocupan allí unos 1,3 GB, pero en la memoria queda solo lo que se
-  lee).
+  lee). Mientras un archivo largo se lee por partes, cada parte tiene otro
+  allí, hasta que se añade (en Windows se llaman `part-…`).
 
 Desinstalar el programa nunca los quita.
 

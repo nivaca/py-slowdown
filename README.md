@@ -145,7 +145,9 @@ Where things are kept
   temporary file in the cache folder (`~/.cache/py-slowdown/`,
   `%LOCALAPPDATA%\py-slowdown\cache`, `~/Library/Caches/py-slowdown/`),
   which disappears when the file is closed (two hours of stereo take about
-  1.3 GB there, but only what is read stays in memory).
+  1.3 GB there, but only what is read stays in memory). While a long file
+  is read in parts, each part has one more there, until it is added
+  (on Windows they are named `part-…`).
 
 Uninstalling the program never removes them.
 

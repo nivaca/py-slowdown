@@ -365,7 +365,10 @@ MOV). Un archivo con más de dos canales se mezcla en estéreo.
 \index{archivos largos}\index{lectura}%
 El archivo se lee en segundo plano. Mientras tanto, la barra de estado
 muestra cuánto va, la forma de onda se llena desde la izquierda y lo ya
-leído se puede tocar. Una clase de dos horas tarda unos segundos. El
+leído se puede tocar. Una clase de dos horas tarda unos segundos. Un
+archivo largo en MP3, FLAC, Ogg Vorbis u Opus se lee en cuatro partes a la
+vez, cada una en un proceso propio: la forma de onda llena su primer cuarto
+desde la izquierda, y luego el resto de una vez. El
 sonido decodificado se guarda en un archivo temporal de la carpeta de
 caché, no en la memoria (dos horas en estéreo ocupan allí unos 1,3\,GB), y
 ese archivo desaparece al cerrar el archivo de audio, o al terminar el

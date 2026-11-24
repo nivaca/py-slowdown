@@ -27,6 +27,13 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   decodifica en varios hilos donde el códec lo permite. Un archivo de 30
   minutos se lee en 1,3 s y no en 2,2 si es MP3, y en 0,3 s y no en 1,2 si
   es FLAC.
+- **Los archivos largos se leen en cuatro partes a la vez**: un archivo de
+  cuatro minutos o más en MP3, FLAC, Ogg Vorbis u Opus se lee por partes,
+  cada una en un proceso propio, y cada parte se une a la anterior solo
+  donde un segundo de ambas coincide muestra por muestra; si no, el archivo
+  se lee de corrido. El resultado es siempre el de una lectura seguida. Una
+  clase de 98 minutos en MP3 se lee en 3,1 s y no en 7,5. El AAC, y un
+  archivo tocado a otra frecuencia que la suya, se leen de corrido.
 
 ## 1.0.0 — 2026-11-24
 

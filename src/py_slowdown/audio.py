@@ -24,6 +24,8 @@ from pathlib import Path
 
 import numpy as np
 
+from . import parts as parallel
+
 # Frames per peak: the waveform keeps the minimum and the maximum of each group of BUCKET frames.
 BUCKET = 256
 
@@ -176,6 +178,14 @@ class _PyAV:
             self._container.close()
 
 
+    @staticmethod
+    def part(path: Path, start: float, stop: float, rate: int, channels: int) -> tuple[list[str], bool, int | None]:
+        """How a process reads the file from START seconds to STOP (-1: the end): (command, header, first frame)."""
+        command = [*parallel.interpreter(), "-m", "py_slowdown.parts", str(path), repr(start), repr(stop), str(rate),
+                   str(channels)]
+        return command, True, None
+
+
 class _FFmpeg:
     """A file read by the ffmpeg program (and described by ffprobe)."""
 
@@ -234,6 +244,16 @@ class _FFmpeg:
         if status != 0 and not stop.is_set():
             raise AudioError(error.splitlines()[-1] if error else f"ffmpeg ended with {status}")
 
+    @staticmethod
+    def part(path: Path, start: float, stop: float, rate: int, channels: int) -> tuple[list[str], bool, int | None]:
+        # Sin cabecera: el primer cuadro se calcula de START, y align lo busca si no está ahí (en un MP3, el
+        # comienzo del flujo lo corre unos 1100 cuadros).
+        command = ["ffmpeg", "-nostdin", "-v", "error", "-ss", repr(start), "-i", str(path), "-map", "0:a:0"]
+        if stop >= 0:
+            command += ["-t", repr(stop - start)]
+        command += ["-f", "s16le", "-acodec", "pcm_s16le", "-ac", str(channels), "-ar", str(rate), "pipe:1"]
+        return command, False, round(start * rate)
+
 
 class Audio:
     """The decoded audio of a file.
@@ -255,12 +275,14 @@ class Audio:
 
         seconds = self._announced_seconds()
         self.estimated = seconds is not None
+        self._seconds = seconds or 0.0
         capacity = int((seconds if seconds else 600.0) * self.rate * 1.02) + self.rate
         self._file = tempfile.TemporaryFile(dir=cache_dir(), prefix="decoded-")  # noqa: SIM115 (open while the audio is)
         self._data = self._map(capacity)
         self.peaks = Peaks(capacity // BUCKET + 2)
 
         self.decoded = 0  # frames ready to be read
+        self.parts_used = 0  # partes leídas en paralelo que se añadieron (0: todo de corrido)
         self.done = False
         self.error = ""
         self._stop = threading.Event()
@@ -306,14 +328,111 @@ class Audio:
         self._data = self._map(max(needed, int(self._data.shape[0] * 1.5)))
 
     def _decode(self) -> None:
+        starts = parallel.plan(self._seconds, self.rate) if self._parallel() else []
+        running: list[parallel.Part] = []
+        self._straight = self._source.samples(self.rate, self.channels, self._stop)
+        self._straight_at = 0  # índice del primer cuadro de lo que la lectura seguida da después
+        self._carry: np.ndarray | None = None  # lo que dio de más la última vez
         try:
-            for samples in self._source.samples(self.rate, self.channels, self._stop):
-                self._take(samples)
+            # Las demás partes, cada una en su proceso, empiezan a la vez que el comienzo, que se lee aquí.
+            if starts and os.name == "nt":
+                parallel.sweep(cache_dir())
+            running = [self._start_part(at, starts[k + 1] if k + 1 < len(starts) else None)
+                       for k, at in enumerate(starts)]
+            reached = self._read_straight(starts[0] if starts else None)
+            for k, part in enumerate(running):
+                if not reached or self._stop.is_set():
+                    break
+                end = starts[k + 1] if k + 1 < len(starts) else None
+                if not self._splice(part, end):
+                    # No coincidió (o el proceso falló): de corrido desde donde se iba, como sin partes.
+                    self.parts_used = k
+                    self._read_straight(None)
+                    break
+            else:
+                self.parts_used = len(running)
         except AudioError as error:
             # A file damaged halfway: what was read until then stays.
             self.error = str(error)
+        finally:
+            for part in running:
+                part.kill()
+            self._straight.close()
         self.peaks.finish()
         self.done = True
+
+    def _parallel(self) -> bool:
+        # Por partes solo a la frecuencia del archivo (el remuestreador tiene memoria y sus costuras no serían las
+        # de una lectura seguida) y con los códecs que se asientan exactos después de un salto.
+        return self.estimated and self.rate == self._source.rate and self.codec in parallel.EXACT
+
+    def _start_part(self, at: int, end: int | None) -> parallel.Part:
+        begin = max(0.0, at / self.rate - parallel.CHECK - parallel.PREROLL)
+        stop = end / self.rate + 0.5 if end is not None else -1.0
+        command, header, predicted = self._source.part(self.path, begin, stop, self.rate, self.channels)
+        return parallel.Part(command, self.channels, cache_dir(), header, predicted)
+
+    def _read_straight(self, until: int | None) -> bool:
+        """Decode straight on up to frame UNTIL (None: the end), keeping only what comes after self.decoded.
+
+        True if it got to UNTIL (False: the file ended, or reading stopped).
+        """
+        while until is None or self.decoded < until:
+            if self._stop.is_set():
+                return False
+            if self._carry is not None:
+                piece, self._carry = self._carry, None
+            else:
+                piece = next(self._straight, None)
+                if piece is None:
+                    return False
+            at = self._straight_at
+            self._straight_at += len(piece)
+            # Lo que ya está (de una parte, antes de volver a leer de corrido) no se vuelve a guardar.
+            low = min(max(0, self.decoded - at), len(piece))
+            high = len(piece) if until is None else min(len(piece), max(low, until - at))
+            if high < len(piece):
+                self._carry = piece[high:]
+                self._straight_at = at + high
+            self._take(piece[low:high])
+        return True
+
+    def _splice(self, part: parallel.Part, end: int | None) -> bool:
+        """Add PART after what is read, up to frame END (None: to its end), once its first frames agree.
+
+        False if they do not, or if the part could not be read to END.
+        """
+        rate = self.rate
+        at = self.decoded - round(parallel.CHECK * rate)
+        window = self._data[at:self.decoded].copy()
+        # Su comienzo: lo que se adelantó, el segundo que se compara y algo de holgura.
+        size = round((parallel.PREROLL + parallel.CHECK + 5.0) * rate)
+        while part.frames < size and not part.finished:
+            if self._stop.is_set():
+                return False
+            part.wait(0.02)
+        if part.failed:
+            return False
+        first = parallel.align(window, at, part.read(0, size), part.predicted)
+        if first is None:
+            return False
+        step = 1 << 17
+        while True:
+            if self._stop.is_set():
+                return False
+            finished = part.finished  # (antes de contar: lo que escribió hasta terminar ya está contado)
+            position = self.decoded - first
+            available = part.frames
+            stop = available if end is None else min(available, end - first)
+            if position < stop:
+                self._take(part.read(position, min(stop, position + step)))
+                continue
+            if end is not None and self.decoded >= end:
+                return True
+            if finished:
+                # Toda la parte está: hasta el final del archivo, si no falló; si no llegó a END, falta algo.
+                return end is None and not part.failed
+            part.wait(0.02)
 
     def _take(self, samples: np.ndarray) -> None:
         if not samples.size:

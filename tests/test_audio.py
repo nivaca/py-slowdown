@@ -1,4 +1,3 @@
-import shutil
 import wave
 
 import numpy as np
@@ -7,25 +6,6 @@ from conftest import RATE, tone, write
 
 from py_slowdown import audio as audio_module
 from py_slowdown.audio import BUCKET, Audio, AudioError, Peaks
-
-
-def decoders():
-    """The decoders there are here: PyAV if installed, the ffmpeg program if installed."""
-    found = []
-    try:
-        import av  # noqa: F401
-        found.append("av")
-    except ImportError:
-        pass
-    if shutil.which("ffmpeg") and shutil.which("ffprobe"):
-        found.append("ffmpeg")
-    return found
-
-
-@pytest.fixture(params=decoders())
-def decoder(request, monkeypatch):
-    monkeypatch.setenv("PY_SLOWDOWN_DECODER", request.param)
-    return request.param
 
 
 @pytest.mark.parametrize("suffix", [".wav", ".flac", ".mp3", ".m4a", ".opus"])

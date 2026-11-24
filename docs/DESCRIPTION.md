@@ -436,10 +436,52 @@ it. A file of 30 minutes is read in 1.3 seconds instead of 2.2 as MP3, and
 in 0.3 instead of 1.2 as FLAC; with the ffmpeg program, as in the RPM, the
 MP3 takes 1.1 seconds instead of 2.0.
 
+15. Reading in parts
+--------------------
+
+To go further I measured on a real recording, a lecture of an hour and
+38 minutes in MP3 (48 kHz, 230 kbps): 7.5 seconds to read it whole, of
+which FFmpeg's own decoding is between 3.4 and 4.3. More threads did not
+help: PyAV makes a call of Python for each of the 244,000 pieces of the
+MP3, and threads take turns with the GIL, so that four were slower than
+one. Processes did help: four decoded it in 2.9 seconds.
+
+So a long file (four minutes or more) is read in four parts at once. The
+program reads the first one itself, as before, so that it can be played
+and drawn at once; each of the others is read by a process of its own,
+the program itself with PyAV (`python -m py_slowdown.parts`) or the ffmpeg
+program, which writes 16-bit samples into a temporary file. The first
+version had a thread copying each pipe into its file, and those threads
+took the GIL from the reading of the first part, which became 60 % slower;
+now each process writes into its file directly, as its standard output,
+and the program reads it with another descriptor.
+
+What had to be sure is that the parts join where they should, sample for
+sample. I measured it first. After a seek, the timestamps give the exact
+place (in an MP3, counted from the start of the stream, about 25 ms after
+zero), and every decoder, started elsewhere, gives the same samples as a
+straight reading after a while: 50 ms for MP3, half a second for Opus, at
+once for FLAC and Vorbis. So each part starts three seconds before its
+place, and the second before its place must be identical to what was read
+before; if it is not, or a process fails, the program reads on straight
+from where it was, and the result is always that of a straight reading,
+at most slower. AAC was the exception. FFmpeg's encoder uses noise
+substitution, and the decoder makes that noise with a random generator
+that runs from the start of the file, so a part begun elsewhere has other
+noise in those bands, which cannot be heard but is not the same. AAC is
+read straight on, and so is a file played at another rate than its own,
+since the resampler has a memory too.
+
+On the recording, the reading went from 7.5 seconds to 3.1 with PyAV, and
+from 6.8 to 4.6 with the ffmpeg program, identical to the straight reading
+in every sample and every peak. On Windows the program runs in
+`pythonw.exe`, which may have no standard output, so the parts run in the
+`python.exe` beside it.
+
 Testing
 -------
 
-The program has 115 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 138 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -468,4 +510,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 65 files and about 11,100 lines (6,800 of them in Python).
+The program has 67 files and about 12,000 lines (7,600 of them in Python).
