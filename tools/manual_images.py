@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tools"))
 OUT = ROOT / "docs" / "img" / "manual"
 SIZE = (1200, 560)
-LABELS = {"en": ("Question from the audience", "Second part"), "es": ("Pregunta del público", "Segunda parte")}
+LABELS = {"en": ("Second verse", "Guitar solo"), "es": ("Segunda estrofa", "Solo de guitarra")}
 
 
 def settle(app, seconds: float = 0.3):

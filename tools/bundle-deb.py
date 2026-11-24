@@ -45,8 +45,8 @@ DEPENDS = ("libc6 (>= 2.34), libegl1, libgl1, libxkbcommon0, libxkbcommon-x11-0,
 DESCRIPTION = """\
 play audio slower or faster without changing its pitch
  py-slowdown plays a recording slower or faster without changing its
- pitch, for transcribing lectures, interviews and dictations, and for
- learning music by ear. The speed goes from 0.25x to 3x, changed while it
+ pitch, for practising music and learning it by ear; it is made for
+ music, not for transcribing speech. The speed goes from 0.25x to 3x, changed while it
  plays, with the R3 engine of the Rubber Band Library. The file is shown
  as a waveform, with the usual controls, and bookmarks with labels keep
  the places to come back to. In English and Spanish.

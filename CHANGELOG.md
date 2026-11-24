@@ -29,8 +29,8 @@ Debian package, the RPM, the wheel and the source, are on
   more in MP3, FLAC, Ogg Vorbis or Opus is read in parts, each by a process
   of its own, and each part is joined to the one before only where a
   second of both agrees sample for sample; if not, the file is read
-  straight on. The result is always that of a straight reading. A lecture
-  of 98 minutes in MP3 is read in 3.1 s instead of 7.5. AAC, and a file
+  straight on. The result is always that of a straight reading. An MP3 of
+  98 minutes is read in 3.1 s instead of 7.5. AAC, and a file
   played at another rate than its own, are read straight on.
 
 ## 1.0.0 — 2026-11-24

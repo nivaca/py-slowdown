@@ -2,10 +2,14 @@ py-slowdown
 ===========
 
 py-slowdown reproduce audio más lento o más rápido sin cambiarle la altura.
-Sirve para transcribir grabaciones (clases, entrevistas, dictados) y para
-sacar música de oído: el archivo se ve como una forma de onda, los mandos de
-siempre lo recorren y los marcadores guardan los lugares a los que se quiere
-volver.
+Está hecho para la música: para practicar una pieza y sacarla de oído,
+oyendo un pasaje una y otra vez a una velocidad que se pueda seguir. El
+archivo se ve como una forma de onda, los mandos de siempre lo recorren y
+los marcadores guardan los lugares a los que se quiere volver.
+
+Es un programa para la música, no para transcribir la voz hablada (clases,
+entrevistas, dictados): lo que hace además de reproducir, como la cuenta
+previa, el tempo o la altura en semitonos, está pensado para músicos.
 
 *Read in English: [README.md](README.md).*
 

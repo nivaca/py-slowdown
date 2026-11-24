@@ -31,8 +31,8 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   cuatro minutos o más en MP3, FLAC, Ogg Vorbis u Opus se lee por partes,
   cada una en un proceso propio, y cada parte se une a la anterior solo
   donde un segundo de ambas coincide muestra por muestra; si no, el archivo
-  se lee de corrido. El resultado es siempre el de una lectura seguida. Una
-  clase de 98 minutos en MP3 se lee en 3,1 s y no en 7,5. El AAC, y un
+  se lee de corrido. El resultado es siempre el de una lectura seguida. Un MP3
+  de 98 minutos se lee en 3,1 s y no en 7,5. El AAC, y un
   archivo tocado a otra frecuencia que la suya, se leen de corrido.
 
 ## 1.0.0 — 2026-11-24

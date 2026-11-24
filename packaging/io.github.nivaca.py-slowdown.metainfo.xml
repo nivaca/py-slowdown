@@ -12,16 +12,16 @@
   </developer>
   <description>
     <p>
-      py-slowdown plays a recording slower or faster without changing its pitch, for
-      transcribing lectures, interviews and dictations, and for learning music by ear. The
+      py-slowdown plays a recording slower or faster without changing its pitch, for practising
+      music and learning it by ear (it is made for music, not for transcribing speech). The
       file is shown as a waveform, the usual controls move through it, and bookmarks keep the
       places to come back to.
     </p>
     <p xml:lang="es">
       py-slowdown reproduce una grabación más lenta o más rápida sin cambiarle la altura, para
-      transcribir clases, entrevistas y dictados, y para sacar música de oído. El archivo se ve
-      como una forma de onda, los mandos de siempre lo recorren y los marcadores guardan los
-      lugares a los que se quiere volver.
+      practicar música y sacarla de oído (está hecho para la música, no para transcribir la voz
+      hablada). El archivo se ve como una forma de onda, los mandos de siempre lo recorren y
+      los marcadores guardan los lugares a los que se quiere volver.
     </p>
     <ul>
       <li>Speed from 0.25× to 3×, changed while it plays, by the R3 engine of the Rubber Band Library; at 1× the file is played as it is</li>
@@ -48,10 +48,10 @@
   <keywords>
     <keyword>slow down</keyword>
     <keyword>time stretch</keyword>
-    <keyword>transcription</keyword>
+    <keyword>music practice</keyword>
     <keyword>waveform</keyword>
     <keyword xml:lang="es">ralentizar</keyword>
-    <keyword xml:lang="es">transcripción</keyword>
+    <keyword xml:lang="es">práctica musical</keyword>
     <keyword xml:lang="es">forma de onda</keyword>
   </keywords>
   <url type="homepage">https://github.com/nivaca/py-slowdown</url>

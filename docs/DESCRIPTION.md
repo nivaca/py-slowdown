@@ -3,9 +3,10 @@ How py-slowdown was made
 
 py-slowdown is an audio player that plays a recording slower or faster
 without changing its pitch, shows it as a waveform and keeps bookmarks in
-it. Nicolas Vaughan made it in November 2026, for transcribing recorded
-lectures and interviews, where one needs to hear a passage again and again
-at a speed one can follow; it follows the shape of his other desktop
+it. Nicolas Vaughan made it in November 2026, for music: for practising a
+piece and learning it by ear, where one needs to hear a passage again and
+again at a speed one can follow. It is an app for music, not for
+transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
 in thirteen stages.
@@ -86,7 +87,7 @@ Now they are faded at the moment of the seek.
 3. Long files
 -------------
 
-A recorded lecture of two hours, in stereo and in 32-bit floats, takes
+A recording of two hours, in stereo and in 32-bit floats, takes
 about 2.5 GB. To keep it all in memory was not reasonable, and to decode it
 on the fly, with seeking, would complicate every jump. The decoded samples
 go instead to an unnamed temporary file in the user's cache folder (not
@@ -113,7 +114,7 @@ stop, forward, to the end), the time, the speed (a slider and a number box,
 from 0.25× to 3×, and a button for 1×) and the volume; on the right, the
 panel of bookmarks, where a label is edited in place and a double click on
 the time goes there. The waveform is scaled to the loudest point of the
-file, because a quiet recording, as lectures often are, looked almost flat.
+file, because a quiet recording looked almost flat.
 All the actions have keyboard shortcuts, and the back and forward buttons
 keep jumping while they are held down.
 
@@ -439,8 +440,8 @@ MP3 takes 1.1 seconds instead of 2.0.
 15. Reading in parts
 --------------------
 
-To go further I measured on a real recording, a lecture of an hour and
-38 minutes in MP3 (48 kHz, 230 kbps): 7.5 seconds to read it whole, of
+To go further I measured on a real recording, an MP3 of an hour and
+38 minutes (48 kHz, 230 kbps): 7.5 seconds to read it whole, of
 which FFmpeg's own decoding is between 3.4 and 4.3. More threads did not
 help: PyAV makes a call of Python for each of the 244,000 pieces of the
 MP3, and threads take turns with the GIL, so that four were slower than

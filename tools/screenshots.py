@@ -44,7 +44,7 @@ class Silent:
 
 
 def sample(folder: Path) -> Path:
-    path = folder / "lecture.m4a"
+    path = folder / "song.m4a"
     subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "lavfi", "-i", "anoisesrc=d=95:c=pink:a=0.3",
                     "-af", "volume='0.15+0.85*abs(sin(t*0.45))*abs(sin(t*0.07+0.4))':eval=frame", "-ac", "2",
                     "-c:a", "aac", str(path)], check=True)
@@ -72,7 +72,7 @@ def shoot(lang: str, audio: Path, folder: Path) -> Path:
     w.show()
     w.open_file(audio)
     w.audio.wait(30)
-    labels = {"en": ("Question from the audience", "Second part"), "es": ("Pregunta del público", "Segunda parte")}
+    labels = {"en": ("Second verse", "Guitar solo"), "es": ("Segunda estrofa", "Solo de guitarra")}
     for seconds, label in zip((21.5, 58.0), labels[lang]):
         w._renamed(w.add_bookmark_at(seconds), label)
     w._show_bookmarks()

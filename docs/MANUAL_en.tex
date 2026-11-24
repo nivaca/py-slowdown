@@ -159,10 +159,11 @@
 \section{Introduction}
 \noindent
 \texttt{py-slowdown} plays a recording slower or faster without changing its
-pitch. I made it for transcribing recorded lectures and interviews, where a
-passage must be heard again and again at a speed one can follow; it serves
-as well for dictations, for learning a language, and for learning music by
-ear.
+pitch. I made it for music: for practising a piece and learning it by ear,
+where a passage must be heard again and again at a speed one can follow.
+It is an app for music, not for transcribing speech (lectures, interviews,
+dictations); what it does besides playing, such as the count-in, the tempo
+or the pitch in semitones, is meant for musicians.
 
 \index{waveform}\index{speed}\index{bookmarks}\index{formats}%
 The recording is shown as a waveform, over which the position moves while
@@ -174,7 +175,7 @@ on from there the next time.
 
 \index{rubber band@Rubber Band}\index{quality}%
 The stretching is done by the Rubber Band Library, with its R3 engine, the
-one of highest quality, made for speech and music. At 1\,× the file is
+one of highest quality. At 1\,× the file is
 played exactly as it is, sample for sample, without going through Rubber
 Band.
 
@@ -359,7 +360,7 @@ WebM, MOV). A file with more than two channels is mixed down to stereo.
 \index{long files}\index{reading}%
 A file is read in the background. While it is read, the status bar shows
 how much is done, the waveform fills in from the left, and what is already
-read can be played. A lecture of two hours takes a few seconds. A long
+read can be played. A recording of two hours takes a few seconds. A long
 file in MP3, FLAC, Ogg Vorbis or Opus is read in four parts at once, each
 by a process of its own: the waveform fills its first quarter from the
 left, and then the rest at once. The
@@ -397,7 +398,7 @@ The controls (figure~\ref{fig:controls_en}) are, from the left:
 The skip length is 5 seconds unless another is chosen in
 \menu{Settings\then Skip length} (1 to 60 seconds).
 \key{Shift+←} and \key{Shift+→} go back and forward one second, which is
-what is most often needed when transcribing. At the end of the file the
+what is most often needed when working out a passage. At the end of the file the
 playing stops; \key{Space} then plays it again from the start.
 
 \index{volume}%
@@ -415,11 +416,11 @@ speed. It can be changed while the recording plays; the change is heard
 after about 0.15 seconds, the sound already prepared at the old speed.
 
 \index{quality}\index{rubber band@Rubber Band}%
-The pitch does not change: a voice at 0.5\,× says the words more slowly,
-but with its own voice. The quality is that of Rubber Band's R3 engine,
-which keeps speech clear and music natural, even far from 1\,×; at very
-slow speeds the attacks of the sounds (consonants, the strokes of a
-guitar) are somewhat softened, as with any method of its kind. At 1\,× the
+The pitch does not change: a melody at 0.5\,× is played more slowly, but in
+its own key. The quality is that of Rubber Band's R3 engine, which keeps
+the music natural, even far from 1\,×; at very slow speeds the attacks of
+the sounds (the strokes of a guitar, the hits of a drum) are somewhat
+softened, as with any method of its kind. At 1\,× the
 file is played as it is.
 
 \index{speed!not available}%
@@ -504,7 +505,7 @@ again from its bookmark with one key.
 the right click, removes one. \menu{Export} in the panel, or
 \menu{Bookmarks\then Export the bookmarks}, saves them as a text file, one
 per line: the time, a tab, and the label. That text can be pasted into a
-transcription or a spreadsheet.
+score, notes or a spreadsheet.
 
 \index{bookmarks!kept}%
 The bookmarks are saved as soon as they change, for each file, by its full

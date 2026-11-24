@@ -2,10 +2,14 @@ py-slowdown
 ===========
 
 py-slowdown plays audio slower or faster without changing its pitch. It is
-meant for transcribing recordings (lectures, interviews, dictations) and for
-learning music by ear: the file is shown as a waveform, the usual player
-controls move through it, and bookmarks keep the places one wants to come
-back to.
+made for music: for practising a piece and learning it by ear, hearing a
+passage again and again at a speed one can follow. The file is shown as a
+waveform, the usual player controls move through it, and bookmarks keep the
+places one wants to come back to.
+
+It is an app for music, not for transcribing speech (lectures, interviews,
+dictations): what it does besides playing, such as the count-in, the tempo
+or the pitch in semitones, is meant for musicians.
 
 *Leer en español: [README_es.md](README_es.md).*
 
