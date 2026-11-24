@@ -136,7 +136,7 @@ of the License, or (at your option) any later version". So I kept the
 licence of all my programs, GPL 3 or later, and replaced pylibrb by a small
 binding of my own (`rubberband.py`), with ctypes, to the C interface of
 Rubber Band, which has all that the engine uses. It loads the library of
-the system (rubberband-libs in Fedora, librubberband2 in Debian and Ubuntu,
+the system (rubberband-libs in Fedora, librubberband3, or librubberband2, in Debian and Ubuntu,
 rubberband in Homebrew), or a copy inside the package. The tests passed as
 they were, with the new binding.
 

@@ -46,7 +46,7 @@ Hay 83 pruebas automáticas (`tests/`), que `tools/test.py` corre a la vez, cada
 
 ## Plataforma
 
-Funciona en Linux, en Windows 10 y posteriores, y en macOS 13 y posteriores (Apple Silicon e Intel). Los instaladores de cada sistema llevan todo lo que el programa necesita, su propio Python incluido; los de Windows y macOS los hace y los prueba GitHub en sus propias máquinas, y a mano solo se ha probado en Fedora 45. Desde el código necesita Python 3.14 o posterior, la biblioteca Rubber Band (versión 3 o posterior) y, en Linux, PortAudio: `rubberband-libs` y `portaudio` en Fedora, `librubberband2` y `libportaudio2` en Debian y Ubuntu, `rubberband` en Homebrew. Los instaladores no están firmados por Microsoft ni por Apple, así que SmartScreen y Gatekeeper avisan la primera vez. No necesita internet.
+Funciona en Linux, en Windows 10 y posteriores, y en macOS 13 y posteriores (Apple Silicon e Intel). Los instaladores de cada sistema llevan todo lo que el programa necesita, su propio Python incluido; los de Windows y macOS los hace y los prueba GitHub en sus propias máquinas, y a mano solo se ha probado en Fedora 45. Desde el código necesita Python 3.14 o posterior, la biblioteca Rubber Band (versión 3 o posterior) y, en Linux, PortAudio: `rubberband-libs` y `portaudio` en Fedora, `librubberband3` (o `librubberband2`) y `libportaudio2` en Debian y Ubuntu, `rubberband` en Homebrew. Los instaladores no están firmados por Microsoft ni por Apple, así que SmartScreen y Gatekeeper avisan la primera vez. No necesita internet.
 
 ### Licencias
 

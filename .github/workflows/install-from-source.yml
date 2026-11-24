@@ -38,8 +38,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -q
+          # (Rubber Band 4 is librubberband3; the older releases have librubberband2)
+          rubberband=librubberband3
+          apt-cache show "$rubberband" >/dev/null 2>&1 || rubberband=librubberband2
           sudo apt-get install -q -y libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 \
-              librubberband2 libportaudio2 ffmpeg
+              "$rubberband" libportaudio2 ffmpeg
       - name: Rubber Band and ffmpeg
         if: runner.os == 'macOS'
         run: brew install rubberband ffmpeg

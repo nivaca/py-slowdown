@@ -17,7 +17,7 @@
 # anywhere else; the settings are never touched.
 # It needs, from the system, the Rubber Band Library and (on Linux) PortAudio:
 #   Fedora: sudo dnf install rubberband-libs portaudio
-#   Debian, Ubuntu: sudo apt install librubberband2 libportaudio2
+#   Debian, Ubuntu: sudo apt install librubberband3 libportaudio2 (older: librubberband2)
 #   macOS: brew install rubberband
 #
 # py-slowdown: Copyright (C) 2026 Nicolas Vaughan <nicolasvaughan@proton.me>
@@ -107,7 +107,7 @@ missing_libraries() {
         echo "  brew install rubberband" >&2
     else
         echo "  Fedora: sudo dnf install rubberband-libs portaudio" >&2
-        echo "  Debian, Ubuntu: sudo apt install librubberband2 libportaudio2" >&2
+        echo "  Debian, Ubuntu: sudo apt install librubberband3 libportaudio2 (older releases: librubberband2)" >&2
     fi
     echo "  and run this again." >&2
     exit 1

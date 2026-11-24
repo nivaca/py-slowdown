@@ -93,7 +93,7 @@ instala para un usuario en Linux o en macOS, en un entorno propio, con su
 entrada en el menú (`--uninstall` lo quita). Necesita del sistema la
 biblioteca Rubber Band (versión 3 o posterior) y, en Linux, PortAudio:
 `sudo dnf install rubberband-libs portaudio` en Fedora, `sudo apt install
-librubberband2 libportaudio2` en Debian y Ubuntu, `brew install rubberband`
+librubberband3 libportaudio2` en Debian y Ubuntu (`librubberband2` en las versiones anteriores), `brew install rubberband`
 en macOS.
 
 Para correrlo desde el código, con [uv](https://docs.astral.sh/uv/):

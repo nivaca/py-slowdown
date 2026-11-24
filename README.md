@@ -88,8 +88,8 @@ From the source, with Python 3.14 or later, `install/install.sh` installs it
 for one user on Linux or macOS, in an environment of its own, with a menu
 entry (`--uninstall` removes it). It needs the Rubber Band Library (version
 3 or later) and, on Linux, PortAudio from the system: `sudo dnf install
-rubberband-libs portaudio` on Fedora, `sudo apt install librubberband2
-libportaudio2` on Debian and Ubuntu, `brew install rubberband` on macOS.
+rubberband-libs portaudio` on Fedora, `sudo apt install librubberband3
+libportaudio2` on Debian and Ubuntu (`librubberband2` on older releases), `brew install rubberband` on macOS.
 
 To run it from the source, with [uv](https://docs.astral.sh/uv/):
 
