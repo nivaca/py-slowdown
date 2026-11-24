@@ -230,8 +230,18 @@ install() {
     "$VENV/bin/python" -m pip install --quiet "$ROOT"
     say "Checking that it starts, and finds Rubber Band and PortAudio"
     "$VENV/bin/$NAME" --version
-    "$VENV/bin/python" -c 'from py_slowdown import rubberband, engine; rubberband.library(); engine.sounddevice()' \
-        || missing_libraries
+    # (PortAudio missing is an error; PortAudio found but without a sound server, as on a machine
+    # with no sound, is not: it plays once there is one)
+    "$VENV/bin/python" -c '
+from py_slowdown import engine, rubberband
+rubberband.library()
+try:
+    engine.sounddevice()
+except OSError:
+    raise
+except Exception:
+    pass
+' || missing_libraries
     say "Installed:"
     for command in "${COMMANDS[@]}"; do
         link_command "$command"
