@@ -1,9 +1,10 @@
 """La ventana principal de py-slowdown.
 
 Arriba, la forma de onda; debajo, los mandos de la reproducción (al principio,
-atrás, tocar o pausar, detener, adelante, al final), el tiempo, la velocidad y
-el volumen; a la derecha, el panel de los marcadores. Los menús repiten todo eso
-con sus atajos de teclado.
+atrás, tocar o pausar, detener, adelante, al final), el tiempo, la velocidad,
+la altura, la manera de oír y el volumen; a la derecha, el panel de los
+marcadores y los bucles. Los menús repiten todo eso con sus atajos de teclado,
+que se pueden cambiar.
 
 La ventana tiene un solo archivo abierto a la vez. Al cerrarlo (o al abrir
 otro, o al salir) guarda el punto donde iba, y al volver a abrirlo sigue de allí.

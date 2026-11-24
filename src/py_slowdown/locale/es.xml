@@ -757,11 +757,11 @@
   </text>
   <text>
     <en>{n} semitones higher</en>
-    <tr>{n} semitonos más alto</tr>
+    <tr>{n} semitonos más arriba</tr>
   </text>
   <text>
     <en>{n} semitones lower</en>
-    <tr>{n} semitonos más bajo</tr>
+    <tr>{n} semitonos más abajo</tr>
   </text>
   <text>
     <en>(formants kept)</en>
@@ -920,5 +920,13 @@
   <text>
     <en>Settings &gt; Keyboard shortcuts</en>
     <tr>Configuración &gt; Atajos de teclado</tr>
+  </text>
+  <text>
+    <en>a semitone higher</en>
+    <tr>un semitono más arriba</tr>
+  </text>
+  <text>
+    <en>a semitone lower</en>
+    <tr>un semitono más abajo</tr>
   </text>
 </interface>

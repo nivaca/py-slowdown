@@ -40,8 +40,11 @@ def describe(speed: float, pitch: float, formants: bool) -> str:
     """How the export will sound, in words."""
     what = tr("At {speed}×", speed=number(speed))
     if pitch:
-        what += ", " + (tr("{n} semitones higher", n=number(pitch)) if pitch > 0
-                        else tr("{n} semitones lower", n=number(-pitch)))
+        if abs(pitch) == 1:
+            what += ", " + (tr("a semitone higher") if pitch > 0 else tr("a semitone lower"))
+        else:
+            what += ", " + (tr("{n} semitones higher", n=number(pitch)) if pitch > 0
+                            else tr("{n} semitones lower", n=number(-pitch)))
         if formants:
             what += " " + tr("(formants kept)")
     else:

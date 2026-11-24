@@ -345,9 +345,10 @@ The waveform takes most of the window (figure~\ref{fig:window_en}). Above
 it is a ruler of times; the red line is the position, the point that is
 heard; what was already played is darker. The bookmarks are dashed lines,
 with their labels on top. Under the waveform are the controls and the
-time, and under them the speed, the pitch and the volume; on the right, the panel of the bookmarks, which
-can be closed, moved or left floating (\menu{View\then Bookmarks} brings it
-back). The status bar says what is being read, and then the format of the
+time, and under them the speed, the pitch (with the button \menu{Formants}),
+the button \menu{Hear} and the volume; on the right, the panel of the
+bookmarks and the loops, in two tabs, which can be closed, moved or left
+floating (\menu{View\then Bookmarks and loops} brings it back). The status bar says what is being read, and then the format of the
 file: its codec, its sample rate, mono or stereo, and its length.
 
 \section{Opening a file}
@@ -360,7 +361,9 @@ WebM, MOV). A file with more than two channels is mixed down to stereo.
 \index{long files}\index{reading}%
 A file is read in the background. While it is read, the status bar shows
 how much is done, the waveform fills in from the left, and what is already
-read can be played. A recording of two hours takes a few seconds. A long
+read can be played. A recording of two hours takes a few seconds. The
+next time a file is opened, its whole waveform and its length are there at
+once, while the sound is read again. A long
 file in MP3, FLAC, Ogg Vorbis or Opus is read in four parts at once, each
 by a process of its own: the waveform fills its first quarter from the
 left, and then the rest at once. The
@@ -447,9 +450,42 @@ The pitch can be changed while the recording plays, without a click. It
 is done by Rubber Band too, in the same pass as the speed, with the same
 quality: measured, a tone lands within a cent (a hundredth of a semitone)
 of the pitch asked for, also at the slowest and fastest speeds. At the pitch of the
-recording and at 1\,× the file is played as it is. The pitch, like the
-speed, is not kept from one session to the next: the program always
-starts at the recording's own.
+recording and at 1\,× the file is played as it is. The pitch and the
+speed of each file are kept when it is closed, and come back when it is
+opened again (section~\ref{sec:each-file}).
+
+\index{formants}\index{pitch!formants}%
+When the pitch moves, the timbre of a voice or an instrument moves with
+it: higher, it sounds smaller; lower, bigger. With the button
+\menu{Formants}, beside the pitch, or \menu{Playback\then Keep the
+formants}, Rubber Band keeps the formants (the resonances that give a voice
+or an instrument its colour) where they were, and only the notes move. It
+can be changed while the recording plays, and it matters only when the
+pitch is moved.
+
+\section{Hearing one part}
+\label{sec:hear}
+
+\shot{menu_hear_en}{0.5}{The menu Hear, with only the bass}
+
+\index{hearing one part}\index{channels}\index{bass}\index{filters}%
+A part of a mix is heard better alone, or nearly so.
+\menu{Playback\then Hear}, or the button \menu{Hear} beside the pitch,
+which opens the same menu (figure~\ref{fig:menu_hear_en}), chooses two
+things. The channels: both, as they were recorded; the left or the right
+only (old stereo recordings often put an instrument on one side); the two
+in one (mono); or the mix without its centre, the difference between the
+channels, which cancels what is in the middle of the mix, where the voice,
+the bass and the solo usually are, and leaves what is to the sides. And a
+filter: only the bass, below 250\,Hz, to follow the bass line, or
+everything but the bass. The button says what is heard (\menu{Hear: left,
+bass only}). A mono file has no channels to choose.
+
+The filters cut sharply, by about 60\,dB beyond 250\,Hz, and leave what
+they let through as it was; they delay the sound by 20\,ms, which cannot
+be heard. A change, while the recording plays, goes from one way of
+hearing to the other in a fade, without a click. The choice is kept, and
+also for each file (section~\ref{sec:each-file}).
 
 \section{The waveform}
 
@@ -540,6 +576,18 @@ there as usual; if it is before the selection, the repeating begins when
 the playing reaches it. \key{Esc}, or \menu{Clear the selection}, removes
 it; \key{L} again stops the repeating and keeps the selection.
 
+\shot{loops_en}{0.4}{Two loops, in the tab Loops of the panel}
+
+\index{loops}\index{selection!kept}%
+A selection can be kept with a name, to come back to it: the intro, the
+bridge, the bars of a solo. \menu{Playback\then Save the selection as a
+loop} (\key{Shift+L}), or \menu{Save the selection} in the tab
+\menu{Loops} of the panel, keeps it as a loop; the tab is shown, with the
+name of the new loop ready to be written (figure~\ref{fig:loops_en}). A
+double click on the start or the end of a loop selects it again, turns on
+the repeating and goes to its start. \menu{Remove} removes one. The loops
+are kept for each file, with its bookmarks.
+
 \section{Counting in}
 \label{sec:countin}
 
@@ -603,19 +651,56 @@ speed}, the tempo changes with the speed: a song at 120 BPM played at
 0.5\,× is counted at 60, as it will sound. The dialog says what will be
 heard at the speed of that moment. These settings are kept.
 
+\section{Exporting the audio}
+\label{sec:export}
+
+\shot{export_en}{0.45}{Exporting the selection, at 0.75\,× and two semitones lower}
+
+\index{exporting the audio}\index{formats!of export}%
+\menu{File\then Export the audio} (\key{Ctrl+E}) saves the recording as it
+sounds: at the speed and the pitch chosen, with the formants if they are
+kept. The dialog (figure~\ref{fig:export_en}) chooses the whole file or the
+selection, the format and, if only a part of the mix is heard
+(section~\ref{sec:hear}), whether it is saved that way; it also says how
+it will sound. Then the program asks for the name of the file, and offers
+that of the recording with its speed and pitch, such as
+\texttt{song (0.75×, −2 st).flac}.
+
+The formats are WAV (16 bits), FLAC (the same, compressed without loss),
+MP3 (192\,kbit/s) and Opus (160\,kbit/s, at 48\,kHz); installed from the
+source without PyAV nor the ffmpeg program, only WAV. The export is done in
+the background, with a bar of progress and \menu{Cancel}, while the
+recording can go on playing. It takes about a thirteenth of the time of the
+sound: an hour of music at 0.75\,× takes some six minutes. The whole file,
+at 1\,× and at its own pitch, is the file itself, sample for sample; a
+selection comes in and goes out on a ramp of 4\,ms, without a click.
+
 \section{Settings}
 
 \shot{menu_settings_en}{0.35}{The menu Settings}
 
 \index{settings}\index{language of the interface}\index{skip length}%
 The menu \menu{Settings} (figure~\ref{fig:menu_settings_en}) has the
-settings of the count-in (section~\ref{sec:countin}), the skip
-length of \menu{Back} and \menu{Forward}, and the language of the
-interface. The language follows that of the system unless one is chosen;
+settings of the count-in (section~\ref{sec:countin}), the keyboard
+shortcuts, the skip length of \menu{Back} and \menu{Forward}, and the
+language of the interface. The language follows that of the system unless one is chosen;
 a new one is used when the program starts again. The program also
 remembers the size and place of the window and of its panel, the volume,
 whether the view follows the position, the folder of the last file opened,
-and the recent files.
+the recent files, the way of hearing, whether the formants are kept, and
+the format and folder of the last export.
+
+\shot{shortcuts_edit_en}{0.6}{Changing the keyboard shortcuts}
+
+\index{keys!changing}\index{foot pedal}%
+\menu{Settings\then Keyboard shortcuts} lists every action with its keys
+(figure~\ref{fig:shortcuts_edit_en}). A click on the keys of an action, and
+then the new ones, changes them; the button inside the box clears them. A
+foot pedal that sends keys, as most do, is set in the same way. Keys that
+another action has already are refused, with its name, and \menu{Restore
+the defaults} brings back those of always. Only the keys changed are kept,
+and \menu{Help\then Keyboard shortcuts} (\key{F1}) shows them as they
+are.
 
 \index{reopening the last file}%
 With \menu{Settings\then Reopen the last file when starting} ticked (it is
@@ -623,6 +708,18 @@ not at first), the program opens again, when it starts, the file that was
 open last, and goes on from where it was left. A file named on the command
 line is opened instead; and if the last file was moved or deleted, the
 program starts without a file.
+
+\section{Each file as it was played}
+\label{sec:each-file}
+
+\index{files!as they were played}%
+When a file is closed, the program keeps, besides its bookmarks, its loops
+and the point where it was left, how it was played: the speed, the pitch,
+the formants, the way of hearing, the selection and whether it was
+repeated, and, if the count-in was on, its tempo and its offset. Only what
+is not the usual is kept. When the file is opened again, all that comes
+back (the selection, once the file is read that far); a file with nothing
+kept is played as the one before it was.
 
 \section{The files it keeps}
 \label{sec:files-kept}
@@ -636,7 +733,8 @@ program starts without a file.
   \texttt{\textasciitilde/Library/Preferences/com.py-slowdown.py-slowdown.plist}
   on macOS. Deleting them, with the program closed, brings back the
   defaults.
-\item[The bookmarks] and the point where each file was left, in
+\item[The bookmarks], the loops, the point where each file was left and
+  how it was played (section~\ref{sec:each-file}), in
   \texttt{bookmarks.json}: in \texttt{\textasciitilde/.local/share/py-slowdown/}
   on Linux (in \texttt{\$XDG\_DATA\_HOME}, if it is set), in
   \texttt{\%APPDATA\%\textbackslash py-slowdown} on Windows, and in
@@ -647,7 +745,12 @@ program starts without a file.
   name, which goes away with it: in \texttt{\textasciitilde/.cache/py-slowdown/}
   on Linux, \texttt{\%LOCALAPPDATA\%\textbackslash py-slowdown\textbackslash
   cache} on Windows, and \texttt{\textasciitilde/Library/Caches/py-slowdown/}
-  on macOS.
+  on macOS. While a long file is read in parts, each part has one more
+  there until it is added.
+\item[The waveforms] of the last 200 files read, in the folder
+  \texttt{peaks} of that same cache folder (about 4\,MB for an hour and a
+  half): with them the whole waveform is there as soon as a file is opened
+  again. They can be deleted at any time.
 \end{description}
 
 \noindent Uninstalling the program never removes them.
@@ -677,13 +780,18 @@ program starts without a file.
 \key{Shift+drag} & select\\
 \key{I}, \key{O} & start, end of the selection at the position\\
 \key{Esc} & clear the selection\\
+\key{Shift+L} & save the selection as a loop\\
 \key{C} & count in before playing\\
 \key{T} & tap the tempo, with the beat\\
 \key{Ctrl+O} & open a file\\
+\key{Ctrl+E} & export the audio\\
 \key{Ctrl+W} & close the file\\
 \key{F1} & the list of the keys\\
 \bottomrule
 \end{longtable}
+
+\noindent These are the keys of always; \menu{Settings\then Keyboard
+shortcuts} changes them.
 
 \section{When something goes wrong}
 

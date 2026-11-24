@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in thirteen stages.
+in seventeen stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -479,10 +479,61 @@ in every sample and every peak. On Windows the program runs in
 `pythonw.exe`, which may have no standard output, so the parts run in the
 `python.exe` beside it.
 
+16. Hearing one part, and keeping the formants
+-----------------------------------------------
+
+The next things were for working out a part of a mix by ear. The menu Hear
+chooses the channels (both, one side only, the two in one, or the mix
+without its centre, the difference of the channels, which cancels the voice
+and the solo when they are in the middle) and a filter: only the bass,
+below 250 Hz, or everything but the bass. NumPy has no recursive filters,
+and one written in Python would be too slow, so the filters are linear-phase
+FIR filters of 40 ms, applied with the FFT on each block with the memory of
+the frames before it. A test checks, block by block, that the result is
+the convolution done at once. They delay the sound by 20 ms, which is not
+heard, and a change while it plays goes from one way to the other in a fade
+over a block, so it makes no click. They run in the thread that prepares
+the sound, about 120 µs a block, not in the callback of the sound card.
+
+Rubber Band also keeps the formants when the pitch moves, if asked: a voice
+moved up keeps its size instead of sounding smaller. The binding only had to
+call one more function of the library, and it can be changed while it plays.
+To test it I made a vowel, harmonics of 150 Hz shaped by a resonance at
+800 Hz, and moved it 7 semitones up: without the option the strongest
+partial went to 1122 Hz, with it it stayed at 450.
+
+17. Exporting, loops, and what is kept
+--------------------------------------
+
+Export saves the recording, or the selection, as it sounds. It uses a
+renderer of its own, so the playing goes on meanwhile, and writes WAV with
+Python, and FLAC, MP3 and Opus with PyAV or, in the RPM, with the ffmpeg
+program, through a pipe. Two details had to be right. Rubber Band, in real
+time, gives a little more than it was given at the end of a file, about
+0.1 seconds at 0.75×, so the output is cut where its place in the file
+reaches the end; and the delay of a filter is taken away at the start and
+pushed out with silence at the end, so that the export has the same length
+and its notes at the same places as without the filter. The whole file at
+1× is the file itself. It runs about thirteen times faster than real time.
+
+The rest was about keeping things. A selection can be saved as a loop with
+a name, in a second tab of the panel. When a file is closed, the program
+keeps with its bookmarks how it was played: the speed, the pitch, the way
+of hearing, the selection, and the count-in's tempo, only what is not the
+usual. The keyboard shortcuts can be changed in a dialog that refuses keys
+given to two actions and saves only the changed ones, so that a foot pedal
+that sends keys can be used. And the peaks of each file read are kept in
+the cache folder, about 4 MB for an hour and a half, so that the next time
+the whole waveform and the length are there at once.
+
+The program is for music, not for transcribing speech, and the
+documentation now says so; its examples, and the pictures of the manual,
+are of songs.
+
 Testing
 -------
 
-The program has 138 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 172 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -493,7 +544,14 @@ length, keeps the pitch (a tone of 220 Hz stays at 220 Hz) and keeps each
 click at its place; that a seek while playing makes no click; and the
 binding to Rubber Band, also when the library is missing; and the
 repeating of a selection, at normal speed and stretching, the count-in,
-and the pitch, by the frequency of a tone. The player is
+and the pitch, by the frequency of a tone. They check the reading in
+parts, identical to the straight one with each codec and both readers, and
+its going back to the straight reading when a part does not agree; the
+filters of Hear against a convolution, and that a change makes no click;
+the formants, by the resonance of a vowel; the export, its lengths, the
+places of its clicks and its formats; and the loops, the settings kept for
+each file, the keyboard shortcuts and the waveform kept for the next
+time. The player is
 tested with a sound card that the tests drive themselves, and the window
 offscreen: opening a file, the controls, the speed, the bookmarks, the
 point where it was left, a file that is not audio, the window without
@@ -511,4 +569,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 67 files and about 12,000 lines (7,600 of them in Python).
+The program has 73 files and about 14,500 lines (9,300 of them in Python).

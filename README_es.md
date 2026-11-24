@@ -40,16 +40,29 @@ Lo que hace
   y al siguiente.
 - Sube o baja la altura, en semitonos (de −12 a +12, también décimas, para
   afinar una grabación con un instrumento), sin cambiar la velocidad,
-  también mientras suena.
+  también mientras suena; con Formantes, una voz o un instrumento conserva
+  su timbre.
+- Oye una parte de la mezcla (Oír): un canal, los dos en uno, la mezcla sin
+  su centro (donde suelen estar la voz y el solo), solo los graves, o todo
+  menos los graves.
 - Repite una selección sin fin y sin pausa (Mayús+arrastrar sobre la
   forma de onda, o I y O, y luego L): el final del pasaje entra en su
-  principio con un fundido breve, a cualquier velocidad.
+  principio con un fundido breve, a cualquier velocidad. Las selecciones se
+  pueden guardar como bucles con un nombre (Mayús+L), para repetirlas de
+  nuevo con un doble clic.
 - Cuenta antes de tocar, como un metrónomo (C): se eligen cuántos golpes
   y el tempo, que puede seguir la velocidad; el tempo se puede medir
   marcando el pulso (T).
-- Recuerda, por archivo, sus marcadores y el punto donde se dejó, y la vez
-  siguiente sigue desde allí; también puede reabrir el último archivo al
-  empezar (Configuración > Reabrir el último archivo al empezar).
+- Exporta la grabación, o la selección, como suena (a la velocidad y la
+  altura elegidas, y como se oye, si se pide): WAV, FLAC, MP3 u Opus
+  (Archivo > Exportar el audio, Ctrl+E).
+- Recuerda, por archivo, sus marcadores, sus bucles, el punto donde se dejó
+  y cómo se tocó (velocidad, altura, manera de oír, selección, cuenta
+  previa), y la vez siguiente sigue desde allí, con toda su forma de onda
+  enseguida; también puede reabrir el último archivo al empezar
+  (Configuración > Reabrir el último archivo al empezar).
+- Los atajos de teclado se pueden cambiar (Configuración > Atajos de
+  teclado), también para un pedal de pie que mande teclas.
 - Interfaz en inglés y en español (Configuración > Idioma).
 
 Teclado
@@ -72,9 +85,13 @@ Teclado
 | Repetir la selección              | L                                |
 | Seleccionar                       | Mayús+arrastrar, o I y O         |
 | Quitar la selección               | Esc                              |
+| Guardar la selección como bucle   | Mayús+L                          |
 | Contar antes de tocar             | C                                |
 | Marcar el tempo (con el pulso)    | T                                |
 | Abrir un archivo                  | Ctrl+O                           |
+| Exportar el audio                 | Ctrl+E                           |
+
+Son las teclas de siempre; Configuración > Atajos de teclado las cambia.
 
 Instalación
 -----------
@@ -141,12 +158,14 @@ Documentación
 Dónde se guarda todo
 --------------------
 
-- Marcadores y posiciones: `bookmarks.json`, por la ruta completa de cada
+- Marcadores, bucles, posiciones y cómo se tocó cada archivo:
+  `bookmarks.json`, por la ruta completa de cada
   archivo de audio, en `~/.local/share/py-slowdown/` en Linux
   (`$XDG_DATA_HOME`), `%APPDATA%\py-slowdown` en Windows y
   `~/Library/Application Support/py-slowdown/` en macOS. Si el archivo se
   mueve o se renombra, los pierde.
-- Configuración (ventana, volumen, salto, idioma, archivos recientes):
+- Configuración (ventana, volumen, salto, idioma, archivos recientes,
+  atajos de teclado, manera de oír, la última exportación):
   `~/.config/py-slowdown/py-slowdown.conf` en Linux, el registro
   (`HKEY_CURRENT_USER\Software\py-slowdown`) en Windows y
   `~/Library/Preferences/com.py-slowdown.py-slowdown.plist` en macOS.
@@ -157,6 +176,10 @@ Dónde se guarda todo
   estéreo ocupan allí unos 1,3 GB, pero en la memoria queda solo lo que se
   lee). Mientras un archivo largo se lee por partes, cada parte tiene otro
   allí, hasta que se añade (en Windows se llaman `part-…`).
+- Las formas de onda de los últimos 200 archivos leídos, en la carpeta
+  `peaks` de esa carpeta de caché (unos 4 MB por hora y media), para que
+  toda la forma de onda esté apenas se vuelve a abrir un archivo. Se pueden
+  borrar cuando se quiera.
 
 Desinstalar el programa nunca los quita.
 

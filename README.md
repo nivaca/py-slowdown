@@ -38,16 +38,27 @@ What it does
   Ctrl+→ go to the previous and next bookmark.
 - Moves the pitch up or down, in semitones (from −12 to +12, tenths too, to
   tune a recording to an instrument), without changing the speed, also
-  while it plays.
+  while it plays; with Formants, a voice or an instrument keeps its timbre.
+- Hears one part of the mix (Hear): one channel, the two in one, the mix
+  without its centre (where the voice and the solo usually are), only the
+  bass, or everything but the bass.
 - Repeats a selection without end and without a gap (Shift+drag on the
   waveform, or I and O, then L): the end of the passage runs into its
-  start through a short fade, at any speed.
+  start through a short fade, at any speed. Selections can be kept as
+  loops with a name (Shift+L), to repeat them again with a double click.
 - Counts in before playing, as a metronome (C): the number of clicks and
   the tempo are chosen, and the tempo can follow the speed; the tempo can
   be measured by tapping with the beat (T).
-- Remembers, for each file, its bookmarks and the point where it was left,
-  and goes on from there the next time; it can also reopen the last file
-  when it starts (Settings > Reopen the last file when starting).
+- Exports the recording, or the selection, as it sounds (at the speed and
+  pitch chosen, and as it is heard, if asked): WAV, FLAC, MP3 or Opus
+  (File > Export the audio, Ctrl+E).
+- Remembers, for each file, its bookmarks, its loops, the point where it
+  was left and how it was played (speed, pitch, way of hearing, selection,
+  count-in), and goes on from there the next time, with its whole waveform
+  at once; it can also reopen the last file when it starts (Settings >
+  Reopen the last file when starting).
+- The keyboard shortcuts can be changed (Settings > Keyboard shortcuts),
+  also for a foot pedal that sends keys.
 - Interface in English and in Spanish (Settings > Language).
 
 Keyboard
@@ -70,9 +81,13 @@ Keyboard
 | Repeat the selection           | L                                |
 | Select                         | Shift+drag, or I and O           |
 | Clear the selection            | Esc                              |
+| Save the selection as a loop   | Shift+L                          |
 | Count in before playing        | C                                |
 | Tap the tempo (with the beat)  | T                                |
 | Open a file                    | Ctrl+O                           |
+| Export the audio               | Ctrl+E                           |
+
+These are the keys of always; Settings > Keyboard shortcuts changes them.
 
 Installing
 ----------
@@ -136,12 +151,14 @@ Documentation
 Where things are kept
 ---------------------
 
-- Bookmarks and positions: `bookmarks.json`, by the full path of each audio
+- Bookmarks, loops, positions and how each file was played:
+  `bookmarks.json`, by the full path of each audio
   file, in `~/.local/share/py-slowdown/` on Linux (`$XDG_DATA_HOME`),
   `%APPDATA%\py-slowdown` on Windows and `~/Library/Application
   Support/py-slowdown/` on macOS. A file that is moved or renamed loses
   them.
-- Settings (window, volume, skip length, language, recent files):
+- Settings (window, volume, skip length, language, recent files, keyboard
+  shortcuts, way of hearing, the last export):
   `~/.config/py-slowdown/py-slowdown.conf` on Linux, the registry
   (`HKEY_CURRENT_USER\Software\py-slowdown`) on Windows, and
   `~/Library/Preferences/com.py-slowdown.py-slowdown.plist` on macOS.
@@ -152,6 +169,10 @@ Where things are kept
   1.3 GB there, but only what is read stays in memory). While a long file
   is read in parts, each part has one more there, until it is added
   (on Windows they are named `part-…`).
+- The waveforms of the last 200 files read, in the folder `peaks` of that
+  cache folder (about 4 MB for an hour and a half), so that the whole
+  waveform is there as soon as a file is opened again. They can be deleted
+  at any time.
 
 Uninstalling the program never removes them.
 

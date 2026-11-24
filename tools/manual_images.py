@@ -5,7 +5,9 @@
 
 Escribe docs/img/manual/NOMBRE_IDIOMA.png: la ventana con un archivo abierto, la forma de onda de cerca, el
 menú del clic derecho sobre la forma de onda, una selección que se repite con la cuenta previa, el diálogo de la
-cuenta previa, el del nombre de un marcador, los menús Reproducción y Configuración, y los atajos de teclado. Todo sobre una grabación de muestra hecha aquí (con ffmpeg), dibujado
+cuenta previa, el del nombre de un marcador, los menús Reproducción, Oír y Configuración, los bucles, el diálogo
+de Exportar el audio, el de los atajos y la lista de los atajos. Todo sobre una grabación de muestra hecha aquí
+(con ffmpeg), dibujado
 fuera de la pantalla, sin tarjeta de sonido y con una configuración propia: la del usuario no se lee ni se
 escribe (HOME y las carpetas XDG apuntan a una carpeta temporal).
 """
@@ -87,12 +89,11 @@ def shoot(lang: str, audio: Path, folder: Path):
     from py_slowdown import interface
     from py_slowdown.interface import tr
     from py_slowdown.timefmt import clock
-    from py_slowdown.window import shortcut_rows
 
     app, w = window(lang, audio, folder)
     save(w, "window", lang)
     save(w.transport, "controls", lang)
-    save(w.panel, "panel", lang)
+    save(w.tabs, "panel", lang)
 
     # De cerca: unos diez segundos alrededor del primer marcador.
     w.wave.zoom(9.0, w.wave.x_of(21.5))
@@ -144,6 +145,43 @@ def shoot(lang: str, audio: Path, folder: Path):
         action = next(a for a in w.menuBar().actions() if a.text() == title)
         menu_shot(app, action.menu(), name, lang)
 
+    # Oír: solo los graves, de los dos canales.
+    w.set_hearing("both", "bass")
+    menu_shot(app, w.hear_menu, "menu_hear", lang)
+    w.set_hearing("both", "none")
+
+    # Los bucles: dos, con nombre.
+    from py_slowdown.bookmarks import Loop
+
+    names = {"en": ("Intro", "Riff before the solo"), "es": ("Introducción", "Riff antes del solo")}[lang]
+    w.loops = [Loop(4.0, 12.5, names[0]), Loop(49.0, 57.5, names[1])]
+    w.loop_panel.show_loops(w.loops)
+    w.tabs.setCurrentWidget(w.loop_panel)
+    settle(app)
+    save(w.tabs, "loops", lang)
+    w.tabs.setCurrentWidget(w.panel)
+
+    # Exportar el audio: la selección, a 0,75× y un tono más abajo.
+    from py_slowdown.exportdialog import ExportDialog
+
+    w.set_pitch(-2.0)
+    dialog = ExportDialog(w, (49.0, 57.5), 0.75, -2.0, True, None, "flac")
+    dialog.show()
+    settle(app)
+    save(dialog, "export", lang)
+    dialog.close()
+    w.set_pitch(0.0)
+
+    # Los atajos, para cambiarlos.
+    from py_slowdown.shortcuts import ShortcutsDialog
+
+    dialog = ShortcutsDialog(w.shortcut_actions, w.default_shortcuts, w)
+    dialog.resize(560, 520)
+    dialog.show()
+    settle(app)
+    save(dialog, "shortcuts_edit", lang)
+    dialog.close()
+
     mark = w.bookmarks[0]
     dialog = QInputDialog(w)
     dialog.setWindowTitle(tr("Bookmark at {time}", time=clock(mark.time, tenths=True)))
@@ -154,7 +192,7 @@ def shoot(lang: str, audio: Path, folder: Path):
     save(dialog, "rename", lang)
     dialog.close()
 
-    rows = shortcut_rows()
+    rows = w.current_shortcut_rows()
     box = QMessageBox(QMessageBox.Icon.Information, tr("Keyboard shortcuts"),
                       "<table cellspacing='4'>" + "".join(
                           f"<tr><td>{what}</td><td>&nbsp;&nbsp;<b>{keys}</b></td></tr>" for what, keys in rows)

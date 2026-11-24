@@ -350,10 +350,11 @@ La forma de onda ocupa casi toda la ventana (figura~\ref{fig:window_es}).
 Encima tiene una regla de tiempos; la línea roja es la posición, el punto
 que se oye; lo ya tocado se ve más oscuro. Los marcadores son líneas de
 trazos, con su nombre arriba. Debajo de la forma de onda están los mandos y
-el tiempo, y debajo de ellos la velocidad, la altura y el volumen; a la
-derecha, el panel de los
-marcadores, que se puede cerrar, mover o dejar flotando
-(\menu{Ver\then Marcadores} lo vuelve a mostrar). La barra de estado dice
+el tiempo, y debajo de ellos la velocidad, la altura (con el botón
+\menu{Formantes}), el botón \menu{Oír} y el volumen; a la derecha, el panel
+de los marcadores y los bucles, en dos pestañas, que se puede cerrar, mover
+o dejar flotando (\menu{Ver\then Marcadores y bucles} lo vuelve a
+mostrar). La barra de estado dice
 qué se está leyendo, y luego el formato del archivo: su códec, su
 frecuencia de muestreo, si es mono o estéreo, y su duración.
 
@@ -367,7 +368,9 @@ MOV). Un archivo con más de dos canales se mezcla en estéreo.
 \index{archivos largos}\index{lectura}%
 El archivo se lee en segundo plano. Mientras tanto, la barra de estado
 muestra cuánto va, la forma de onda se llena desde la izquierda y lo ya
-leído se puede tocar. Una grabación de dos horas tarda unos segundos. Un
+leído se puede tocar. Una grabación de dos horas tarda unos segundos. La
+vez siguiente que se abre un archivo, toda su forma de onda y su duración
+están enseguida, mientras el sonido se vuelve a leer. Un
 archivo largo en MP3, FLAC, Ogg Vorbis u Opus se lee en cuatro partes a la
 vez, cada una en un proceso propio: la forma de onda llena su primer cuarto
 desde la izquierda, y luego el resto de una vez. El
@@ -458,8 +461,41 @@ También la cambia Rubber Band, en la misma pasada que la velocidad y con la
 misma calidad: medido, un tono queda a menos de un centésimo de semitono
 de la altura pedida, también a las velocidades más lentas y más
 rápidas. A la altura de la grabación y a 1\,× el archivo
-suena tal cual. La altura, como la velocidad, no se guarda de una sesión a
-otra: el programa empieza siempre en la de la grabación.
+suena tal cual. La altura y la velocidad de cada archivo se guardan al
+cerrarlo, y vuelven al abrirlo de nuevo (sección~\ref{sec:cada-archivo}).
+
+\index{formantes}\index{altura!formantes}%
+Cuando la altura se mueve, el timbre de una voz o de un instrumento se
+mueve con ella: más aguda, suena más pequeña; más grave, más grande. Con el
+botón \menu{Formantes}, junto a la altura, o \menu{Reproducción\then
+Conservar los formantes}, Rubber Band deja los formantes (las resonancias
+que dan su color a una voz o a un instrumento) donde estaban, y solo se
+mueven las notas. Se puede cambiar mientras suena la grabación, y solo
+importa cuando la altura se mueve.
+
+\section{Oír una parte}
+\label{sec:oir}
+
+\shot{menu_hear_es}{0.5}{El menú Oír, con solo los graves}
+
+\index{oir una parte@oír una parte}\index{canales}\index{graves}\index{filtros}%
+Una parte de una mezcla se oye mejor sola, o casi. \menu{Reproducción\then
+Oír}, o el botón \menu{Oír} junto a la altura, que abre el mismo menú
+(figura~\ref{fig:menu_hear_es}), elige dos cosas. Los canales: los dos,
+como se grabaron; solo el izquierdo o solo el derecho (las grabaciones
+estéreo antiguas suelen poner un instrumento a un lado); los dos en uno
+(mono); o la mezcla sin su centro, la diferencia entre los canales, que
+anula lo que está en el medio de la mezcla, donde suelen estar la voz, el
+bajo y el solo, y deja lo que está a los lados. Y un filtro: solo los
+graves, debajo de 250\,Hz, para seguir la línea del bajo, o todo menos los
+graves. El botón dice lo que se oye (\menu{Oír: izquierdo, solo graves}).
+Un archivo mono no tiene canales que elegir.
+
+Los filtros cortan neto, unos 60\,dB más allá de 250\,Hz, y dejan lo que
+pasa como estaba; atrasan el sonido 20\,ms, que no se oyen. Un cambio,
+mientras suena la grabación, pasa de una manera de oír a la otra en un
+fundido, sin chasquido. La elección se guarda, y también para cada archivo
+(sección~\ref{sec:cada-archivo}).
 
 \section{La forma de onda}
 
@@ -552,6 +588,19 @@ selección, las repeticiones empiezan cuando la reproducción llega a ella.
 \key{Esc}, o \menu{Quitar la selección}, la quita; \key{L} otra vez deja
 de repetir y conserva la selección.
 
+\shot{loops_es}{0.4}{Dos bucles, en la pestaña Bucles del panel}
+
+\index{bucles}\index{seleccion@selección!guardada}%
+Una selección se puede guardar con un nombre, para volver a ella: la
+introducción, el puente, los compases de un solo.
+\menu{Reproducción\then Guardar la selección como bucle} (\key{Mayús+L}),
+o \menu{Guardar la selección} en la pestaña \menu{Bucles} del panel, la
+guarda como un bucle; la pestaña se muestra, con el nombre del bucle nuevo
+listo para escribirlo (figura~\ref{fig:loops_es}). Un doble clic en el
+comienzo o el final de un bucle lo vuelve a elegir, enciende la repetición
+y va a su comienzo. \menu{Quitar} quita uno. Los bucles se guardan para
+cada archivo, con sus marcadores.
+
 \section{La cuenta previa}
 \label{sec:cuenta}
 
@@ -617,19 +666,55 @@ velocidad}, el tempo cambia con la velocidad: una canción a 120 BPM tocada
 a 0,5\,× se cuenta a 60, como va a sonar. El diálogo dice lo que se oirá a
 la velocidad de ese momento. Estos ajustes se conservan.
 
+\section{Exportar el audio}
+\label{sec:exportar}
+
+\shot{export_es}{0.45}{Exportar la selección, a 0,75\,× y dos semitonos más abajo}
+
+\index{exportar el audio}\index{formatos!de exportacion@de exportación}%
+\menu{Archivo\then Exportar el audio} (\key{Ctrl+E}) guarda la grabación
+como suena: a la velocidad y la altura elegidas, con los formantes si se
+conservan. El diálogo (figura~\ref{fig:export_es}) elige el archivo entero o
+la selección, el formato y, si se oye solo una parte de la mezcla
+(sección~\ref{sec:oir}), si se guarda así; dice además cómo sonará. Luego
+el programa pide el nombre del archivo, y ofrece el de la grabación con su
+velocidad y su altura, como \texttt{canción (0,75×, −2 st).flac}.
+
+Los formatos son WAV (16 bits), FLAC (lo mismo, comprimido sin pérdida),
+MP3 (192\,kbit/s) y Opus (160\,kbit/s, a 48\,kHz); instalado desde el
+código sin PyAV ni el programa ffmpeg, solo WAV. La exportación se hace en
+segundo plano, con una barra de progreso y \menu{Cancelar}, mientras la
+grabación puede seguir sonando. Tarda más o menos la treceava parte del
+tiempo del sonido: una hora de música a 0,75\,× tarda unos seis minutos.
+El archivo entero, a 1\,× y a su altura, es el archivo mismo, muestra por
+muestra; una selección entra y sale en una rampa de 4\,ms, sin chasquido.
+
 \section{Configuración}
 
 \shot{menu_settings_es}{0.35}{El menú Configuración}
 
 \index{configuracion@configuración}\index{idioma de la interfaz}\index{longitud del salto}%
 El menú \menu{Configuración} (figura~\ref{fig:menu_settings_es}) tiene los
-ajustes de la cuenta previa (sección~\ref{sec:cuenta}), la longitud del
-salto de \menu{Atrás} y \menu{Adelante} y el idioma de la
-interfaz. El idioma sigue al del sistema, salvo que se elija uno; uno nuevo
+ajustes de la cuenta previa (sección~\ref{sec:cuenta}), los atajos de
+teclado, la longitud del salto de \menu{Atrás} y \menu{Adelante} y el
+idioma de la interfaz. El idioma sigue al del sistema, salvo que se elija uno; uno nuevo
 se usa cuando el programa vuelve a abrirse. El programa recuerda además el
 tamaño y el lugar de la ventana y de su panel, el volumen, si la vista
-sigue la posición, la carpeta del último archivo abierto y los archivos
-recientes.
+sigue la posición, la carpeta del último archivo abierto, los archivos
+recientes, la manera de oír, si se conservan los formantes, y el formato y
+la carpeta de la última exportación.
+
+\shot{shortcuts_edit_es}{0.6}{Cambiar los atajos de teclado}
+
+\index{teclas!cambiarlas}\index{pedal de pie}%
+\menu{Configuración\then Atajos de teclado} muestra cada acción con sus
+teclas (figura~\ref{fig:shortcuts_edit_es}). Un clic en las teclas de una
+acción, y luego las nuevas, las cambia; el botón dentro de la casilla las
+borra. Un pedal de pie que manda teclas, como casi todos, se configura igual.
+Unas teclas que ya tiene otra acción no se aceptan, y se dice cuál;
+\menu{Restaurar los de siempre} devuelve los de siempre. Solo se guardan
+las teclas cambiadas, y \menu{Ayuda\then Atajos de teclado} (\key{F1}) las
+muestra como están.
 
 \index{reabrir el último archivo}%
 Con \menu{Configuración\then Reabrir el último archivo al empezar} marcado
@@ -637,6 +722,18 @@ Con \menu{Configuración\then Reabrir el último archivo al empezar} marcado
 último archivo que estuvo abierto, y sigue desde donde se dejó. Si se nombra
 un archivo en la línea de órdenes, se abre ese; y si el último se movió o se
 borró, el programa empieza sin archivo.
+
+\section{Cada archivo como se tocó}
+\label{sec:cada-archivo}
+
+\index{archivos!como se tocaron}%
+Al cerrar un archivo, el programa guarda, además de sus marcadores, sus
+bucles y el punto donde se dejó, cómo se tocó: la velocidad, la altura, los
+formantes, la manera de oír, la selección y si se repetía, y, si la cuenta
+previa estaba encendida, su tempo y su desfase. Solo se guarda lo que no es
+lo de siempre. Al abrir de nuevo el archivo, todo eso vuelve (la selección,
+cuando el archivo está leído hasta allí); un archivo sin nada guardado se
+toca como el anterior.
 
 \section{Los archivos que guarda}
 \label{sec:archivos}
@@ -650,7 +747,8 @@ borró, el programa empieza sin archivo.
   \texttt{\textasciitilde/Library/Preferences/com.py-slowdown.py-slowdown.plist}
   en macOS. Si se borra, con el programa cerrado, vuelven los valores de
   siempre.
-\item[Los marcadores] y el punto donde se dejó cada archivo, en
+\item[Los marcadores], los bucles, el punto donde se dejó cada archivo y
+  cómo se tocó (sección~\ref{sec:cada-archivo}), en
   \texttt{bookmarks.json}: en \texttt{\textasciitilde/.local/share/py-slowdown/}
   en Linux (en \texttt{\$XDG\_DATA\_HOME}, si está definida), en
   \texttt{\%APPDATA\%\textbackslash py-slowdown} en Windows y en
@@ -661,7 +759,12 @@ borró, el programa empieza sin archivo.
   sin nombre, que se va con él: en \texttt{\textasciitilde/.cache/py-slowdown/}
   en Linux, \texttt{\%LOCALAPPDATA\%\textbackslash py-slowdown\textbackslash
   cache} en Windows y \texttt{\textasciitilde/Library/Caches/py-slowdown/} en
-  macOS.
+  macOS. Mientras un archivo largo se lee por partes, cada parte tiene otro
+  allí hasta que se añade.
+\item[Las formas de onda] de los últimos 200 archivos leídos, en la carpeta
+  \texttt{peaks} de esa misma carpeta de caché (unos 4\,MB por hora y
+  media): con ellas toda la forma de onda está apenas se vuelve a abrir un
+  archivo. Se pueden borrar cuando se quiera.
 \end{description}
 
 \noindent Desinstalar el programa nunca los quita.
@@ -691,13 +794,18 @@ borró, el programa empieza sin archivo.
 \key{Mayús+arrastrar} & seleccionar\\
 \key{I}, \key{O} & principio, final de la selección en la posición\\
 \key{Esc} & quitar la selección\\
+\key{Mayús+L} & guardar la selección como bucle\\
 \key{C} & contar antes de tocar\\
 \key{T} & marcar el tempo, con el pulso\\
 \key{Ctrl+O} & abrir un archivo\\
+\key{Ctrl+E} & exportar el audio\\
 \key{Ctrl+W} & cerrar el archivo\\
 \key{F1} & la lista de las teclas\\
 \bottomrule
 \end{longtable}
+
+\noindent Son las teclas de siempre; \menu{Configuración\then Atajos de
+teclado} las cambia.
 
 \section{Cuando algo falla}
 

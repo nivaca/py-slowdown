@@ -28,12 +28,18 @@
       <li xml:lang="es">Velocidad de 0,25× a 3×, que se cambia mientras suena, con el motor R3 de la biblioteca Rubber Band; a 1× el archivo suena tal cual</li>
       <li>MP3, M4A, MP4, FLAC, WAV, Ogg, Opus and the other formats FFmpeg reads</li>
       <li xml:lang="es">MP3, M4A, MP4, FLAC, WAV, Ogg, Opus y los demás formatos que lee FFmpeg</li>
-      <li>The pitch moved up or down in semitones, without changing the speed</li>
-      <li xml:lang="es">La altura, subida o bajada en semitonos, sin cambiar la velocidad</li>
-      <li>A selection repeated without a gap, at any speed, and a count-in before playing</li>
-      <li xml:lang="es">Una selección que se repite sin pausa, a cualquier velocidad, y una cuenta previa antes de tocar</li>
-      <li>Bookmarks with labels, kept for each file with the point where it was left</li>
-      <li xml:lang="es">Marcadores con nombre, que se guardan por archivo junto con el punto donde se dejó</li>
+      <li>The pitch moved up or down in semitones, without changing the speed, keeping the formants if asked</li>
+      <li xml:lang="es">La altura, subida o bajada en semitonos, sin cambiar la velocidad, conservando los formantes si se pide</li>
+      <li>One part of the mix heard: one channel, the mix without its centre, only the bass, or all but the bass</li>
+      <li xml:lang="es">Una parte de la mezcla: un canal, la mezcla sin su centro, solo los graves, o todo menos los graves</li>
+      <li>A selection repeated without a gap, at any speed, kept as a loop with a name, and a count-in before playing</li>
+      <li xml:lang="es">Una selección que se repite sin pausa, a cualquier velocidad, guardada como bucle con un nombre, y una cuenta previa antes de tocar</li>
+      <li>The recording, or the selection, exported as it sounds: WAV, FLAC, MP3 or Opus</li>
+      <li xml:lang="es">La grabación, o la selección, exportada como suena: WAV, FLAC, MP3 u Opus</li>
+      <li>Bookmarks with labels, kept for each file with the point where it was left and how it was played</li>
+      <li xml:lang="es">Marcadores con nombre, que se guardan por archivo junto con el punto donde se dejó y cómo se tocó</li>
+      <li>Keyboard shortcuts of one's own, also for a foot pedal</li>
+      <li xml:lang="es">Atajos de teclado propios, también para un pedal de pie</li>
       <li>An interface in English or Spanish</li>
       <li xml:lang="es">Una interfaz en inglés o en español</li>
     </ul>
