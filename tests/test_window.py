@@ -1335,3 +1335,37 @@ def test_the_arrow_of_save(window, app, wav, tmp_path, monkeypatch):
     window.close_file()
     assert not window.a_ask_save.isChecked() and [b.time for b in window.store.bookmarks(other)] == [0.9]
     assert answers == [] and not window.file_saving_menu.isEnabled()
+
+
+def test_the_equalizer(window, app, wav):
+    """The button EQ (and Hear > Equalizer) opens the equalizer: its five knobs change the sound as they turn, On
+    hears it with or without them, Flat takes them all back to 0; the button is on while the equalizer changes the
+    sound; the bands are kept with the file (in its .slx too) and a new file starts flat."""
+    from py_slowdown import sidecar
+    from py_slowdown.window import EqualizerDialog
+
+    loaded(window, app, wav)
+    assert not window.b_eq.isChecked() and window.player.eq == (0, 0, 0, 0, 0)
+    window.b_eq.click()
+    dialog = window.eq_dialog
+    assert isinstance(dialog, EqualizerDialog) and dialog.isVisible() and not window.b_eq.isChecked()
+    assert [k.text() for k in dialog.knobs] == ["0 dB"] * 5 and dialog.on.isChecked()
+    dialog.knobs[0].setValue(4)
+    dialog.knobs[4].setValue(-6)
+    assert window.player.eq == (4, 0, 0, 0, -6) and window.b_eq.isChecked() and "12 kHz -6" in window.b_eq.toolTip()
+    dialog.on.setChecked(False)  # (sin él, para comparar: las perillas se quedan)
+    assert window.player.eq == (0, 0, 0, 0, 0) and not window.b_eq.isChecked() and dialog.knobs[0].value() == 4
+    dialog.on.setChecked(True)
+    window._apply_file_settings({})
+    kept = window._file_settings()
+    assert kept["eq"] == [4, 0, 0, 0, -6] and "eq_on" not in kept
+    window.close_file()
+    assert sidecar.read(sidecar.find(wav)).settings["eq"] == [4, 0, 0, 0, -6]
+    window.set_eq((1, 1, 1, 1, 1))
+    loaded(window, app, wav)
+    assert window.player.eq == (4, 0, 0, 0, -6) and [k.value() for k in dialog.knobs] == [4, 0, 0, 0, -6]
+    dialog.flatten()
+    assert window.player.eq == (0, 0, 0, 0, 0) and not window.b_eq.isChecked()
+    menu = next(a.menu() for a in window.menuBar().actions() if a.text() == "H&ear")
+    assert window.a_equalizer in menu.actions()
+    dialog.close()

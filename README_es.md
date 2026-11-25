@@ -48,6 +48,8 @@ Lo que hace
   instrumento), cada uno con su perilla, sin cambiar la velocidad,
   también mientras suena; con Reproducción > Conservar los formantes, una voz o un instrumento conserva
   su timbre.
+- Un ecualizador de cinco bandas, con perillas (el botón EQ, u Oír >
+  Ecualizador).
 - Oye una parte de la mezcla (Oír): un canal, los dos en uno, la mezcla sin
   su centro (donde suelen estar la voz y el solo), solo los graves, o todo
   menos los graves.

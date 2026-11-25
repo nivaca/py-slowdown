@@ -26,6 +26,8 @@ import numpy as np
 
 from . import rubberband
 from .audio import Audio
+from . import equalizer
+from .equalizer import Equalizer
 from .hearing import Hearing
 
 MIN_SPEED = 0.25
@@ -413,6 +415,8 @@ class Player:
         self._quality = "high"
         self._hearing_mode = ("both", "none")  # (canales, filtro): cómo se oye
         self._hearing: Hearing | None = None
+        self._eq_gains = equalizer.FLAT  # las cinco bandas del ecualizador, en dB
+        self._equalizer: Equalizer | None = None
         self._lock = threading.Lock()
         self._wake = threading.Condition(self._lock)
         self._queue: deque[Block] = deque()
@@ -435,6 +439,7 @@ class Player:
         self._renderer.set_formants(self._formants)
         self._renderer.set_quality(self._quality)
         self._hearing = Hearing(audio.rate, *self._hearing_mode)
+        self._equalizer = Equalizer(audio.rate, self._eq_gains)
         self.loop = None
         self._position = 0.0
         self._queue.clear()
@@ -550,6 +555,18 @@ class Player:
             self._wake.notify_all()
 
     @property
+    def eq(self) -> tuple[int, ...]:
+        """The gains of the five bands of the equalizer, in decibels (see equalizer.py)."""
+        return self._eq_gains
+
+    @eq.setter
+    def eq(self, gains) -> None:
+        self._eq_gains = equalizer.clamp(gains)
+        with self._lock:
+            self._requests.append(("eq", self._eq_gains))
+            self._wake.notify_all()
+
+    @property
     def hearing(self) -> tuple[str, str]:
         """(channels, filter): how the sound is heard (see hearing.py)."""
         return self._hearing_mode
@@ -641,11 +658,14 @@ class Player:
                     renderer.set_quality(value)
                 elif kind == "hearing":
                     self._hearing.set(*value)
+                elif kind == "eq":
+                    self._equalizer.set(value)
             block, seam = renderer.render()
             if block is not None and len(block.frames):
                 if seam:
                     self._hearing.reset()  # (lo de antes del corte no se mezcla con lo que sigue)
-                block.frames = self._hearing.process(block.frames)
+                    self._equalizer.reset()
+                block.frames = self._equalizer.process(self._hearing.process(block.frames))
             with self._lock:
                 if any(kind == "seek" for kind, _value in self._requests):
                     continue  # a seek came while this block was made: it is not heard

@@ -7,6 +7,13 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Un ecualizador de cinco bandas**: el botón EQ, a la derecha de los
+  mandos, u Oír > Ecualizador, abre cinco perillas (60 Hz, 250 Hz, 1 kHz,
+  4 kHz y 12 kHz, cada una de −12 a +12 dB), con Encendido, para comparar,
+  y Plano. El sonido cambia a medida que se giran, sin chasquidos; EQ se
+  ve lleno mientras cambia el sonido. Se guarda con cada archivo (también
+  en su `.slx`); se aplica a una exportación como se oye, sin sus 40 ms de
+  retraso.
 - **Repetir sin selección repite el archivo entero**: L, o el botón de las
   dos flechas, sin nada seleccionado, sigue desde el principio al llegar al
   final del archivo (una vez leído hasta el final). Se guarda con el

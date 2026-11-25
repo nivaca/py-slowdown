@@ -45,6 +45,7 @@ What it does
   (hundredths of a semitone, from −50 to +50, to tune a recording to an
   instrument), each with a knob, without changing the speed, also
   while it plays; with Playback > Keep the formants, a voice or an instrument keeps its timbre.
+- A five-band equalizer, with knobs (the button EQ, or Hear > Equalizer).
 - Hears one part of the mix (Hear): one channel, the two in one, the mix
   without its centre (where the voice and the solo usually are), only the
   bass, or everything but the bass.

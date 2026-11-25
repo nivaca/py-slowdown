@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty-three stages.
+in twenty-four stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -760,10 +760,30 @@ environment had moved with the folder, and its `pytest` still pointed to
 the old place. `tools/test.py`, which runs `python -m pytest`, was not
 affected.
 
+24. A five-band equalizer
+-------------------------
+
+The equalizer has five bands, at 60 Hz, 250 Hz, 1 kHz, 4 kHz and 12 kHz,
+each from −12 to +12 dB, on knobs like the others, in a small window that
+the button EQ opens and that can stay open while the recording plays. The
+filter had the same constraint as those of Hear: NumPy has no recursive
+filters, and five of them written in Python would not keep up with the
+sound. So the five gains are points of a curve, straight between two
+bands on the scale of decibels and of the logarithm of the frequency, flat
+beyond the ends; that curve is turned into a linear-phase FIR filter of
+80 ms, from the FFT back to time and smoothed with a window, and applied
+with the FFT block after block. Measured, each band gives its gain within
+0.2 dB, and a block costs about 150 µs. It delays the sound by 40 ms,
+which is not heard and which the export takes away, together with the
+delay of the filters of Hear, so that an exported recording keeps its
+length and its notes in their place. A knob turned while it plays goes
+from the old curve to the new one in a fade over a block. The bands are
+kept with each file, as the way of hearing is.
+
 Testing
 -------
 
-The program has 208 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 219 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -778,7 +798,8 @@ and the pitch, by the frequency of a tone. They check the reading in
 parts, identical to the straight one with each codec and both readers, and
 its going back to the straight reading when a part does not agree; the
 filters of Hear against a convolution, and that a change makes no click;
-the formants, by the resonance of a vowel; each quality, by its engine,
+the formants, by the resonance of a vowel; the equalizer, by the gain of
+each band and by a convolution; each quality, by its engine,
 its length, its pitch and its clicks; the export, its lengths, the
 places of its clicks and its formats; and the loops, the settings kept for
 each file, the `.slx` file of each recording (moved with it, two of the
@@ -803,4 +824,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 76 files and about 18,300 lines (11,500 of them in Python).
+The program has 78 files and about 18,900 lines (11,900 of them in Python).

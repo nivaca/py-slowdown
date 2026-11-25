@@ -29,6 +29,8 @@ import numpy as np
 
 from .audio import Audio, decoder
 from .engine import FADE, Renderer
+from . import equalizer
+from .equalizer import Equalizer
 from .hearing import Hearing, delay
 
 # Formato: (extensión, códec de FFmpeg, bits por segundo o None, frecuencias que acepta o None)
@@ -54,6 +56,7 @@ class Settings:
     pitch: float = 0.0
     formants: bool = False
     hearing: tuple[str, str] = ("both", "none")  # ("both", "none"): sin cambiar cómo se oye
+    eq: tuple[int, ...] = equalizer.FLAT  # las cinco bandas del ecualizador, en dB
 
 
 def available() -> list[str]:
@@ -79,7 +82,9 @@ def render(audio: Audio, settings: Settings, cancel: threading.Event | None = No
     # (desde el principio no hay corte: sin la rampa de entrada, el archivo tal cual)
     renderer.seek(start, fade=start > 0)
     hearing = Hearing(rate, *settings.hearing)
-    lag = delay(hearing.filter, rate)  # cuadros que el filtro atrasa: los primeros se dejan, y al final se vacía
+    eq = Equalizer(rate, settings.eq)
+    # Cuadros que el filtro y el ecualizador atrasan: los primeros se dejan, y al final se vacían con silencio.
+    total_lag = lag = delay(hearing.filter, rate) + equalizer.delay(eq.gains, rate)
     fade_out = not whole
     held: np.ndarray | None = None  # el último bloque, que espera por si hay que apagarlo (una selección)
     while True:
@@ -102,6 +107,7 @@ def render(audio: Audio, settings: Settings, cancel: threading.Event | None = No
             last = end if end is not None else (audio.length or 1)
             progress(min(1.0, (block.start - start) / max(1, last - start)))
         frames = hearing.process(frames) if not hearing.plain else frames
+        frames = eq.process(frames) if not equalizer.is_flat(eq.gains) else frames
         if lag:
             drop = min(lag, len(frames))
             frames, lag = frames[drop:], lag - drop
@@ -110,9 +116,11 @@ def render(audio: Audio, settings: Settings, cancel: threading.Event | None = No
         held = frames
         if end is not None and block.start + len(block.frames) * block.step >= end:
             break
-    if not hearing.plain and delay(hearing.filter, rate):
-        # Lo que el filtro tiene todavía: su retraso, empujado con silencio.
-        tail = hearing.process(np.zeros((delay(hearing.filter, rate), audio.channels), np.float32))
+    if total_lag:
+        # Lo que el filtro y el ecualizador tienen todavía: su retraso, empujado con silencio.
+        tail = np.zeros((total_lag, audio.channels), np.float32)
+        tail = hearing.process(tail) if not hearing.plain else tail
+        tail = eq.process(tail) if not equalizer.is_flat(eq.gains) else tail
         held = tail if held is None else np.concatenate([held, tail])
     if held is not None and len(held):
         if fade_out:

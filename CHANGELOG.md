@@ -7,6 +7,12 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **A five-band equalizer**: the button EQ, at the right of the controls,
+  or Hear > Equalizer, opens five knobs (60 Hz, 250 Hz, 1 kHz, 4 kHz and
+  12 kHz, each from −12 to +12 dB), with On, to compare, and Flat. The
+  sound changes as they turn, without a click; EQ is filled while it
+  changes the sound. Kept with each file (in its `.slx` too); applied to
+  an export as it is heard, without its 40 ms of delay.
 - **Repeat without a selection repeats the whole file**: L, or the button
   with the two arrows, with nothing selected, goes on from the beginning at
   the end of the file (once it is read to its end). Kept with the file.

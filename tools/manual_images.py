@@ -175,6 +175,14 @@ def shoot(lang: str, audio: Path, folder: Path):
     menu.hide()
     dialog.close()
 
+    # El ecualizador, con unas bandas movidas.
+    w.show_equalizer()
+    w.set_eq((4, -2, 0, 3, -6))
+    settle(app)
+    save(w.eq_dialog, "equalizer", lang)
+    w.eq_dialog.close()
+    w.set_eq((0, 0, 0, 0, 0))
+
     # Oír: solo los graves, de los dos canales.
     w.set_hearing("both", "bass")
     menu_shot(app, w.hear_menu, "menu_hear", lang)

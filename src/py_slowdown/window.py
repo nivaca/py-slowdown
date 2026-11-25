@@ -41,7 +41,7 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Loop, Store, export_text
-from . import export, shortcuts, sidecar
+from . import equalizer, export, shortcuts, sidecar
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, grid_offset, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_BEATS, MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
@@ -364,6 +364,71 @@ class SaveDialog(QDialog):
         super().keyPressEvent(event)
 
 
+class EqualizerDialog(QDialog):
+    """The equalizer: a knob for each of its five bands (−12 to +12 dB, 0 at the top, a double click back to 0),
+    On (to hear it with and without), Flat (all to 0) and Close. It changes the sound as the knobs turn; it does
+    not stop the window (it can stay open while playing)."""
+
+    def __init__(self, window, parent=None):
+        super().__init__(parent)
+        self.window = window
+        self.setWindowTitle(tr("Equalizer"))
+        self.knobs: list[PitchDial] = []
+        grid = QHBoxLayout()
+        grid.setSpacing(10)
+        for band in equalizer.BANDS:
+            knob = PitchDial(" dB", 3, self)
+            knob.setRange(-equalizer.MAX_GAIN, equalizer.MAX_GAIN)
+            knob.setPageStep(3)
+            name = f"{band // 1000} kHz" if band >= 1000 else f"{band} Hz"
+            knob.setToolTip(tr("{band}: up or down, in decibels; a double click goes back to 0", band=name))
+            knob.valueChanged.connect(self._turned)
+            label = QLabel(name, self)
+            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            column = QVBoxLayout()
+            column.addWidget(knob, 0, Qt.AlignmentFlag.AlignHCenter)
+            column.addWidget(label)
+            grid.addLayout(column)
+            self.knobs.append(knob)
+        self.on = QCheckBox(tr("&On"), self)
+        self.on.setToolTip(tr("Hear the recording with the equalizer, or without it (the knobs stay)"))
+        self.on.toggled.connect(self._turned)
+        flat = QPushButton(tr("&Flat"), self)
+        flat.setToolTip(tr("All the bands back to 0 dB"))
+        flat.clicked.connect(self.flatten)
+        close = QPushButton(tr("Close"), self)
+        close.clicked.connect(self.close)
+        buttons = QHBoxLayout()
+        buttons.addWidget(self.on)
+        buttons.addStretch()
+        buttons.addWidget(flat)
+        buttons.addWidget(close)
+        layout = QVBoxLayout(self)
+        layout.addLayout(grid)
+        layout.addLayout(buttons)
+        self.show_values(window.eq_gains, window.eq_on)
+
+    def show_values(self, gains, on: bool) -> None:
+        """Put the knobs and On where GAINS and ON say, without changing the sound again."""
+        for knob, gain in zip(self.knobs, gains):
+            knob.blockSignals(True)
+            knob.setValue(int(gain))
+            knob.blockSignals(False)
+        self.on.blockSignals(True)
+        self.on.setChecked(on)
+        self.on.blockSignals(False)
+
+    def gains(self) -> tuple[int, ...]:
+        return tuple(knob.value() for knob in self.knobs)
+
+    def flatten(self) -> None:
+        self.show_values(equalizer.FLAT, self.on.isChecked())
+        self._turned()
+
+    def _turned(self, _value=None) -> None:
+        self.window.set_eq(self.gains(), self.on.isChecked())
+
+
 class Window(QMainWindow):
     def __init__(self, player: Player | None = None, store: Store | None = None,
                  settings: QSettings | None = None):
@@ -400,6 +465,9 @@ class Window(QMainWindow):
         except (TypeError, ValueError):
             factor = BOOST
         self.boost_factor = factor if factor in BOOSTS else BOOST  # (por cuánto multiplica el refuerzo)
+        self.eq_gains = equalizer.FLAT  # las cinco bandas, en dB, aunque esté apagado
+        self.eq_on = True
+        self.eq_dialog: EqualizerDialog | None = None
         self._build_transport()
         central = QWidget(self)
         layout = QVBoxLayout(central)
@@ -435,6 +503,7 @@ class Window(QMainWindow):
             self.restoreState(state)
         self.a_boosts[self.boost_factor].setChecked(True)
         self.boost.setChecked(self.settings.value("volume_boost", False, type=bool))
+        self._show_eq()
         self.volume.setValue(int(self.settings.value("volume", NORMAL_VOLUME, type=int)))
         self._update_enabled()
         self._check_rubberband()
@@ -598,6 +667,14 @@ class Window(QMainWindow):
         self.boost.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         row.addWidget(self.boost)
         self._show_volume(NORMAL_VOLUME)
+        row.addSpacing(12)
+
+        # El ecualizador: el botón abre su diálogo, y se ve encendido mientras cambia el sonido.
+        self.b_eq = QToolButton(self)
+        self.b_eq.setText(tr("EQ"))
+        self.b_eq.setCheckable(True)
+        self.b_eq.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        row.addWidget(self.b_eq)
 
         row.addStretch()
         self._update_skip_tips()
@@ -652,6 +729,7 @@ class Window(QMainWindow):
         self.a_sel_start = a(tr("Select&ion starts here"), lambda: self.mark_selection(start=True), ["I"])
         self.a_sel_end = a(tr("Selection ends &here"), lambda: self.mark_selection(start=False), ["O"])
         self.a_sel_clear = a(tr("Clear the selecti&on"), lambda: self.set_selection(None), ["Esc"])
+        self.a_equalizer = a(tr("&Equalizer…"), self.show_equalizer)
         self.a_save_loop = a(tr("Sa&ve the selection as a loop"), self.save_loop, ["Shift+L"])
         self.a_count = a(tr("&Count in before playing"), self._set_count_on, ["C"], checkable=True)
         self.a_count.setChecked(self.count.on)
@@ -724,6 +802,8 @@ class Window(QMainWindow):
                 actions[value] = action
             if key is CHANNELS:
                 self.hear_menu.addSeparator()
+        self.hear_menu.addSeparator()
+        self.hear_menu.addAction(self.a_equalizer)
         channels = self.settings.value("hearing/channels", "both")
         filter_ = self.settings.value("hearing/filter", "none")
         self.set_hearing(channels if channels in CHANNELS else "both", filter_ if filter_ in FILTERS else "none")
@@ -835,6 +915,7 @@ class Window(QMainWindow):
         self.speed_knob.valueChanged.connect(lambda v: self.set_speed(v / 100))
         self.volume.valueChanged.connect(self._set_volume)
         self.boost.toggled.connect(self._set_boost)
+        self.b_eq.clicked.connect(self.show_equalizer)
         self.wave.seekRequested.connect(self.seek)
         self.wave.addBookmarkRequested.connect(self.add_bookmark_at)
         self.wave.removeBookmarkRequested.connect(self.remove_bookmark)
@@ -1061,6 +1142,10 @@ class Window(QMainWindow):
             kept["formants"] = True
         if player.hearing != ("both", "none"):
             kept["hearing"] = list(player.hearing)
+        if not equalizer.is_flat(self.eq_gains):
+            kept["eq"] = list(self.eq_gains)
+            if not self.eq_on:
+                kept["eq_on"] = False
         selection = self.selection or (self._pending_selection[0] if self._pending_selection else None)
         if selection:
             kept["selection"] = [round(selection[0], 3), round(selection[1], 3)]
@@ -1087,6 +1172,7 @@ class Window(QMainWindow):
         else:
             self.set_speed(self.player.speed)
         self.set_hearing("both", "none")
+        self.set_eq(equalizer.FLAT, True)
         self.a_repeat.setChecked(False)
         default = CountIn()
         self.count.bpm, self.count.offset = default.bpm, default.offset
@@ -1105,6 +1191,7 @@ class Window(QMainWindow):
                 self.set_speed(float(kept.get("speed", 1.0)))
                 self.set_pitch(float(kept.get("pitch", 0.0)))
                 self.a_formants.setChecked(bool(kept.get("formants", False)))
+            self.set_eq(kept.get("eq", equalizer.FLAT), bool(kept.get("eq_on", True)))
             channels, filter_ = kept.get("hearing", ("both", "none"))
             self.set_hearing(channels if channels in CHANNELS else "both", filter_ if filter_ in FILTERS else "none")
             selection = kept.get("selection")
@@ -1611,6 +1698,37 @@ class Window(QMainWindow):
         self.volume.setToolTip(tip + "; " + tr("a double click goes back to 100%"))
         self.volume.update()
 
+    def show_equalizer(self) -> None:
+        """Open the equalizer (or bring it to the front); the button stays as the equalizer is, on or off."""
+        if self.eq_dialog is None:
+            self.eq_dialog = EqualizerDialog(self, self)
+        self.eq_dialog.show_values(self.eq_gains, self.eq_on)
+        self.eq_dialog.show()
+        self.eq_dialog.raise_()
+        self.eq_dialog.activateWindow()
+        self._show_eq()
+
+    def set_eq(self, gains, on: bool = True) -> None:
+        """The five bands of the equalizer (GAINS, in dB), heard if ON; kept with the file, as how it is heard."""
+        self.eq_gains = equalizer.clamp(gains)
+        self.eq_on = bool(on)
+        self.player.eq = self.eq_gains if self.eq_on else equalizer.FLAT
+        if self.eq_dialog is not None:
+            self.eq_dialog.show_values(self.eq_gains, self.eq_on)
+        self._show_eq()
+        self._show_title()
+
+    def _show_eq(self) -> None:
+        # El botón, encendido mientras el ecualizador cambia el sonido; su etiqueta dice las bandas.
+        active = self.eq_on and not equalizer.is_flat(self.eq_gains)
+        self.b_eq.setChecked(active)
+        values = "  ".join(f"{(f'{b // 1000} kHz' if b >= 1000 else f'{b} Hz')} {g:+d}"
+                           for b, g in zip(equalizer.BANDS, self.eq_gains))
+        tip = tr("Equalizer (five bands): opens it") + ("\n" + values if active else "")
+        if not self.eq_on and not equalizer.is_flat(self.eq_gains):
+            tip += "\n" + tr("(turned off)")
+        self.b_eq.setToolTip(tip)
+
     def set_boost_factor(self, factor: float) -> None:
         """How much Boost multiplies the sound (one of BOOSTS); it applies at once if Boost is on."""
         self.boost_factor = factor if factor in BOOSTS else BOOST
@@ -1855,10 +1973,13 @@ class Window(QMainWindow):
             return
         player = self.player
         channels, filter_ = player.hearing
-        plain = (channels, filter_) == ("both", "none")
+        heard = []
+        if (channels, filter_) != ("both", "none"):
+            heard.append(hearing_short(channels, filter_))
+        if not equalizer.is_flat(player.eq):
+            heard.append(tr("the equalizer"))
         dialog = ExportDialog(self, self.selection, player.speed, player.pitch, player.formants,
-                              None if plain else hearing_short(channels, filter_),
-                              self.settings.value("export/format", "wav"))
+                              "; ".join(heard) or None, self.settings.value("export/format", "wav"))
         if not dialog.exec():
             return
         format_ = dialog.chosen_format()
@@ -1877,7 +1998,8 @@ class Window(QMainWindow):
         start, end = self.selection if dialog.part.isChecked() and self.selection else (0.0, None)
         settings = export.Settings(start=start, end=end, speed=player.speed, pitch=player.pitch,
                                    formants=player.formants,
-                                   hearing=player.hearing if dialog.hearing.isChecked() else ("both", "none"))
+                                   hearing=player.hearing if dialog.hearing.isChecked() else ("both", "none"),
+                                   eq=player.eq if dialog.hearing.isChecked() else equalizer.FLAT)
         if run_export(self, self.audio, path, format_, settings):
             self.statusBar().showMessage(tr("Exported {name}", name=path.name), 6000)
 

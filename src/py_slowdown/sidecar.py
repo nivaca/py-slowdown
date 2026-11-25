@@ -14,6 +14,7 @@ fecha:
       <position seconds="83.25"/>
       <playback speed="0.75" pitch="-2.0" formants="true"/>
       <hearing channels="both" filter="bass"/>
+      <equalizer gains="3 0 -2 0 4" on="true"/>
       <volume percent="120"/>
       <selection start="95.0" end="103.5" repeat="true"/>
       <countin on="true" bpm="96" offset="0.0"/>
@@ -159,6 +160,16 @@ def read(path: Path) -> FileState | None:
     hearing = root.find("hearing")
     if hearing is not None:
         settings["hearing"] = [hearing.get("channels", "both"), hearing.get("filter", "none")]
+    eq = root.find("equalizer")
+    if eq is not None:
+        try:
+            gains = [int(g) for g in eq.get("gains", "").split()]
+        except ValueError:
+            gains = []
+        if len(gains) == 5 and any(gains):
+            settings["eq"] = gains
+            if eq.get("on", "true").lower() in ("false", "0", "no"):
+                settings["eq_on"] = False
     selection = root.find("selection")
     if selection is not None:
         start, end = _number(selection, "start", -1.0), _number(selection, "end", -1.0)
@@ -207,6 +218,10 @@ def save(audio: Path, state: FileState, folder: Path | None = None) -> Path:
                   formants="true" if settings.get("formants") else "false")
     channels, filter_ = settings.get("hearing", ("both", "none"))
     ET.SubElement(root, "hearing", channels=str(channels), filter=str(filter_))
+    if settings.get("eq"):
+        # (las cinco bandas, de 60 Hz a 12 kHz, en dB)
+        ET.SubElement(root, "equalizer", gains=" ".join(str(int(g)) for g in settings["eq"]),
+                      on="false" if settings.get("eq_on") is False else "true")
     if settings.get("volume") is not None:
         ET.SubElement(root, "volume", percent=str(int(settings["volume"])))
     if settings.get("selection"):

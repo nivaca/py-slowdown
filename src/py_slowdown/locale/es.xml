@@ -1133,4 +1133,52 @@
     <en>Volume &amp;boost</en>
     <tr>Re&amp;fuerzo del volumen</tr>
   </text>
+  <text>
+    <en>&amp;Equalizer…</en>
+    <tr>&amp;Ecualizador…</tr>
+  </text>
+  <text>
+    <en>&amp;Flat</en>
+    <tr>&amp;Plano</tr>
+  </text>
+  <text>
+    <en>&amp;On</en>
+    <tr>&amp;Encendido</tr>
+  </text>
+  <text>
+    <en>(turned off)</en>
+    <tr>(apagado)</tr>
+  </text>
+  <text>
+    <en>All the bands back to 0 dB</en>
+    <tr>Todas las bandas de vuelta a 0 dB</tr>
+  </text>
+  <text>
+    <en>Close</en>
+    <tr>Cerrar</tr>
+  </text>
+  <text>
+    <en>EQ</en>
+    <tr>EQ</tr>
+  </text>
+  <text>
+    <en>Equalizer</en>
+    <tr>Ecualizador</tr>
+  </text>
+  <text>
+    <en>Equalizer (five bands): opens it</en>
+    <tr>Ecualizador (cinco bandas): lo abre</tr>
+  </text>
+  <text>
+    <en>Hear the recording with the equalizer, or without it (the knobs stay)</en>
+    <tr>Oír la grabación con el ecualizador, o sin él (las perillas se quedan)</tr>
+  </text>
+  <text>
+    <en>the equalizer</en>
+    <tr>el ecualizador</tr>
+  </text>
+  <text>
+    <en>{band}: up or down, in decibels; a double click goes back to 0</en>
+    <tr>{band}: arriba o abajo, en decibeles; un doble clic lo devuelve a 0</tr>
+  </text>
 </interface>
