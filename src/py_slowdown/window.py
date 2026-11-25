@@ -177,6 +177,7 @@ class Knob(QDial):
         self.home = home
         self.step = step
         self.warn = warn
+        self.detents: tuple[int, ...] = ()  # valores donde la perilla, arrastrada, se detiene (las velocidades)
         self.setWrapping(False)
         self.setFixedSize(self.SIZE, self.SIZE)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -216,16 +217,25 @@ class Knob(QDial):
             value = top + (90.0 - degrees) / (90.0 - self.HIGHEST) * (high - top)
         return int(round(value))
 
+    DETENT = 4.0  # grados: a esa distancia de un valor de DETENTS, la perilla arrastrada se queda en él
+
+    def dragged_to(self, x: float, y: float) -> int:
+        """The value of dragging to (X, Y): the one there, or a detent within DETENT degrees of it."""
+        value = self.value_at(x, y)
+        here = self.degrees(value)
+        near = [d for d in self.detents if abs(self.degrees(d) - here) <= self.DETENT]
+        return min(near, key=lambda d: abs(self.degrees(d) - here)) if near else value
+
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
-            self.setValue(self.value_at(event.position().x(), event.position().y()))
+            self.setValue(self.dragged_to(event.position().x(), event.position().y()))
             event.accept()
         else:
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event) -> None:
         if event.buttons() & Qt.MouseButton.LeftButton:
-            self.setValue(self.value_at(event.position().x(), event.position().y()))
+            self.setValue(self.dragged_to(event.position().x(), event.position().y()))
             event.accept()
 
     def mouseReleaseEvent(self, event) -> None:
@@ -504,6 +514,7 @@ class Window(QMainWindow):
         if state is not None:
             self.restoreState(state)
         self.a_boosts[self.boost_factor].setChecked(True)
+        self.speed_knob.detents = tuple(self.speed_presets())  # (las velocidades elegidas: topes de la perilla)
         self.boost.setChecked(self.settings.value("volume_boost", False, type=bool))
         self._show_eq()
         self._draw_icons()
@@ -1612,9 +1623,11 @@ class Window(QMainWindow):
                                                        "50, 75, 100, 125."))
             return
         self.settings.setValue("speed/presets", ", ".join(str(p) for p in speeds))
+        self.speed_knob.detents = tuple(self.speed_presets())
 
     def restore_speed_presets(self) -> None:
         self.settings.remove("speed/presets")
+        self.speed_knob.detents = tuple(self.speed_presets())
 
     def change_speed(self, delta: float) -> None:
         if self.stretching:

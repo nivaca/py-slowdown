@@ -1469,3 +1469,26 @@ def test_loops_on_the_waveform(window, app, wav):
     assert window.selection == (3.0, 5.0) and window.a_repeat.isChecked() and window.player.loop == (3.0, 5.0)
     window.remove_loop(0)
     assert [x.label for x in wave.loops] == ["Riff"]
+
+
+def test_speed_knob_detents(window, app, monkeypatch):
+    """Dragged, the speed knob stops at the speeds chosen beforehand when it passes within a few degrees of one;
+    the detents follow the list when it changes."""
+    from py_slowdown import window as window_module
+
+    knob = window.speed_knob
+    assert knob.detents == window_module.SPEED_PRESETS
+    import math
+
+    def point(value):
+        # Un punto en la dirección de VALUE, a 20 píxeles del centro
+        angle = math.radians(knob.degrees(value))
+        return knob.width() / 2 + 20 * math.cos(angle), knob.height() / 2 - 20 * math.sin(angle)
+
+    assert knob.dragged_to(*point(77)) == 75  # (cerca de 75: se queda allí)
+    assert knob.dragged_to(*point(84)) == 84  # (lejos de 80 y de 90: donde está)
+    monkeypatch.setattr(window_module.QInputDialog, "getText", lambda *args, **kwargs: ("65, 100", True))
+    window.edit_speed_presets()
+    assert knob.detents == (65, 100) and knob.dragged_to(*point(77)) == 77
+    window.restore_speed_presets()
+    assert knob.detents == window_module.SPEED_PRESETS

@@ -7,6 +7,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **La perilla de la velocidad se detiene en las velocidades elegidas**:
+  arrastrada, se queda en una velocidad de la lista (50 %, 75 %, 100 %…)
+  cuando pasa a unos pocos grados de ella; la rueda y las teclas la mueven
+  como antes.
 - **Los bucles sobre la forma de onda**: cada bucle guardado es una banda
   de su color al pie de la forma de onda, con su nombre; un clic en ella lo
   elige, lo repite y va a su comienzo.

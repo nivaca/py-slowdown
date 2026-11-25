@@ -7,6 +7,9 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **The speed knob stops at the chosen speeds**: dragged, it stays at a
+  speed of the list (50%, 75%, 100%…) when it passes within a few degrees
+  of one; the wheel and the keys move it as before.
 - **The loops on the waveform**: each saved loop is a band of its own
   colour at the foot of the waveform, with its name; a click on it selects
   it, repeats it and goes to its start.
