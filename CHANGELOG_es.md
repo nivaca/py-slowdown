@@ -7,6 +7,11 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Una pantalla de inicio**: sin archivo, la forma de onda muestra las
+  grabaciones abiertas últimamente, cada una con un pequeño dibujo de su
+  forma de onda (de sus picos guardados); un clic abre una; una que ya no
+  está se ve en gris, no encontrada. El reloj vuelve a cero al cerrar un
+  archivo.
 - **Modo compacto** (Ver, Ctrl+Mayús+M): solo los mandos y una forma de
   onda baja, sin los paneles del costado ni la barra de estado, en una
   ventana pequeña encima de las demás, para practicar junto a una

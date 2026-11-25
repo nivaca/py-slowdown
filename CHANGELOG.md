@@ -7,6 +7,10 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **A start screen**: without a file, the waveform lists the recordings
+  opened last, each with a small picture of its waveform (from its peaks
+  kept); a click opens one; one gone is greyed, not found. The clock goes
+  back to zero when a file is closed.
 - **Compact mode** (View, Ctrl+Shift+M): only the controls and a short
   waveform, without the side panels and the status bar, in a small window
   on top of the others, to practise beside a score; off, the window as it

@@ -1277,4 +1277,12 @@
     <en>Co&amp;mpact mode</en>
     <tr>Modo co&amp;mpacto</tr>
   </text>
+  <text>
+    <en>Recent recordings</en>
+    <tr>Grabaciones recientes</tr>
+  </text>
+  <text>
+    <en>{folder} (not found)</en>
+    <tr>{folder} (no se encuentra)</tr>
+  </text>
 </interface>

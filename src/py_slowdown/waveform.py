@@ -14,10 +14,11 @@ from __future__ import annotations
 
 import math
 import time
+from pathlib import Path
 
 import numpy as np
 from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFontMetrics, QImage, QPainter, QPalette, QPen
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPen
 from PySide6.QtWidgets import QMenu, QScrollBar, QSizePolicy, QVBoxLayout, QWidget
 
 from .audio import BUCKET, Audio
@@ -86,6 +87,7 @@ class Waveform(QWidget):
     firstBeatRequested = Signal(object)  # seconds: the recording's first beat, for the count-in
     viewChanged = Signal()
     loopClicked = Signal(int)  # the saved loop (its row) whose band is clicked
+    recentRequested = Signal(str)  # a recording of the start screen, clicked
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -99,6 +101,8 @@ class Waveform(QWidget):
         self.repeating = False  # whether the selection is repeated (it is drawn stronger)
         self.count: int | None = None  # the beat of a count-in, drawn big
         self.loops: list = []  # los bucles guardados (bookmarks.Loop), dibujados al pie
+        self.recent: list[tuple[str, object]] = []  # sin archivo: las grabaciones recientes (ruta, resumen o None)
+        self._hover_row: int | None = None
         self.flash: str | None = None  # un valor que acaba de cambiar (la velocidad, la altura), grande un momento
         self._flash_timer = QTimer(self)
         self._flash_timer.setSingleShot(True)
@@ -276,9 +280,8 @@ class Waveform(QWidget):
         painter.fillRect(self.rect(), colors["base"])
         painter.fillRect(QRectF(0, 0, w, RULER), colors["ruler"])
         if not self.audio:
-            painter.setPen(colors["faint"])
-            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter,
-                             tr("Open an audio file (Ctrl+O), or drop one here"))
+            self._paint_start(painter, colors, w, h)
+            painter.end()
             return
         top = RULER + FLAG
         self._paint_ruler(painter, colors, w)
@@ -340,6 +343,84 @@ class Waveform(QWidget):
         painter.fillRect(box, color)
         painter.setPen(colors["base"])
         painter.drawText(box, Qt.AlignmentFlag.AlignCenter, "1")
+
+    # --- la pantalla de inicio, sin archivo
+
+    ROW = 46  # alto de cada grabación reciente
+
+    def set_recent(self, recent) -> None:
+        """The recordings opened last, as (path, its waveform in heights from 0 to 1, or None), for the start
+        screen."""
+        self.recent = list(recent)
+        self._hover_row = None
+        self.update()
+
+    def _rows(self) -> tuple[float, float, int]:
+        # (izquierda, arriba, cuántas filas caben) de la lista de las recientes, centrada.
+        width = min(560, self.width() - 40)
+        left = (self.width() - width) / 2
+        top = RULER + 70
+        fits = max(0, int((self.height() - top - 10) // self.ROW))
+        return left, top, min(fits, len(self.recent))
+
+    def recent_at(self, x: float, y: float) -> int | None:
+        """The row of the start screen at X, Y."""
+        if self.audio or not self.recent:
+            return None
+        left, top, count = self._rows()
+        row = int((y - top) // self.ROW)
+        width = min(560, self.width() - 40)
+        return row if 0 <= row < count and left <= x <= left + width and y >= top else None
+
+    def _paint_start(self, painter: QPainter, colors, w: int, h: int) -> None:
+        painter.setPen(colors["faint"])
+        hint = tr("Open an audio file (Ctrl+O), or drop one here")
+        if not self.recent:
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, hint)
+            return
+        painter.drawText(QRectF(0, RULER + 14, w, 24), Qt.AlignmentFlag.AlignCenter, hint)
+        left, top, count = self._rows()
+        width = min(560, w - 40)
+        font = painter.font()
+        bold = QFont(font)
+        bold.setBold(True)
+        painter.setPen(colors["text"])
+        painter.drawText(QRectF(left, top - 26, width, 22), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                         tr("Recent recordings"))
+        for row, (path, thumb) in enumerate(self.recent[:count]):
+            y = top + row * self.ROW
+            box = QRectF(left, y + 2, width, self.ROW - 4)
+            there = Path(path).is_file()
+            if row == self._hover_row and there:
+                shade = QColor(colors["wave"])
+                shade.setAlpha(40)
+                painter.fillRect(box, shade)
+            # La onda, pequeña, a la izquierda; el nombre y la carpeta, al lado.
+            wave_box = QRectF(box.left() + 6, box.top() + 6, 120, box.height() - 12)
+            ink = QColor(colors["wave"] if there else colors["faint"])
+            painter.setPen(QPen(ink, 1))
+            if thumb is not None and len(thumb):
+                middle = wave_box.center().y()
+                half = wave_box.height() / 2
+                step = wave_box.width() / len(thumb)
+                for i, height in enumerate(thumb):
+                    x = wave_box.left() + i * step
+                    painter.drawLine(QPointF(x, middle - height * half), QPointF(x, middle + height * half + 0.5))
+            else:
+                painter.drawLine(QPointF(wave_box.left(), wave_box.center().y()),
+                                 QPointF(wave_box.right(), wave_box.center().y()))
+            text_box = QRectF(wave_box.right() + 12, box.top() + 3, box.right() - wave_box.right() - 16, 20)
+            painter.setFont(bold)
+            painter.setPen(colors["text"] if there else colors["faint"])
+            metrics = QFontMetrics(bold)
+            painter.drawText(text_box, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                             metrics.elidedText(Path(path).name, Qt.TextElideMode.ElideRight, int(text_box.width())))
+            painter.setFont(font)
+            painter.setPen(colors["faint"])
+            folder = str(Path(path).parent) if there else tr("{folder} (not found)", folder=str(Path(path).parent))
+            painter.drawText(text_box.translated(0, 18), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                             QFontMetrics(font).elidedText(folder, Qt.TextElideMode.ElideMiddle,
+                                                           int(text_box.width())))
 
     def set_loops(self, loops) -> None:
         self.loops = list(loops)
@@ -546,7 +627,14 @@ class Waveform(QWidget):
     # --- el ratón
 
     def mousePressEvent(self, event) -> None:
-        if not self.audio or event.button() != Qt.MouseButton.LeftButton:
+        if not self.audio:
+            row = self.recent_at(event.position().x(), event.position().y())
+            if event.button() == Qt.MouseButton.LeftButton and row is not None:
+                path = self.recent[row][0]
+                if Path(path).is_file():
+                    self.recentRequested.emit(path)
+            return
+        if event.button() != Qt.MouseButton.LeftButton:
             return
         x = event.position().x()
         if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
@@ -566,6 +654,14 @@ class Waveform(QWidget):
 
     def mouseMoveEvent(self, event) -> None:
         x = event.position().x()
+        if not self.audio:
+            # La pantalla de inicio: la fila bajo el puntero, sombreada, y el puntero, una mano.
+            row = self.recent_at(x, event.position().y())
+            if row != self._hover_row:
+                self._hover_row = row
+                self.setCursor(Qt.CursorShape.PointingHandCursor if row is not None else Qt.CursorShape.ArrowCursor)
+                self.update()
+            return
         if self._selecting is not None:
             here = self.seconds_at(x)
             self.set_selection((min(self._selecting, here), max(self._selecting, here)))

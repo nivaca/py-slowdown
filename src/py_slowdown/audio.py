@@ -97,6 +97,43 @@ def load_peaks(where: Path | None) -> tuple[Peaks, int] | None:
         return None
 
 
+THUMB = 120  # columnas del resumen de la forma de onda, para la pantalla de inicio
+
+
+def summary(lo: np.ndarray, hi: np.ndarray, columns: int = THUMB) -> np.ndarray:
+    """The waveform in COLUMNS heights from 0 to 1 (the loudest of each stretch, scaled to the loudest of all)."""
+    loudest = np.maximum(np.abs(np.asarray(lo, np.float32)), np.abs(np.asarray(hi, np.float32)))
+    if not len(loudest):
+        return np.zeros(columns, np.float32)
+    edges = np.linspace(0, len(loudest), columns + 1).astype(int)
+    heights = np.array([loudest[a:max(b, a + 1)].max() if a < len(loudest) else 0.0
+                        for a, b in zip(edges[:-1], edges[1:])], np.float32)
+    top = float(heights.max())
+    return heights / top if top > 0 else heights
+
+
+def thumbnail(path: str | os.PathLike) -> np.ndarray | None:
+    """The waveform of PATH in THUMB heights, from its peaks kept by an earlier reading (at the rates and channels
+    a file is usually read at); None if there are none."""
+    path = Path(path)
+    for rate in (44100, 48000, 96000, 88200, 32000, 22050):
+        for channels in (2, 1):
+            where = peaks_path(path, rate, channels)
+            if where is None:
+                return None
+            if not where.is_file():
+                continue
+            try:
+                with np.load(where) as data:
+                    if "thumb" in data.files:
+                        return np.asarray(data["thumb"], np.float32)
+                    # (guardada por una versión anterior, sin el resumen: se hace de los picos)
+                    return summary(data["lo"].astype(np.float32), data["hi"].astype(np.float32))
+            except (OSError, ValueError, KeyError):
+                return None
+    return None
+
+
 def save_peaks(where: Path | None, peaks: Peaks, frames: int) -> None:
     """Keep PEAKS for the next time, and forget the oldest beyond PEAK_FILES."""
     if where is None:
@@ -106,7 +143,8 @@ def save_peaks(where: Path | None, peaks: Peaks, frames: int) -> None:
         count = peaks.count
         temporary = where.with_suffix(".tmp.npz")
         np.savez_compressed(temporary, lo=np.rint(peaks.lo[:count] * SCALE).astype(np.int16),
-                            hi=np.rint(peaks.hi[:count] * SCALE).astype(np.int16), frames=np.int64(frames))
+                            hi=np.rint(peaks.hi[:count] * SCALE).astype(np.int16), frames=np.int64(frames),
+                            thumb=summary(peaks.lo[:count], peaks.hi[:count]))
         temporary.replace(where)
         kept = sorted(where.parent.glob("*.npz"), key=lambda p: p.stat().st_mtime, reverse=True)
         for old in kept[PEAK_FILES:]:

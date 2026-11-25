@@ -41,7 +41,7 @@ from PySide6.QtWidgets import (
 )
 
 from . import __version__, interface, rubberband
-from .audio import EXTENSIONS, Audio, AudioError
+from .audio import EXTENSIONS, Audio, AudioError, thumbnail
 from .bookmarks import Bookmark, Loop, Store, export_text
 from . import equalizer, export, glyphs, shortcuts, sidecar
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, grid_offset, number, recording_tempo
@@ -774,6 +774,7 @@ class Window(QMainWindow):
         self.boost.setChecked(self.settings.value("volume_boost", False, type=bool))
         self._show_eq()
         self._draw_icons()
+        self.show_start()
         self.volume.setValue(int(self.settings.value("volume", NORMAL_VOLUME, type=int)))
         self._update_enabled()
         self._check_rubberband()
@@ -1209,6 +1210,7 @@ class Window(QMainWindow):
         self.wave.selectionChanged.connect(self.set_selection)
         self.wave.firstBeatRequested.connect(self.set_first_beat)
         self.wave.loopClicked.connect(self.repeat_loop)
+        self.wave.recentRequested.connect(self.open_file)
         self.b_repeat.toggled.connect(self.a_repeat.setChecked)
         self.a_repeat.toggled.connect(self.b_repeat.setChecked)
         self.b_tap.clicked.connect(self.tap_tempo)
@@ -1409,6 +1411,8 @@ class Window(QMainWindow):
         self._return_to = self._paused_at = None
         self._pending_selection = None
         self.wave.set_audio(None)
+        self.show_start()  # (sin archivo: las grabaciones recientes)
+        self.time_label.setText("0:00.0 / 0:00.0")
         self.selection = None
         self.wave.set_selection(None)
         self._show_bookmarks()
@@ -1576,6 +1580,11 @@ class Window(QMainWindow):
     def _remember(self, path: Path) -> None:
         recent = [p for p in self.settings.value("recent", [], type=list) if p != str(path)]
         self.settings.setValue("recent", [str(path)] + recent[: RECENT - 1])
+
+    def show_start(self) -> None:
+        """Without a file: the recordings opened last, on the waveform, each with its small waveform."""
+        recent = self.settings.value("recent", [], type=list)
+        self.wave.set_recent([(p, thumbnail(p)) for p in recent])
 
     def _fill_recent(self) -> None:
         self.recent_menu.clear()

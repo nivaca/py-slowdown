@@ -1652,3 +1652,28 @@ def test_compact_mode(window, app, wav):
     window.a_compact.trigger()
     window.close()
     assert window.settings.value("geometry") == window._normal[0]
+
+
+def test_the_start_screen(window, app, wav, tmp_path):
+    """Without a file, the waveform lists the recordings opened last, each with its small waveform (from the
+    peaks kept); a click on one opens it; one that is gone is listed, greyed, and does nothing."""
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtTest import QTest
+
+    from py_slowdown.audio import THUMB, thumbnail
+
+    loaded(window, app, wav)
+    window.close_file()
+    wave = window.wave
+    assert [p for p, _thumb in wave.recent] == [str(wav)]
+    thumb = wave.recent[0][1]
+    assert thumb is not None and len(thumb) == THUMB and 0.99 <= max(thumb) <= 1.0
+    assert thumbnail(tmp_path / "nothing.wav") is None
+    wave.grab()
+    left, top, count = wave._rows()
+    assert count == 1 and wave.recent_at(left + 50, top + 10) == 0
+    QTest.mouseClick(wave, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier,
+                     QPoint(int(left + 50), int(top + 10)))
+    assert window.audio is not None and window.audio.path == wav.resolve()
+    window.close_file()
+    assert window.time_label.text() == "0:00.0 / 0:00.0"  # (cerrado, el reloj vuelve a cero)
