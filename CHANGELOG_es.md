@@ -5,7 +5,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Sin publicar
+## 1.3.0 — 2026-11-24
+
+Hecha para practicar: una pausa vuelve adonde empezó a tocar, la cuenta
+previa entra en los pulsos de un primer pulso que no se pierde, la altura
+se fija en semitonos y cents con dos perillas, y los ajustes de cada
+grabación viajan en un archivo `.slx` propio, que se guarda cuando se pide.
 
 - **Una pausa vuelve adonde empezó a tocar**: Espacio, o el botón, pausa y
   lleva la posición de vuelta allí, para tocar otra vez el mismo pasaje

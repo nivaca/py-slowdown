@@ -5,7 +5,12 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 1.3.0 — 2026-11-24
+
+Made for practising: a pause goes back to where playing started, the
+count-in comes in on the beats of a first beat that stays, the pitch is
+set in semitones and cents with two knobs, and the settings of each
+recording travel in a `.slx` file of its own, saved when asked.
 
 - **A pause goes back to where playing started**: Space, or the button,
   pauses and takes the position back there, so that the same passage is

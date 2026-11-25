@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-slowdown
-Version:        1.2.0
+Version:        1.3.0
 Release:        1%{?dist}
 Summary:        Play audio slower or faster without changing its pitch
 
@@ -99,6 +99,15 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*
 
 %changelog
+* Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.3.0-1
+- Settings files end in .slx, a type of their own that opens the recording; the
+  first beat a bookmark of its own, the count-in coming in on its beats; a pause
+  goes back to where playing started (Shift+Space continues); ask to save before
+  closing a file; the pitch in semitones and cents with two knobs; the volume up
+  to 150%; each file starts from the usual settings; Count-in > Clicks; Go to
+  the start goes to the first beat with the count-in on; Ctrl+W closes the file,
+  Alt+F4 quits
+
 * Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.2.0-1
 - The settings of each recording in an XML file of its name, beside it or in a
   folder chosen; speeds chosen beforehand in a button Speeds; a choice of
