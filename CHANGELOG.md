@@ -7,6 +7,9 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **The value just changed, large on the waveform**: a speed changed from
+  the keyboard or the menu of speeds, or a pitch changed from the keyboard,
+  is shown in the middle of the waveform for a moment, then fades.
 - **Reset the sound** (Playback, Ctrl+Shift+N): speed 100%, the recording's
   pitch, the formants off, both channels without a filter and the equalizer
   flat, at once; the volume stays.

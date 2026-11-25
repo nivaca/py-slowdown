@@ -1426,3 +1426,23 @@ def test_reset_the_sound(window, app, wav):
     assert (player.speed, player.pitch, player.formants, player.hearing) == (1.0, 0.0, False, ("both", "none"))
     assert player.eq == (0, 0, 0, 0, 0) and window.eq_gains == (0, 0, 0, 0, 0) and window.eq_on
     assert window.volume.value() == 70
+
+
+def test_values_shown_on_the_waveform(window, app, wav):
+    """A speed or a pitch changed from the keyboard (or a speed of the menu) is shown large on the waveform for a
+    moment, then goes; one turned on its knob is not (the knob shows it)."""
+    import time as clock
+
+    loaded(window, app, wav)
+    window.speed_knob.setValue(80)
+    assert window.wave.flash is None
+    window.a_slower.trigger()
+    assert window.wave.flash == "75%"
+    window.a_higher.trigger()
+    assert window.wave.flash == "+1 st  0 ¢"
+    window.wave.grab()  # (se dibuja sin errores)
+    end = clock.time() + 2.5
+    while window.wave.flash is not None and clock.time() < end:
+        app.processEvents()
+        clock.sleep(0.02)
+    assert window.wave.flash is None

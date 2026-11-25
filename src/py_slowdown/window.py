@@ -728,10 +728,10 @@ class Window(QMainWindow):
         self.a_forward_1 = a(tr("Forward one second"), lambda: self.jump(1.0), ["Shift+Right"])
         self.a_slower = a(tr("S&lower"), lambda: self.change_speed(-SPEED_STEP), ["Down", "-"])
         self.a_faster = a(tr("F&aster"), lambda: self.change_speed(SPEED_STEP), ["Up", "+"])
-        self.a_normal = a(tr("&Normal speed"), lambda: self.set_speed(1.0), ["N"])
+        self.a_normal = a(tr("&Normal speed"), lambda: self.set_speed(1.0, shown=True), ["N"])
         self.a_higher = a(tr("A se&mitone higher"), lambda: self.change_pitch(1.0), ["Ctrl+Up"])
         self.a_lower = a(tr("A semitone lo&wer"), lambda: self.change_pitch(-1.0), ["Ctrl+Down"])
-        self.a_original_pitch = a(tr("Ori&ginal pitch"), lambda: self.set_pitch(0.0), ["Shift+N"])
+        self.a_original_pitch = a(tr("Ori&ginal pitch"), lambda: self.set_pitch(0.0, shown=True), ["Shift+N"])
         self.a_reset_sound = a(tr("Reset the so&und"), self.reset_sound, ["Ctrl+Shift+N"])
         self.a_formants = a(tr("&Keep the formants"), self.set_formants, checkable=True)
         self.a_formants.setStatusTip(tr("Keep the formants: when the pitch moves, voices and instruments keep their "
@@ -1568,7 +1568,8 @@ class Window(QMainWindow):
         if self.audio:
             self.seek(self.audio.duration)
 
-    def set_speed(self, speed: float) -> None:
+    def set_speed(self, speed: float, shown: bool = False) -> None:
+        # (SHOWN: cambiada desde el teclado o el menú, se muestra grande un momento sobre la forma de onda)
         speed = min(MAX_SPEED, max(MIN_SPEED, round(float(speed), 2)))
         self.player.speed = speed
         # The knob is brought in line without calling this again.
@@ -1576,6 +1577,8 @@ class Window(QMainWindow):
         self.speed_knob.setValue(round(speed * 100))
         self.speed_knob.blockSignals(False)
         self.b_normal.setEnabled(speed != 1.0)
+        if shown and self.audio is not None:
+            self.wave.show_value(f"{round(speed * 100)}%")
 
     def speed_presets(self) -> list[int]:
         """The speeds of the button Speeds, in percent."""
@@ -1591,7 +1594,7 @@ class Window(QMainWindow):
             action.setCheckable(True)
             action.setChecked(percent == now)
             action.setEnabled(self.stretching or percent == 100)
-            action.triggered.connect(lambda _=False, p=percent: self.set_speed(p / 100))
+            action.triggered.connect(lambda _=False, p=percent: self.set_speed(p / 100, shown=True))
         menu.addSeparator()
         menu.addAction(tr("&Edit the speeds…"), self.edit_speed_presets)
         menu.addAction(tr("&Restore the usual speeds"), self.restore_speed_presets)
@@ -1614,16 +1617,19 @@ class Window(QMainWindow):
 
     def change_speed(self, delta: float) -> None:
         if self.stretching:
-            self.set_speed(self.player.speed + delta)
+            self.set_speed(self.player.speed + delta, shown=True)
 
-    def set_pitch(self, semitones: float) -> None:
-        """Move the pitch SEMITONES up (or down, below 0) from that of the recording."""
+    def set_pitch(self, semitones: float, shown: bool = False) -> None:
+        """Move the pitch SEMITONES up (or down, below 0) from that of the recording; SHOWN (from the keyboard),
+        also large on the waveform for a moment."""
         if not self.stretching:
             return
         self.player.pitch = semitones
         self._show_pitch(self.player.pitch)
         self.b_pitch.setEnabled(self.player.pitch != 0.0)
         self._update_formants()
+        if shown and self.audio is not None:
+            self.wave.show_value(f"{self.semitone_dial.text()}  {self.cent_dial.text()}")
 
     def _pitch_moved(self, _value: int = 0) -> None:
         # Una barra o una casilla de la altura: los semitonos más los cents.
@@ -1682,7 +1688,7 @@ class Window(QMainWindow):
             action.setEnabled(stereo or value == "both")
 
     def change_pitch(self, delta: float) -> None:
-        self.set_pitch(self.player.pitch + delta)
+        self.set_pitch(self.player.pitch + delta, shown=True)
 
     def _gain(self, value: int) -> float:
         # A square curve (the steps of the knob sound more even to the ear), times 1.5 with Boost.
@@ -1741,6 +1747,8 @@ class Window(QMainWindow):
         self.set_hearing("both", "none")
         self.set_eq(equalizer.FLAT, True)
         self.statusBar().showMessage(tr("The sound as it is in the recording"), 3000)
+        if self.audio is not None:
+            self.wave.show_value("100%  0 st")
 
     def show_equalizer(self) -> None:
         """Open the equalizer (or bring it to the front); the button stays as the equalizer is, on or off."""

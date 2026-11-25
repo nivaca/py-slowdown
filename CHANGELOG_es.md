@@ -7,6 +7,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **El valor recién cambiado, grande sobre la forma de onda**: una
+  velocidad cambiada desde el teclado o desde el menú de las velocidades, o
+  una altura cambiada desde el teclado, se ve en el medio de la forma de
+  onda por un momento, y luego se desvanece.
 - **Deshacer los cambios del sonido** (Reproducción, Ctrl+Mayús+N): a la
   vez, velocidad 100 %, la altura de la grabación, sin los formantes, los
   dos canales sin filtro y el ecualizador plano; el volumen se queda.

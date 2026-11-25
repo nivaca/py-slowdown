@@ -16,7 +16,7 @@ import math
 import time
 
 import numpy as np
-from PySide6.QtCore import QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QImage, QPainter, QPalette, QPen
 from PySide6.QtWidgets import QMenu, QScrollBar, QSizePolicy, QVBoxLayout, QWidget
 
@@ -93,6 +93,11 @@ class Waveform(QWidget):
         self.selection: tuple[float, float] | None = None  # seconds
         self.repeating = False  # whether the selection is repeated (it is drawn stronger)
         self.count: int | None = None  # the beat of a count-in, drawn big
+        self.flash: str | None = None  # un valor que acaba de cambiar (la velocidad, la altura), grande un momento
+        self._flash_timer = QTimer(self)
+        self._flash_timer.setSingleShot(True)
+        self._flash_timer.timeout.connect(self._flash_step)
+        self._flash_alpha = 0
         self.first_beat: float | None = None  # the beat on which the recording comes in after the count
         self.pause_mark: float | None = None  # where the last pause was, to continue from it (Shift+Space)
         self._dragging = False
@@ -279,6 +284,8 @@ class Waveform(QWidget):
         x = self.x_of(self.position)
         painter.setPen(QPen(colors["cursor"], 2))
         painter.drawLine(QPointF(x, RULER), QPointF(x, h))
+        if self.flash and self.count is None:
+            self._paint_flash(painter, colors, w, h)
         if self.count is not None:
             # El pulso de la cuenta previa, grande, en el centro.
             font = painter.font()
@@ -326,6 +333,42 @@ class Waveform(QWidget):
         painter.fillRect(box, color)
         painter.setPen(colors["base"])
         painter.drawText(box, Qt.AlignmentFlag.AlignCenter, "1")
+
+    def show_value(self, text: str) -> None:
+        """Show TEXT large in the middle of the waveform for a moment (about a second), fading at the end: the
+        value just changed from the keyboard."""
+        self.flash = text
+        self._flash_alpha = 255
+        self._flash_timer.start(900)
+        self.update()
+
+    def _flash_step(self) -> None:
+        # Se apaga en unos 200 ms, de 40 en 40.
+        self._flash_alpha -= 50
+        if self._flash_alpha <= 0:
+            self.flash = None
+        else:
+            self._flash_timer.start(40)
+        self.update()
+
+    def _paint_flash(self, painter: QPainter, colors, w: int, h: int) -> None:
+        font = painter.font()
+        font.setPixelSize(max(20, int((h - RULER) * 0.22)))
+        font.setBold(True)
+        painter.setFont(font)
+        metrics = QFontMetrics(font)
+        box = QRectF(0, 0, metrics.horizontalAdvance(self.flash) + 36, metrics.height() + 14)
+        box.moveCenter(QPointF(w / 2, RULER + (h - RULER) / 2))
+        # Un recuadro del color de fondo, algo transparente, para que se lea sobre la onda.
+        back = QColor(colors["base"])
+        back.setAlpha(int(self._flash_alpha * 0.8))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(back)
+        painter.drawRoundedRect(box, 8, 8)
+        ink = QColor(colors["text"])
+        ink.setAlpha(self._flash_alpha)
+        painter.setPen(ink)
+        painter.drawText(box, Qt.AlignmentFlag.AlignCenter, self.flash)
 
     def set_count(self, beat: int | None) -> None:
         if beat != self.count:
