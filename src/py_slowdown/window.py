@@ -484,6 +484,7 @@ class Window(QMainWindow):
         rows.setSpacing(2)
         row = QHBoxLayout()
         rows.addLayout(row)
+        row.addStretch()  # (y otro al final: la fila, centrada bajo la forma de onda)
         self.b_start = self._tool(sp.SP_MediaSkipBackward, tr("Go to the start (Home)"))
         self.b_back = self._tool(sp.SP_MediaSeekBackward, "", repeat=True)
         self.b_play = self._tool(sp.SP_MediaPlay, tr("Play (Space)"))
@@ -526,6 +527,7 @@ class Window(QMainWindow):
         row.addStretch()
         row = QHBoxLayout()
         rows.addLayout(row)
+        row.addStretch()  # (y otro al final: la fila, centrada)
 
         row.addWidget(QLabel(tr("Speed"), self))
         # La velocidad, en por ciento, con 100 % arriba: de 25 a 100 a la izquierda, de 100 a 300 a la derecha.

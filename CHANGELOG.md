@@ -23,6 +23,7 @@ Debian package, the RPM, the wheel and the source, are on
   asking); Always save, for all recordings (Ask to save turned off); Never
   save this recording's changes (the title says so). Settings > Changes of
   this recording shows the recording's choice, and takes it back.
+- The control panel is centred under the waveform, both its rows.
 - The Spanish manual pointed to the section of the count-in with a "??".
 
 ## 1.3.1 — 2026-11-24

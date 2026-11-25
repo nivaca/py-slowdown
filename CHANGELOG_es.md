@@ -26,6 +26,7 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   Preguntar si guardar); No guardar nunca los cambios de esta grabación (el
   título lo dice). Configuración > Cambios de esta grabación muestra la
   elección de la grabación, y la deshace.
+- El panel de los mandos está centrado bajo la forma de onda, sus dos filas.
 - El manual en español remitía a la sección de la cuenta previa con un «??».
 
 ## 1.3.1 — 2026-11-24
