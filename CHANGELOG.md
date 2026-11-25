@@ -7,6 +7,9 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **The whole file above a closer view**: zoomed in, a strip above the
+  waveform shows the whole file, the part in view shaded and the position
+  in red; a click or a drag there shows that part.
 - **The equalizer's curve and presets**: a curve above the knobs shows
   what it does from 20 Hz to 20 kHz; Presets has some for music (Bass up,
   Hear the bass line, Voice and solos forward, Bright, Warm, Cut the hiss)

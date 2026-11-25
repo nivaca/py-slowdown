@@ -7,6 +7,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **El archivo entero encima de una vista de cerca**: con la vista
+  acercada, una franja encima de la forma de onda muestra el archivo
+  entero, la parte a la vista sombreada y la posición en rojo; un clic o un
+  arrastre allí muestra esa parte.
 - **La curva y los ajustes guardados del ecualizador**: una curva encima
   de las perillas muestra lo que hace de 20 Hz a 20 kHz; Ajustes guardados
   tiene algunos para la música (Más graves, Oír la línea del bajo, La voz y

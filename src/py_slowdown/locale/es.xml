@@ -1253,4 +1253,8 @@
     <en>Name of the preset:</en>
     <tr>Nombre del ajuste:</tr>
   </text>
+  <text>
+    <en>The whole file: a click or a drag shows that part</en>
+    <tr>El archivo entero: un clic o un arrastre muestra esa parte</tr>
+  </text>
 </interface>

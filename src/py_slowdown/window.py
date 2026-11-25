@@ -2014,6 +2014,8 @@ class Window(QMainWindow):
         position = self.player.position
         self.wave.follow_reading()
         self.wave.set_position(position, self.player.playing)
+        if self.view.overview.isVisible():
+            self.view.overview.update()  # (la posición, también en la franja del archivo entero)
         counting = self.player.counting()
         self.wave.set_count(counting[0] if counting and counting[0] else None)
         # Con la cuenta previa, y sin sonar, dónde espera el primer pulso de la grabación.

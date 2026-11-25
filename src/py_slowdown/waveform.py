@@ -642,16 +642,103 @@ class Waveform(QWidget):
         super().resizeEvent(event)
 
 
+class Overview(QWidget):
+    """The whole file, in a thin strip above the waveform while it is zoomed in: the part in view shaded, the
+    position a line; a click or a drag there moves the view (not the position) to that point."""
+
+    HEIGHT = 30
+
+    def __init__(self, wave: Waveform, parent=None):
+        super().__init__(parent)
+        self.wave = wave
+        self.setFixedHeight(self.HEIGHT)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setToolTip(tr("The whole file: a click or a drag shows that part"))
+        self._key = None
+        self._image: QImage | None = None
+
+    def _shape(self, colors) -> QImage | None:
+        # La onda entera, dibujada una vez por tamaño y lectura (como la de la forma de onda, en una imagen).
+        audio = self.wave.audio
+        w, h = self.width(), self.height()
+        key = (w, h, audio.decoded, audio.peaks.count, colors["wave"].rgba())
+        if key == self._key:
+            return self._image
+        self._key = key
+        length = max(1, audio.length)
+        lo, hi = columns(audio, 0.0, length / max(1, w), w)
+        image = QImage(w, h, QImage.Format.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(image)
+        painter.setPen(colors["wave"])
+        loudest = max(float(np.nanmax(np.abs(np.concatenate([lo, hi])))) if np.isfinite(lo).any() else 0.0, 0.05)
+        middle = h / 2
+        for x in range(w):
+            if np.isnan(lo[x]):
+                continue
+            top = middle - hi[x] / loudest * (middle - 2)
+            bottom = middle - lo[x] / loudest * (middle - 2)
+            painter.drawLine(QPointF(x, top), QPointF(x, max(bottom, top + 1)))
+        painter.end()
+        self._image = image
+        return image
+
+    def paintEvent(self, _event) -> None:
+        painter = QPainter(self)
+        colors = self.wave._colors()
+        painter.fillRect(self.rect(), colors["ruler"])
+        audio = self.wave.audio
+        if audio is None:
+            painter.end()
+            return
+        image = self._shape(colors)
+        if image is not None:
+            painter.drawImage(0, 0, image)
+        length = max(1, audio.length)
+        scale = self.width() / length
+        x0 = self.wave.start * scale
+        x1 = (self.wave.start + self.wave.visible_frames()) * scale
+        shade = QColor(colors["select"])
+        shade.setAlpha(60)
+        painter.fillRect(QRectF(x0, 0, max(2.0, x1 - x0), self.height()), shade)
+        painter.setPen(QPen(colors["select"], 1))
+        painter.drawRect(QRectF(x0, 0.5, max(2.0, x1 - x0), self.height() - 1))
+        x = self.wave.position * audio.rate * scale
+        painter.setPen(QPen(colors["cursor"], 2))
+        painter.drawLine(QPointF(x, 0), QPointF(x, self.height()))
+        painter.setPen(colors["faint"])
+        painter.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
+        painter.end()
+
+    def _show_at(self, x: float) -> None:
+        audio = self.wave.audio
+        if audio is None:
+            return
+        frame = x / max(1, self.width()) * audio.length
+        self.wave.set_start(frame - self.wave.visible_frames() / 2)
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._show_at(event.position().x())
+
+    def mouseMoveEvent(self, event) -> None:
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            self._show_at(event.position().x())
+
+
 class WaveformView(QWidget):
-    """The waveform with a scroll bar under it."""
+    """The waveform with a scroll bar under it, and, while it is zoomed in, the whole file in a strip above it."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.wave = Waveform(self)
+        self.overview = Overview(self.wave, self)
+        self.overview.hide()
         self.bar = QScrollBar(Qt.Orientation.Horizontal, self)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
+        layout.addWidget(self.overview)
         layout.addWidget(self.wave)
         layout.addWidget(self.bar)
         self._sync = False
@@ -670,6 +757,9 @@ class WaveformView(QWidget):
         self.bar.setSingleStep(max(1, wave.width() // 10))
         self.bar.setValue(int(wave.start / fpp))
         self.bar.setVisible(total > 0)
+        # (la franja del archivo entero, solo mientras se ve una parte)
+        self.overview.setVisible(bool(wave.audio) and bool(wave.fpp))
+        self.overview.update()
         self._sync = False
 
     def _scrolled(self, value: int) -> None:

@@ -1561,3 +1561,26 @@ def test_the_equalizer_curve_and_presets(window, app, wav, monkeypatch):
     dialog.remove_preset("My bass")
     assert dialog.own_presets() == {}
     dialog.close()
+
+
+def test_the_overview_strip(window, app, wav):
+    """Zoomed in, a strip above the waveform shows the whole file, the part in view shaded; a click there moves the
+    view to that point (not the position); the whole file again, the strip goes."""
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtTest import QTest
+
+    loaded(window, app, wav)
+    overview = window.view.overview
+    assert overview.isHidden()
+    window.wave.zoom(4.0, 0)
+    app.processEvents()
+    assert overview.isVisible()
+    overview.grab()
+    position = window.player.position
+    QTest.mouseClick(overview, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier,
+                     QPoint(overview.width() * 3 // 4, overview.height() // 2))
+    middle = (window.wave.start + window.wave.visible_frames() / 2) / window.audio.rate
+    assert middle == pytest.approx(4.5, abs=0.1) and window.player.position == position
+    window.wave.fit()
+    window.view._update_bar()
+    assert overview.isHidden()
