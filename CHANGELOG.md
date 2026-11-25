@@ -41,6 +41,9 @@ Debian package, the RPM, the wheel and the source, are on
 - **Count-in > Clicks**: how many clicks the count-in gives (4 at first),
   from a list in the menu (1 to 8, 12, 16), the one chosen ticked; the
   dialog still takes any number from 1 to 16.
+- **Bookmarks and loops go to the `.slx` at once**: each one added,
+  renamed or removed is written in the recording's `.slx` right away, as
+  in `bookmarks.json`, not only when the file is closed.
 - **File > Save the .slx** (Ctrl+S) writes the recording's `.slx` at once,
   without closing it; with Settings files set to Not saved, beside the
   recording all the same.

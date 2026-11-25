@@ -1379,8 +1379,10 @@ class Window(QMainWindow):
         self._update_count_tip()
 
     def _save_bookmarks(self) -> None:
+        # En bookmarks.json y, enseguida, en el .slx de la grabación (no solo al cerrarla).
         if self.audio:
             self.store.set_bookmarks(self.audio.path, self.bookmarks)
+            self._write_sidecar()
 
     def add_bookmark(self) -> None:
         if self.audio:
@@ -1452,6 +1454,7 @@ class Window(QMainWindow):
     def _save_loops(self) -> None:
         if self.audio:
             self.store.set_loops(self.audio.path, self.loops)
+            self._write_sidecar()
 
     def save_loop(self) -> None:
         """Keep the selection as a loop; its name is written in the list (Loops), which is shown."""

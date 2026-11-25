@@ -43,6 +43,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 - **Cuenta previa > Golpes**: cuántos golpes da la cuenta previa (4 al
   principio), de una lista en el menú (de 1 a 8, 12, 16), el elegido
   marcado; el diálogo sigue aceptando cualquier número de 1 a 16.
+- **Los marcadores y los bucles van al `.slx` enseguida**: cada uno que
+  se añade, se renombra o se quita se escribe en el `.slx` de la grabación
+  en ese momento, como en `bookmarks.json`, no solo al cerrar el archivo.
 - **Archivo > Guardar el .slx** (Ctrl+S) escribe el `.slx` de la grabación
   enseguida, sin cerrarla; con Archivos de ajustes en No se guardan, lo
   escribe igual junto a la grabación.

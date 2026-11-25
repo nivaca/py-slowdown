@@ -607,7 +607,9 @@ program had it, and the uninstaller gives it back only if it is still
 py-slowdown's. The `song.xml` files of 1.2.0 are read as before, and each
 one is removed when the `.slx` that replaces it has been written, but only
 if it names that same recording. Since the `.slx` was written only when
-a file was closed, File > Save the .slx (Ctrl+S) writes it at any moment,
+a file was closed, each change to the bookmarks or the loops now writes it
+at once, as it writes `bookmarks.json`, and File > Save the .slx (Ctrl+S)
+writes it at any moment,
 and also when the settings say Not saved, beside the recording, because it
 was asked for.
 

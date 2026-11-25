@@ -147,9 +147,13 @@ def test_the_window_keeps_it(tmp_path, monkeypatch, output):
     w.audio.wait(10)
     w.set_speed(0.7)
     w.add_bookmark_at(1.5)
+    # (cada marcador va al .slx en el momento, no solo al cerrar)
+    marks = ET.parse(music / "song.slx").getroot().findall("bookmarks/bookmark")
+    assert [m.get("time") for m in marks] == ["1.5"]
     w.set_selection((1.0, 2.0))
     w.save_loop()
     w._loop_renamed(0, "Lick")
+    assert ET.parse(music / "song.slx").getroot().find("loops/loop").text == "Lick"
     w.seek(2.5)
     w.close_file()
     xml = music / "song.slx"
