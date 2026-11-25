@@ -99,6 +99,7 @@ Keyboard
 | Repeat the selection           | L                                |
 | Select                         | Shift+drag, or I and O           |
 | Clear the selection            | Esc                              |
+| Select the whole file          | Ctrl+A                           |
 | Save the selection as a loop   | Shift+L                          |
 | Count in before playing        | C                                |
 | Tap the tempo (with the beat)  | T                                |

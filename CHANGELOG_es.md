@@ -7,6 +7,8 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Seleccionar el archivo entero** (Reproducción, Ctrl+A): el archivo
+  entero pasa a ser la selección.
 - `tools/zenodo.py`: la descripción del depósito es ahora el README entero
   de la etiqueta, en HTML. El borrador recibe además el colaborador (el
   director del proyecto), los idiomas, el copyright, el repositorio en

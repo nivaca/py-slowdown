@@ -508,6 +508,10 @@
     <tr>Quitar la selección</tr>
   </text>
   <text>
+    <en>Select the whole file</en>
+    <tr>Seleccionar el archivo entero</tr>
+  </text>
+  <text>
     <en>Count in before playing</en>
     <tr>Contar antes de tocar</tr>
   </text>

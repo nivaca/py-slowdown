@@ -7,6 +7,8 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Select the whole file** (Playback, Ctrl+A): the whole file becomes the
+  selection.
 - `tools/zenodo.py` prepares the deposit of a release for Zenodo. `collect`
   puts in `dist/zenodo/` the tree of the tag as
   `py-slowdown-VERSION-source.tar.gz`, with its signature, a signed

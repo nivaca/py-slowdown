@@ -106,6 +106,7 @@ Teclado
 | Repetir la selección              | L                                |
 | Seleccionar                       | Mayús+arrastrar, o I y O         |
 | Quitar la selección               | Esc                              |
+| Seleccionar el archivo entero     | Ctrl+A                           |
 | Guardar la selección como bucle   | Mayús+L                          |
 | Contar antes de tocar             | C                                |
 | Marcar el tempo (con el pulso)    | T                                |

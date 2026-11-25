@@ -147,6 +147,7 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Select with the mouse"), tr("Shift+drag")),
         (tr("Start / end of the selection at the position"), "I / O"),
         (tr("Clear the selection"), tr("Esc")),
+        (tr("Select the whole file"), "Ctrl+A"),
         (tr("Save the selection as a loop"), tr("Shift+L")),
         (tr("Count in before playing"), "C"),
         (tr("Tap the tempo (with the beat)"), "T"),
@@ -1013,6 +1014,7 @@ class Window(QMainWindow):
         self.a_sel_start = a(tr("Select&ion starts here"), lambda: self.mark_selection(start=True), ["I"])
         self.a_sel_end = a(tr("Selection ends &here"), lambda: self.mark_selection(start=False), ["O"])
         self.a_sel_clear = a(tr("Clear the selecti&on"), lambda: self.set_selection(None), ["Esc"])
+        self.a_sel_all = a(tr("Select the whole file"), self.select_all, ["Ctrl+A"])
         self.a_equalizer = a(tr("&Equalizer…"), self.show_equalizer)
         self.a_save_loop = a(tr("Sa&ve the selection as a loop"), self.save_loop, ["Shift+L"])
         self.a_count = a(tr("&Count in before playing"), self._set_count_on, ["C"], checkable=True)
@@ -1065,7 +1067,7 @@ class Window(QMainWindow):
                        self.a_forward_1, self.a_forward, self.a_end, None,
                        self.a_slower, self.a_faster, self.a_normal, self.speed_menu, None,
                        self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, self.a_reset_sound, None,
-                       self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, self.a_save_loop):
+                       self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, self.a_sel_all, self.a_save_loop):
             if action is None:
                 play.addSeparator()
             elif isinstance(action, QMenu):
@@ -1807,6 +1809,11 @@ class Window(QMainWindow):
         old = self.selection or (0.0, self.audio.duration)
         self.set_selection((here, old[1]) if start else (old[0], here))
 
+    def select_all(self) -> None:
+        """The whole file as the selection."""
+        if self.audio:
+            self.set_selection((0.0, self.audio.duration))
+
     def _set_repeat(self, on: bool) -> None:
         self.wave.set_selection(self.selection, on)
         self._apply_loop()
@@ -2202,7 +2209,7 @@ class Window(QMainWindow):
         for action in (self.a_close, self.a_save_slx, self.a_export_audio, self.a_play, self.a_stop, self.a_start, self.a_end, self.a_back,
                        self.a_forward, self.a_back_1, self.a_forward_1, self.a_mark, self.a_prev_mark,
                        self.a_next_mark, self.a_zoom_in, self.a_zoom_out, self.a_fit, self.a_repeat,
-                       self.a_sel_start, self.a_sel_end, self.a_sel_clear):
+                       self.a_sel_start, self.a_sel_end, self.a_sel_clear, self.a_sel_all):
             action.setEnabled(loaded)
         self.a_export.setEnabled(loaded and bool(self.bookmarks))
         self.a_first_beat.setEnabled(loaded)

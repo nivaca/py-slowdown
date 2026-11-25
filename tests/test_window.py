@@ -339,6 +339,10 @@ def test_selection_and_repeat(window, app, wav):
     assert window.selection == pytest.approx((1.0, 4.0)) and window.player.loop == pytest.approx((1.0, 4.0))
     window.a_sel_clear.trigger()
     assert window.selection is None
+    # Ctrl+A: el archivo entero, como selección
+    QTest.keyClick(window.wave, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+    assert window.selection == pytest.approx((0.0, 6.0)) and window.wave.selection == pytest.approx((0.0, 6.0))
+    window.a_sel_clear.trigger()
     # Mayús+arrastrar sobre la forma de onda
     wave = window.wave
     x0, x1 = round(wave.x_of(2.0)), round(wave.x_of(5.0))
@@ -1277,6 +1281,23 @@ def test_repeat_the_whole_file(window, app, wav, tmp_path):
     assert sidecar.read(sidecar.find(wav)).settings["repeat"] is True
     loaded(window, app, wav)
     assert window.a_repeat.isChecked() and window.player.loop == pytest.approx((0.0, 6.0))
+
+
+def test_repeat_the_whole_file_while_playing(window, app, wav, output):
+    """Repeat on without a selection: past the end of the file, the playing goes on from its start."""
+    window.a_ask_save.setChecked(False)
+    loaded(window, app, wav)
+    window.a_play.trigger()
+    window.a_repeat.trigger()
+    window.seek(5.0)
+    seen = []
+    for _ in range(300):  # unos 3,5 s de sonido: pasa el final
+        output.pull(512)
+        window._tick()
+        seen.append(window.player.position)
+        time.sleep(0.001)
+    assert window.player.playing and not window.player.ended
+    assert max(seen) > 5.8 and seen[-1] < 3.0
 
 
 def test_the_arrow_of_save(window, app, wav, tmp_path, monkeypatch):
