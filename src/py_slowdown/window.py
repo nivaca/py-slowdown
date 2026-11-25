@@ -390,15 +390,14 @@ class Window(QMainWindow):
         self.b_pitch.setToolTip(tr("Original pitch (Shift+N)"))
         self.b_pitch.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.b_pitch.setEnabled(False)
-        # (las dos perillas juntas, cada una pegada a su valor)
+        # (las dos perillas una junto a otra, sus valores por fuera y el 0 al lado: +2 st ◯◯ −15 ¢ 0)
+        self.semitone_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         knobs = QHBoxLayout()
         knobs.setSpacing(2)
-        for dial, label in ((self.semitone_dial, self.semitone_label), (self.cent_dial, self.cent_label)):
-            knobs.addWidget(dial)
-            knobs.addWidget(label)
+        for widget in (self.semitone_label, self.semitone_dial, self.cent_dial, self.cent_label, self.b_pitch):
+            knobs.addWidget(widget)
         row.addLayout(knobs)
         self._show_pitch(0.0)
-        row.addWidget(self.b_pitch)
         row.addSpacing(12)
 
         row.addStretch()
