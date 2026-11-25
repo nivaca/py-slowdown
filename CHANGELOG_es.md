@@ -5,6 +5,17 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+- `tools/zenodo.py` prepara el depósito de una versión en Zenodo. `collect`
+  deja en `dist/zenodo/` el árbol de la etiqueta como
+  `py-slowdown-VERSIÓN-source.tar.gz`, con su firma, un `SHA256SUMS` del
+  depósito, firmado, y la clave pública, y comprueba cada firma con solo esa
+  clave (`--packages` añade los archivos de la versión). `upload` lo sube a
+  Zenodo como borrador, versión nueva del depósito si ya lo hay, y nunca lo
+  publica. `tools/release.py` reúne ahora el depósito después de la etiqueta
+  y, con `--zenodo`, lo sube. Los metadatos están en `.zenodo.json`.
+
 ## 1.4.0 — 2026-11-25
 
 Perillas para la velocidad y el volumen, un ecualizador de cinco bandas,

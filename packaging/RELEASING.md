@@ -108,3 +108,24 @@ The project is https://copr.fedorainfracloud.org/coprs/nivaca/py-slowdown/
 --chroot fedora-rawhide-x86_64`). Each Copr build needs a higher
 version-release than the last, so bump the spec first. `copr-cli` needs an
 API token in `~/.config/copr` (it expires after 180 days).
+
+## Zenodo
+
+Each release leaves in `dist/zenodo/` what goes to Zenodo: the tree of the
+tag as `py-slowdown-VERSION-source.tar.gz`, made with `git archive`, its signature,
+a `SHA256SUMS` of only that file with its signature, and the public key.
+`tools/release.py` makes it after the tag (`tools/zenodo.py collect`),
+and checks every signature there with only the public key.
+`tools/zenodo.py collect --packages` also puts the files published with the
+release in it, with their signatures.
+
+`tools/release.py --zenodo`, or `tools/zenodo.py upload` afterwards, sends
+it to Zenodo as a draft, with the metadata of `.zenodo.json`, the version,
+the date of the tag and links to the tag on Codeberg and GitHub. If Zenodo
+already has a published deposit with the same title, the draft is a new
+version of it, under the same concept DOI. The draft is never published by
+these tools: review it on Zenodo and publish it there. The token goes in
+`$ZENODO_TOKEN` (made at https://zenodo.org/account/settings/applications/,
+with deposit:write and deposit:actions). To try the whole thing first, use
+`tools/zenodo.py upload --sandbox`, with a token of sandbox.zenodo.org in
+`$ZENODO_SANDBOX_TOKEN`; `--dry-run` only shows what would be sent.
