@@ -5,7 +5,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Sin publicar
+## 1.4.0 — 2026-11-25
+
+Perillas para la velocidad y el volumen, un ecualizador de cinco bandas,
+íconos propios del programa, y muchas cosas más pequeñas para practicar
+mejor: deshacer los cambios del sonido, los bucles sobre la forma de onda,
+un reloj de compases y pulsos, un modo compacto, una pantalla de inicio.
 
 - **Acercar a la selección** (Ver, Z): solo la selección, con un poco de
   margen a cada lado; y en un panel táctil, pellizcar acerca o aleja

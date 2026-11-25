@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-slowdown
-Version:        1.3.1
+Version:        1.4.0
 Release:        1%{?dist}
 Summary:        Play audio slower or faster without changing its pitch
 
@@ -99,6 +99,13 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*
 
 %changelog
+* Wed Nov 25 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.4.0-1
+- The knobs for speed and volume, with menus, keys and detents; a five-band
+  equalizer with its curve and presets, in a panel Sound with Hear; volume
+  boost; repeat of the whole file; the arrow of Save; the program's own icons;
+  reset the sound; the loops on the waveform; an overview strip; a clock of bars
+  and beats; compact mode; a start screen; zoom to the selection and pinch
+
 * Tue Nov 24 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.3.1-1
 - The ticks of the pitch knobs show on dark themes (drawn in the text colour,
   not the theme's Mid, which in many dark themes is that of the background)

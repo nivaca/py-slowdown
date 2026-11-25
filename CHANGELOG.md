@@ -5,7 +5,12 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 1.4.0 — 2026-11-25
+
+Knobs for the speed and the volume, a five-band equalizer, the program's
+own icons, and many smaller things to make practising easier: reset the
+sound, the loops on the waveform, a clock of bars and beats, a compact
+mode, a start screen.
 
 - **Zoom to the selection** (View, Z): just the selection, with a little
   room on each side; and on a touchpad, a pinch zooms around the fingers.
