@@ -678,10 +678,15 @@ pitch, formants, way of hearing, the tempo and offset of the count-in), and
 then gets what was kept of it; the volume and the switches of the count-in
 are the user's, not the file's, and stay.
 
+With a first beat, the start of the music is no longer the start of the
+file, so Go to the start (Home) now goes to the first beat while the
+count-in is on, and to the beginning of the file otherwise; its tooltip
+says which, since the same key does two things.
+
 Testing
 -------
 
-The program has 199 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 200 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

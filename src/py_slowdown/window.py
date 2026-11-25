@@ -437,7 +437,7 @@ class Window(QMainWindow):
         self.a_play = a(tr("&Play/Pause"), self.toggle, ["Space"])
         self.a_continue = a(tr("&Continue from the pause"), self.continue_playing, ["Shift+Space"])
         self.a_stop = a(tr("&Stop"), self.stop, ["S"])
-        self.a_start = a(tr("Go to the s&tart"), lambda: self.seek(0.0), ["Home"])
+        self.a_start = a(tr("Go to the s&tart"), self.go_start, ["Home"])
         self.a_end = a(tr("Go to the &end"), self.go_end, ["End"])
         self.a_back = a(tr("&Back"), lambda: self.jump(-self.skip), ["Left"])
         self.a_forward = a(tr("&Forward"), lambda: self.jump(self.skip), ["Right"])
@@ -604,7 +604,7 @@ class Window(QMainWindow):
     def _connect(self) -> None:
         self.b_play.clicked.connect(self.toggle)
         self.b_stop.clicked.connect(self.stop)
-        self.b_start.clicked.connect(lambda: self.seek(0.0))
+        self.b_start.clicked.connect(self.go_start)
         self.b_end.clicked.connect(self.go_end)
         self.b_back.clicked.connect(lambda: self.jump(-self.skip))
         self.b_forward.clicked.connect(lambda: self.jump(self.skip))
@@ -945,6 +945,7 @@ class Window(QMainWindow):
     def _set_count_on(self, on: bool) -> None:
         self.count.on = on
         self.count.save(self.settings)
+        self._update_count_tip()
 
     def count_settings(self) -> None:
         beat = self.first_beat()
@@ -1057,6 +1058,14 @@ class Window(QMainWindow):
         elif count.offset:
             signed = ("+" if count.offset > 0 else "−") + number(abs(count.offset))
             what += tr("; the recording {offset} s off the beat", offset=signed)
+        # Ir al principio va al primer pulso con la cuenta encendida: el botón y el menú lo dicen.
+        if self.count.on and beat is not None:
+            start = tr("Go to the first beat, {time} (Home): the count-in is on",
+                       time=clock(beat.time, tenths=True))
+        else:
+            start = tr("Go to the start (Home)")
+        self.b_start.setToolTip(start)
+        self.a_start.setStatusTip(start)
         tip = tr("Count in before playing (C): {what}.", what=what)
         for action in (self.a_count, self.a_count_settings):
             action.setStatusTip(tip)
@@ -1112,6 +1121,16 @@ class Window(QMainWindow):
     def jump(self, seconds: float) -> None:
         if self.audio:
             self.seek(max(0.0, self.player.position + seconds))
+
+    def start_point(self) -> float:
+        """Where Go to the start goes: with the count-in on, the first beat, if the file has one (so that the
+        count-in brings the recording in on it); else the beginning of the file."""
+        beat = self.first_beat()
+        return beat.time if self.count.on and beat is not None else 0.0
+
+    def go_start(self) -> None:
+        if self.audio:
+            self.seek(self.start_point())
 
     def go_end(self) -> None:
         if self.audio:

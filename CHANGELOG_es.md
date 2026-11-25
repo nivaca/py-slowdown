@@ -24,6 +24,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   Ctrl+↓ mueven un semitono y conservan los cents; mover los cents nunca
   hace saltar los semitonos. El volumen pasa a la derecha de la primera
   fila, para dejar sitio.
+- **Ir al principio va al primer pulso** (Inicio, el botón, el menú)
+  cuando la cuenta previa está encendida y el archivo tiene un primer
+  pulso, para que la cuenta lleve a él; si no, al principio del archivo.
+  Su descripción emergente dice a cuál.
 - **Cada archivo empieza con lo de siempre**: un archivo sin nada guardado
   se abre a velocidad normal, con la altura de la grabación, los dos
   canales, los formantes apagados y la cuenta previa a 100 pulsos por

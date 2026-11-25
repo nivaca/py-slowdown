@@ -24,6 +24,10 @@ Debian package, the RPM, the wheel and the source, are on
   Ctrl+↓ move a semitone and keep the cents; moving the cents never makes
   the semitones jump. The volume moves to the right of the first row, to
   make room.
+- **Go to the start goes to the first beat** (Home, the button, the menu)
+  when the count-in is on and the file has a first beat, so that the count
+  leads into it; otherwise to the beginning of the file. Its tooltip says
+  which.
 - **Each file starts from the usual settings**: a file with nothing kept
   opens at normal speed, the recording's pitch, both channels, the
   formants off and the count-in at 100 BPM, not with those of the file

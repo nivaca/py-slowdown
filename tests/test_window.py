@@ -591,6 +591,26 @@ def test_each_file_starts_from_the_defaults(window, app, wav, tmp_path):
     assert window.player.hearing == ("left", "bass") and window.count.bpm == 140
 
 
+def test_go_to_the_start(window, app, wav):
+    """Go to the start (Home, the button): with the count-in on and a first beat, to the first beat; with the
+    count-in off, or no first beat, to the beginning of the file. Its tooltip says which."""
+    loaded(window, app, wav)
+    window.a_count.setChecked(True)
+    window.seek(3.0)
+    window.a_start.trigger()
+    assert window.player.position == 0.0  # (sin primer pulso)
+    window.set_first_beat(1.25)
+    window.seek(4.0)
+    window.a_start.trigger()
+    assert window.player.position == pytest.approx(1.25) and "first beat, 0:01.2" in window.b_start.toolTip()
+    window.seek(4.0)
+    window.b_start.click()
+    assert window.player.position == pytest.approx(1.25)
+    window.a_count.setChecked(False)
+    window.a_start.trigger()
+    assert window.player.position == 0.0 and window.b_start.toolTip() == "Go to the start (Home)"
+
+
 def test_split_pitch():
     from py_slowdown.window import split_pitch
 

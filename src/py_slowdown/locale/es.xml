@@ -44,6 +44,10 @@
     <tr>Cents, centésimas de semitono, arriba o abajo: para afinar la grabación con un instrumento</tr>
   </text>
   <text>
+    <en>Go to the first beat, {time} (Home): the count-in is on</en>
+    <tr>Ir al primer pulso, {time} (Inicio): la cuenta previa está encendida</tr>
+  </text>
+  <text>
     <en>&amp;Close</en>
     <tr>&amp;Cerrar</tr>
   </text>
