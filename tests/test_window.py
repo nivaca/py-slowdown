@@ -1372,8 +1372,9 @@ def test_the_equalizer(window, app, wav):
 
 
 def test_the_drawn_icons(window, app):
-    """The buttons Bookmark, Speeds and EQ show icons of the program's own (glyphs.py), drawn in the theme's
-    button text, also a dark one, and in the text on the selection when a button is on."""
+    """The buttons (playing, repeat, Bookmark, Speeds, EQ) and the speaker show icons of the program's own
+    (glyphs.py), drawn in the theme's button text, also a dark one, and in the text on the selection when a button
+    is on."""
     from PySide6.QtGui import QColor, QIcon, QPalette
 
     from py_slowdown import glyphs
@@ -1390,4 +1391,20 @@ def test_the_drawn_icons(window, app):
         return {image.pixelColor(x, y).name() for x in range(48) for y in range(48) if image.pixelColor(x, y).alpha() == 255}
 
     assert colours(QIcon.State.Off) == {"#eceff4"} and colours(QIcon.State.On) == {"#ff0000"}
-    assert set(glyphs.SHAPES) == {"equalizer", "bookmark", "speed"}
+    assert set(glyphs.SHAPES) == {"equalizer", "bookmark", "speed", "play", "pause", "stop", "start", "end", "back",
+                                  "forward", "repeat", "volume"}
+    for button in (window.b_start, window.b_back, window.b_play, window.b_stop, window.b_forward, window.b_end,
+                   window.b_repeat):
+        assert not button.icon().isNull()
+    assert not window.speaker.pixmap().isNull()
+
+
+def test_play_and_pause_icons(window, app, wav, output):
+    """The button Play shows a triangle, and two bars while it plays."""
+    loaded(window, app, wav)
+    still = window.b_play.icon().pixmap(24, 24).toImage()
+    window.toggle()
+    playing = window.b_play.icon().pixmap(24, 24).toImage()
+    assert window.player.playing and still != playing
+    window.toggle()
+    assert window.b_play.icon().pixmap(24, 24).toImage() == still

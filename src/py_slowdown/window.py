@@ -532,9 +532,10 @@ class Window(QMainWindow):
 
     # --- construcción
 
-    def _tool(self, icon: QStyle.StandardPixmap, tip: str, repeat: bool = False) -> QToolButton:
+    def _tool(self, glyph: str, tip: str, repeat: bool = False) -> QToolButton:
+        # Un botón de la reproducción, con el ícono GLYPH (glyphs.py; _draw_icons lo dibuja en los colores del tema).
         button = QToolButton(self)
-        button.setIcon(self.style().standardIcon(icon))
+        button.setProperty("glyph", glyph)
         button.setIconSize(QSize(24, 24))
         button.setToolTip(tip)
         button.setAutoRaise(True)
@@ -547,7 +548,6 @@ class Window(QMainWindow):
         return button
 
     def _build_transport(self) -> None:
-        sp = QStyle.StandardPixmap
         self.transport = QWidget(self)
         # Dos filas: los mandos y el tiempo; debajo, la velocidad, la altura y el volumen (en una sola, la ventana
         # no cabía en una pantalla de 1366 píxeles).
@@ -563,13 +563,13 @@ class Window(QMainWindow):
         row = QHBoxLayout()
         rows.addLayout(row)
         row.addStretch()  # (y otro al final: la fila, centrada bajo la forma de onda)
-        self.b_start = self._tool(sp.SP_MediaSkipBackward, tr("Go to the start (Home)"))
-        self.b_back = self._tool(sp.SP_MediaSeekBackward, "", repeat=True)
-        self.b_play = self._tool(sp.SP_MediaPlay, tr("Play (Space)"))
+        self.b_start = self._tool("start", tr("Go to the start (Home)"))
+        self.b_back = self._tool("back", "", repeat=True)
+        self.b_play = self._tool("play", tr("Play (Space)"))
         self.b_play.setIconSize(QSize(32, 32))
-        self.b_stop = self._tool(sp.SP_MediaStop, tr("Stop and go back to the start (S)"))
-        self.b_forward = self._tool(sp.SP_MediaSeekForward, "", repeat=True)
-        self.b_end = self._tool(sp.SP_MediaSkipForward, tr("Go to the end (End)"))
+        self.b_stop = self._tool("stop", tr("Stop and go back to the start (S)"))
+        self.b_forward = self._tool("forward", "", repeat=True)
+        self.b_end = self._tool("end", tr("Go to the end (End)"))
         self.b_mark = QToolButton(self)
         self.b_mark.setText(tr("Bookmark"))  # (solo el ícono se ve: el texto es para los lectores de pantalla)
         self.b_mark.setToolTip(tr("Add a bookmark at the current position (B)"))
@@ -582,7 +582,7 @@ class Window(QMainWindow):
         row.addSpacing(6)
         row.addWidget(self.b_mark)
         self.b_repeat = QToolButton(self)
-        self.b_repeat.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
+        self.b_repeat.setIconSize(QSize(24, 24))
         self.b_repeat.setCheckable(True)
         self.b_repeat.setAutoRaise(True)
         self.b_repeat.setToolTip(tr("Repeat the selection, or the whole file if there is none, without a pause (L); "
@@ -660,8 +660,7 @@ class Window(QMainWindow):
         row.addSpacing(12)
 
         # El volumen: hasta 100 % (el sonido de la grabación), o hasta 150 % con el refuerzo, en rojo.
-        speaker = QLabel(self)
-        speaker.setPixmap(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume).pixmap(20, 20))
+        self.speaker = speaker = QLabel(self)
         speaker.setToolTip(tr("Volume"))
         row.addWidget(speaker)
         self.volume = Knob(lambda value: f"{value}%", VOLUME_TICKS, top=None, home=NORMAL_VOLUME, step=5,
@@ -1712,8 +1711,15 @@ class Window(QMainWindow):
         if not hasattr(self, "b_eq"):
             return  # (un cambio de tema mientras se arma la ventana: luego se dibujan)
         # (los colores de cada botón, que son los que él dibuja: los del tema, salvo que tenga los suyos)
-        for button, name in ((self.b_eq, "equalizer"), (self.b_mark, "bookmark"), (self.b_speeds, "speed")):
+        for button, name in ((self.b_eq, "equalizer"), (self.b_mark, "bookmark"), (self.b_speeds, "speed"),
+                             (self.b_repeat, "repeat"), (self.b_start, "start"), (self.b_back, "back"),
+                             (self.b_stop, "stop"), (self.b_forward, "forward"), (self.b_end, "end")):
             button.setIcon(glyphs.icon(name, button.palette()))
+        # Tocar o pausar, según suene; y el parlante junto al volumen.
+        self._play_icons = {False: glyphs.icon("play", self.b_play.palette()),
+                            True: glyphs.icon("pause", self.b_play.palette())}
+        self.b_play.setIcon(self._play_icons[self.player.playing])
+        self.speaker.setPixmap(glyphs.icon("volume", self.speaker.palette()).pixmap(QSize(20, 20)))
 
     def changeEvent(self, event) -> None:
         # Otro tema (claro u oscuro): los íconos propios, otra vez en sus colores.
@@ -1821,8 +1827,9 @@ class Window(QMainWindow):
         playing = self.player.playing
         self.b_play.setProperty("playing", playing)
         self.a_continue.setEnabled(self.audio is not None and not playing and self._paused_at is not None)
-        icon = QStyle.StandardPixmap.SP_MediaPause if playing else QStyle.StandardPixmap.SP_MediaPlay
-        self.b_play.setIcon(self.style().standardIcon(icon))
+        if not hasattr(self, "_play_icons"):
+            self._draw_icons()
+        self.b_play.setIcon(self._play_icons[playing])
         self.b_play.setToolTip(tr("Pause and go back to where it started (Space); Shift+Space continues from the "
                                   "pause") if playing else tr("Play (Space)"))
 

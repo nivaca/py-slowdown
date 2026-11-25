@@ -787,11 +787,15 @@ the program's own, small SVGs written in the code and drawn in the colour
 of the theme's button text; for a button that is on, in the colour of the
 text on the selection, since such a button is filled with it. They are
 drawn again when the theme changes, from each button's own colours.
+The buttons of playing, repeat and the speaker of the volume, which had
+Qt's standard icons, of another style and, with some styles, dark on a
+dark theme, were then drawn in the same way, so that the whole row is of
+one hand.
 
 Testing
 -------
 
-The program has 220 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 221 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
