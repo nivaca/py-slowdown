@@ -7,6 +7,11 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **La curva y los ajustes guardados del ecualizador**: una curva encima
+  de las perillas muestra lo que hace de 20 Hz a 20 kHz; Ajustes guardados
+  tiene algunos para la música (Más graves, Oír la línea del bajo, La voz y
+  los solos adelante, Brillante, Cálido, Sin el siseo) y los del usuario,
+  guardados con un nombre y quitados de nuevo.
 - **Perillas que muestran que se giran, también desde el teclado**: el
   puntero sobre una perilla es una mano y enciende su borde; Tab llega a
   las perillas, cuyo borde también se enciende, y las flechas la mueven un

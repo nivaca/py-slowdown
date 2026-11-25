@@ -448,6 +448,64 @@ class SaveDialog(QDialog):
         super().keyPressEvent(event)
 
 
+def eq_presets() -> list[tuple[str, tuple[int, ...]]]:
+    """The equalizer's own presets: (name, the five gains), for music."""
+    return [(tr("Flat"), (0, 0, 0, 0, 0)),
+            (tr("Bass up"), (6, 3, 0, 0, 0)),
+            (tr("Hear the bass line"), (6, 3, -3, -6, -9)),
+            (tr("Voice and solos forward"), (-3, -1, 3, 3, 0)),
+            (tr("Bright"), (0, 0, 0, 3, 6)),
+            (tr("Warm"), (3, 2, 0, -2, -4)),
+            (tr("Cut the hiss"), (0, 0, 0, -2, -8))]
+
+
+class EqualizerCurve(QWidget):
+    """What the equalizer does, as a curve: the gain from 20 Hz to 20 kHz (on a logarithmic scale), from −12 dB
+    to +12 dB, a line at 0 and one at each band; greyed when the equalizer is off."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.gains = equalizer.FLAT
+        self.on = True
+        self.setMinimumSize(300, 90)
+
+    def show_values(self, gains, on: bool) -> None:
+        self.gains, self.on = tuple(gains), on
+        self.update()
+
+    def paintEvent(self, _event) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        palette = self.palette()
+        w, h = self.width(), self.height()
+        painter.fillRect(self.rect(), palette.color(QPalette.ColorRole.Base))
+        low, high = math.log10(20), math.log10(20000)
+
+        def x_of(freq: float) -> float:
+            return (math.log10(freq) - low) / (high - low) * (w - 1)
+
+        def y_of(db: float) -> float:
+            return h / 2 - db / equalizer.MAX_GAIN * (h / 2 - 6)
+
+        faint = QColor(palette.color(QPalette.ColorRole.Text))
+        faint.setAlpha(60)
+        painter.setPen(QPen(faint, 1))
+        painter.drawLine(QPointF(0, y_of(0)), QPointF(w, y_of(0)))
+        for band in equalizer.BANDS:
+            painter.drawLine(QPointF(x_of(band), 0), QPointF(x_of(band), h))
+        # La curva, de 200 puntos
+        import numpy as np
+
+        freqs = np.logspace(low, high, 200)
+        gains = equalizer.response(self.gains, freqs) if self.on else np.zeros(len(freqs))
+        line = palette.color(QPalette.ColorRole.Highlight) if self.on else faint
+        painter.setPen(QPen(line, 2))
+        points = [QPointF(x_of(f), y_of(g)) for f, g in zip(freqs, gains)]
+        for a, b in zip(points, points[1:]):
+            painter.drawLine(a, b)
+        painter.end()
+
+
 class EqualizerDialog(QDialog):
     """The equalizer: a knob for each of its five bands (−12 to +12 dB, 0 at the top, a double click back to 0),
     On (to hear it with and without), Flat (all to 0) and Close. It changes the sound as the knobs turn; it does
@@ -458,6 +516,7 @@ class EqualizerDialog(QDialog):
         self.window = window
         self.setWindowTitle(tr("Equalizer"))
         self.knobs: list[PitchDial] = []
+        self.curve = EqualizerCurve(self)
         grid = QHBoxLayout()
         grid.setSpacing(10)
         for band in equalizer.BANDS:
@@ -482,12 +541,20 @@ class EqualizerDialog(QDialog):
         flat.clicked.connect(self.flatten)
         close = QPushButton(tr("Close"), self)
         close.clicked.connect(self.close)
+        self.presets = QToolButton(self)
+        self.presets.setText(tr("&Presets"))
+        self.presets.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.presets.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        self.presets.setMenu(QMenu(self.presets))
+        self.presets.menu().aboutToShow.connect(self._fill_presets)
         buttons = QHBoxLayout()
         buttons.addWidget(self.on)
         buttons.addStretch()
+        buttons.addWidget(self.presets)
         buttons.addWidget(flat)
         buttons.addWidget(close)
         layout = QVBoxLayout(self)
+        layout.addWidget(self.curve)
         layout.addLayout(grid)
         layout.addLayout(buttons)
         self.show_values(window.eq_gains, window.eq_on)
@@ -501,9 +568,52 @@ class EqualizerDialog(QDialog):
         self.on.blockSignals(True)
         self.on.setChecked(on)
         self.on.blockSignals(False)
+        self.curve.show_values(gains, on)
 
     def gains(self) -> tuple[int, ...]:
         return tuple(knob.value() for knob in self.knobs)
+
+    def own_presets(self) -> dict[str, list[int]]:
+        """The presets the user saved: {name: the five gains}."""
+        try:
+            value = json.loads(str(self.window.settings.value("eq/presets", "{}")))
+        except ValueError:
+            return {}
+        return {str(k): list(equalizer.clamp(v)) for k, v in value.items()} if isinstance(value, dict) else {}
+
+    def _fill_presets(self) -> None:
+        menu = self.presets.menu()
+        menu.clear()
+        for name, gains in eq_presets():
+            menu.addAction(name, lambda g=gains: self.choose(g))
+        own = self.own_presets()
+        if own:
+            menu.addSeparator()
+            for name, gains in sorted(own.items()):
+                menu.addAction(name, lambda g=gains: self.choose(g))
+        menu.addSeparator()
+        menu.addAction(tr("&Save as preset…"), self.save_preset)
+        if own:
+            remove = menu.addMenu(tr("&Remove a preset"))
+            for name in sorted(own):
+                remove.addAction(name, lambda n=name: self.remove_preset(n))
+
+    def choose(self, gains) -> None:
+        self.show_values(equalizer.clamp(gains), True)
+        self._turned()
+
+    def save_preset(self) -> None:
+        name, ok = QInputDialog.getText(self, tr("Save as preset"), tr("Name of the preset:"))
+        name = name.strip()
+        if ok and name:
+            own = self.own_presets()
+            own[name] = list(self.gains())
+            self.window.settings.setValue("eq/presets", json.dumps(own, ensure_ascii=False))
+
+    def remove_preset(self, name: str) -> None:
+        own = self.own_presets()
+        own.pop(name, None)
+        self.window.settings.setValue("eq/presets", json.dumps(own, ensure_ascii=False))
 
     def flatten(self) -> None:
         self.show_values(equalizer.FLAT, self.on.isChecked())

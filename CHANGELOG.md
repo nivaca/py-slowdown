@@ -7,6 +7,10 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **The equalizer's curve and presets**: a curve above the knobs shows
+  what it does from 20 Hz to 20 kHz; Presets has some for music (Bass up,
+  Hear the bass line, Voice and solos forward, Bright, Warm, Cut the hiss)
+  and the user's, saved by name and removed again.
 - **Knobs that show they can be turned, also from the keyboard**: the
   pointer over a knob is a hand and lights up its rim; Tab reaches the
   knobs, whose rim then lights up too, and the arrows move it a step, Page

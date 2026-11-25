@@ -1535,3 +1535,29 @@ def test_knobs_with_the_keyboard(window, app, wav):
     app.processEvents()
     if knob.hasFocus():  # (fuera de la pantalla, el foco depende de la plataforma)
         assert knob.grab().toImage() != plain
+
+
+def test_the_equalizer_curve_and_presets(window, app, wav, monkeypatch):
+    """The equalizer draws its curve, and has presets: its own (for music), and the user's, saved by name and
+    removed again; one chosen sets the knobs and the sound."""
+    from py_slowdown import window as window_module
+
+    loaded(window, app, wav)
+    window.show_equalizer()
+    dialog = window.eq_dialog
+    dialog.knobs[0].setValue(6)
+    assert dialog.curve.gains == (6, 0, 0, 0, 0) and dialog.curve.on
+    dialog.curve.grab()
+    dialog._fill_presets()
+    names = [a.text() for a in dialog.presets.menu().actions() if a.text()]
+    assert names[:3] == ["Flat", "Bass up", "Hear the bass line"] and "&Save as preset…" in names
+    next(a for a in dialog.presets.menu().actions() if a.text() == "Cut the hiss").trigger()
+    assert window.player.eq == (0, 0, 0, -2, -8) and [k.value() for k in dialog.knobs] == [0, 0, 0, -2, -8]
+    monkeypatch.setattr(window_module.QInputDialog, "getText", lambda *args, **kwargs: ("My bass", True))
+    dialog.save_preset()
+    assert dialog.own_presets() == {"My bass": [0, 0, 0, -2, -8]}
+    dialog._fill_presets()
+    assert "My bass" in [a.text() for a in dialog.presets.menu().actions()]
+    dialog.remove_preset("My bass")
+    assert dialog.own_presets() == {}
+    dialog.close()

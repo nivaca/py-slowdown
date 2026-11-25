@@ -1205,4 +1205,52 @@
     <en>Back to {value}</en>
     <tr>Volver a {value}</tr>
   </text>
+  <text>
+    <en>Flat</en>
+    <tr>Plano</tr>
+  </text>
+  <text>
+    <en>Bass up</en>
+    <tr>Más graves</tr>
+  </text>
+  <text>
+    <en>Hear the bass line</en>
+    <tr>Oír la línea del bajo</tr>
+  </text>
+  <text>
+    <en>Voice and solos forward</en>
+    <tr>La voz y los solos adelante</tr>
+  </text>
+  <text>
+    <en>Bright</en>
+    <tr>Brillante</tr>
+  </text>
+  <text>
+    <en>Warm</en>
+    <tr>Cálido</tr>
+  </text>
+  <text>
+    <en>Cut the hiss</en>
+    <tr>Sin el siseo</tr>
+  </text>
+  <text>
+    <en>&amp;Presets</en>
+    <tr>&amp;Ajustes guardados</tr>
+  </text>
+  <text>
+    <en>&amp;Save as preset…</en>
+    <tr>&amp;Guardar como ajuste…</tr>
+  </text>
+  <text>
+    <en>&amp;Remove a preset</en>
+    <tr>&amp;Quitar un ajuste</tr>
+  </text>
+  <text>
+    <en>Save as preset</en>
+    <tr>Guardar como ajuste</tr>
+  </text>
+  <text>
+    <en>Name of the preset:</en>
+    <tr>Nombre del ajuste:</tr>
+  </text>
 </interface>
