@@ -15,7 +15,10 @@ Debian package, the RPM, the wheel and the source, are on
   sends it to Zenodo as a draft, a new version of the deposit if there is
   one already, and never publishes it. `tools/release.py` now collects the
   deposit after the tag and uploads it as a draft, unless `--no-zenodo`. The
-  metadata are in `.zenodo.json`.
+  metadata are in `.zenodo.json`; the description is the whole README of the
+  tag, in HTML. The languages, the copyright, the repository on GitHub, the
+  programming language and the development status, which Zenodo's deposit
+  API doesn't take, are added to the draft through its records API.
 
 ## 1.4.0 — 2026-11-25
 

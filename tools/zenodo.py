@@ -17,7 +17,11 @@ Antes comprueba la firma de la etiqueta, y después cada firma, como lo haría q
 GNUPGHOME temporal que solo tiene la clave pública. Si algo no se comprueba, no deja dist/zenodo/.
 
 upload sube dist/zenodo/ a Zenodo (o a sandbox.zenodo.org, con --sandbox) con los metadatos de .zenodo.json, más
-la versión, la fecha de la etiqueta y los enlaces a ella en los repositorios. Si ya hay en Zenodo un depósito
+la versión, la fecha de la etiqueta, los enlaces a ella en los repositorios y, como descripción, el README.md entero de
+la etiqueta, pasado a HTML. Después completa el borrador por la API de registros de Zenodo con lo que la de depósitos
+no recibe: los idiomas (las claves "languages" de .zenodo.json), el copyright (el año de la etiqueta y el primer
+autor), la dirección del repositorio en GitHub, el lenguaje de programación y el estado del desarrollo (las claves
+"programming_language" y "development_status"). Si ya hay en Zenodo un depósito
 publicado con el mismo título, hace una versión nueva de él (el DOI de concepto se mantiene); si no, uno nuevo.
 Nunca lo publica: deja un borrador y da su dirección, para revisarlo y publicarlo a mano. El token va en
 $ZENODO_TOKEN ($ZENODO_SANDBOX_TOKEN con --sandbox), con los permisos deposit:write y deposit:actions.
@@ -27,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import os
 import re
@@ -296,6 +301,124 @@ def check_deposit(out: Path = OUT) -> tuple[str, list[Path]]:
     return version, deposit_files(out)
 
 
+# ------------------------------------------------------------------ the README, as the description
+
+
+def escape(text: str) -> str:
+    # Las entidades que ya están (el &lt; de una dirección) se dejan como están
+    text = re.sub(r"&(?!#?\w+;)", "&amp;", text)
+    return text.replace("<", "&lt;").replace(">", "&gt;")
+
+
+def inline(text: str, base: str | None) -> str:
+    """One block's text in HTML: code, links (relative ones made absolute with BASE), bold and italics. Images
+    are left out: Zenodo doesn't take <img>."""
+    parts = re.split(r"(`[^`]+`)", text)
+    out = []
+    for i, part in enumerate(parts):
+        if i % 2:
+            out.append(f"<code>{html.escape(part[1:-1], quote=False)}</code>")
+            continue
+        part = escape(part)
+        part = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", part)
+
+        def link(m: re.Match) -> str:
+            label, url = m.groups()
+            if url.startswith("#"):
+                return label
+            if not re.match(r"[a-z]+:", url) and base:
+                url = base + url.lstrip("./")
+            return f'<a href="{url}">{label}</a>'
+
+        part = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", link, part)
+        part = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", part)
+        part = re.sub(r"(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])", r"<em>\1</em>", part)
+        out.append(part)
+    return "".join(out).strip()
+
+
+def markdown_html(text: str, base: str | None = None) -> str:
+    """A README in Markdown as the HTML Zenodo accepts in a description (p, ul, ol, li, table, pre, code, a,
+    strong, em, blockquote: no headings nor images, so a heading is a paragraph in bold)."""
+    lines = text.expandtabs(4).splitlines()
+    blocks, i = [], 0
+    item = re.compile(r"^\s{0,3}([-*+]|\d+[.)])\s+")
+    rule = re.compile(r"^(=+|-+)\s*$")
+
+    def starts_block(n: int) -> bool:
+        line = lines[n]
+        return (not line.strip() or bool(item.match(line)) or line.startswith(("#", "|", "```", ">"))
+                or (n + 1 < len(lines) and bool(rule.match(lines[n + 1])) and bool(line.strip())))
+
+    while i < len(lines):
+        line = lines[i]
+        if not line.strip():
+            i += 1
+        elif line.startswith("```"):
+            end = next((j for j in range(i + 1, len(lines)) if lines[j].startswith("```")), len(lines))
+            blocks.append(f"<pre><code>{html.escape(chr(10).join(lines[i + 1:end]), quote=False)}</code></pre>")
+            i = end + 1
+        elif line.startswith("    "):
+            end = i
+            while end < len(lines) and (lines[end].startswith("    ") or not lines[end].strip()):
+                end += 1
+            code = [l[4:] for l in lines[i:end]]
+            while code and not code[-1].strip():
+                code.pop()
+            blocks.append(f"<pre><code>{html.escape(chr(10).join(code), quote=False)}</code></pre>")
+            i = end
+        elif m := re.match(r"^(#{1,6})\s+(.*?)\s*#*\s*$", line):
+            blocks.append(f"<p><strong>{inline(m.group(2), base)}</strong></p>")
+            i += 1
+        elif i + 1 < len(lines) and rule.match(lines[i + 1]) and not item.match(line):
+            blocks.append(f"<p><strong>{inline(line.strip(), base)}</strong></p>")
+            i += 2
+        elif line.startswith("|"):
+            rows = []
+            while i < len(lines) and lines[i].startswith("|"):
+                cells = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+                if not all(re.fullmatch(r":?-+:?", c) for c in cells):
+                    rows.append(cells)
+                i += 1
+            head, *body = rows or [[]]
+            blocks.append("<table><thead><tr>" + "".join(f"<th>{inline(c, base)}</th>" for c in head)
+                          + "</tr></thead><tbody>"
+                          + "".join("<tr>" + "".join(f"<td>{inline(c, base)}</td>" for c in r) + "</tr>"
+                                    for r in body) + "</tbody></table>")
+        elif line.startswith(">"):
+            quoted = []
+            while i < len(lines) and lines[i].startswith(">"):
+                quoted.append(lines[i][1:].strip())
+                i += 1
+            blocks.append(f"<blockquote><p>{inline(' '.join(quoted), base)}</p></blockquote>")
+        elif m := item.match(line):
+            tag = "ul" if m.group(1) in "-*+" else "ol"
+            items = []
+            while i < len(lines):
+                if m := item.match(lines[i]):
+                    items.append([lines[i][m.end():].strip()])
+                    i += 1
+                elif lines[i].strip() and lines[i].startswith(" "):
+                    items[-1].append(lines[i].strip())
+                    i += 1
+                elif not lines[i].strip() and i + 1 < len(lines) and item.match(lines[i + 1]):
+                    i += 1
+                else:
+                    break
+            blocks.append(f"<{tag}>" + "".join(f"<li>{inline(' '.join(t), base)}</li>" for t in items) + f"</{tag}>")
+        else:
+            paragraph = [line.strip()]
+            i += 1
+            while i < len(lines) and not starts_block(i):
+                paragraph.append(lines[i].strip())
+                i += 1
+            text_html = inline(" ".join(paragraph), base)
+            # (un párrafo de solo una imagen queda vacío)
+            if text_html:
+                blocks.append(f"<p>{text_html}</p>")
+    return "\n".join(blocks)
+
+
 # ------------------------------------------------------------------ upload
 
 
@@ -315,20 +438,74 @@ def repository_links(tag: str) -> list[dict[str, str]]:
     return sorted(links, key=lambda link: "codeberg.org" not in link["identifier"])
 
 
-def metadata(version: str) -> dict:
-    """The deposit's metadata: .zenodo.json, with the version, the tag's date and the links to the tag."""
+def repository() -> tuple[str, str] | None:
+    """The repository's address, GitHub's if it is on GitHub, or else Codeberg's, and the path of a tag in it
+    ("tree/{tag}" or "src/tag/{tag}"); None if it is on neither."""
+    found = {}
+    for line in git("remote", "-v").splitlines():
+        m = re.search(r"(codeberg\.org|github\.com)[:/]+([^/\s]+/[^/\s]+?)(?:\.git)?/?\s+\(push\)$", line)
+        if m:
+            found.setdefault(m.group(1), f"https://{m.group(1)}/{m.group(2)}")
+    if "github.com" in found:
+        return found["github.com"], "blob/{tag}/"
+    if "codeberg.org" in found:
+        return found["codeberg.org"], "src/tag/{tag}/"
+    return None
+
+
+# Lo que la API de depósitos no recibe: va después, por la de registros (InvenioRDM)
+RECORD_ONLY = ("languages", "programming_language", "development_status")
+
+
+def metadata(version: str) -> tuple[dict, dict]:
+    """The deposit's metadata: .zenodo.json, with the version, the tag's date, the links to the tag and the
+    README of the tag as the description; and what only the records API takes, for record_fields()."""
     if not METADATA.is_file():
         raise Failed("there is no .zenodo.json with the deposit's metadata")
     data = json.loads(METADATA.read_text(encoding="utf-8"))
     tag = next((t for t in (f"v{version}", version) if git("tag", "--list", t)), None)
     if not tag:
         raise Failed(f"there is no tag of version {version}")
+    extra = {key: data.pop(key) for key in RECORD_ONLY if key in data}
     data["version"] = version
     data["publication_date"] = git("log", "-1", "--format=%cs", f"{tag}^{{commit}}")
     links = repository_links(tag)
     known = {r.get("identifier") for r in data.get("related_identifiers", [])}
     data["related_identifiers"] = data.get("related_identifiers", []) + [l for l in links if l["identifier"] not in known]
-    return data
+    repo = repository()
+    if git("ls-tree", "--name-only", tag, "README.md"):
+        base = f"{repo[0]}/{repo[1].format(tag=tag)}" if repo else None
+        data["description"] = markdown_html(git("show", f"{tag}:README.md"), base)
+    if extra.get("languages"):
+        # (la API de depósitos recibe uno solo: el primero; los demás, record_fields())
+        data["language"] = extra["languages"][0]
+    if data.get("creators"):
+        name = data["creators"][0]["name"]
+        family, _, given = name.partition(", ")
+        extra["copyright"] = f"Copyright © {data['publication_date'][:4]} {f'{given} {family}' if given else name}"
+    if repo:
+        extra["repository"] = repo[0]
+    return data, extra
+
+
+def record_fields(record: dict, extra: dict) -> dict:
+    """RECORD (a draft as the records API gives it) with the fields of EXTRA that the deposit API doesn't take:
+    the languages, the copyright and the software's fields (repository, programming language, status)."""
+    meta = record.setdefault("metadata", {})
+    custom = record.get("custom_fields") or {}
+    record["custom_fields"] = custom
+    if extra.get("languages"):
+        meta["languages"] = [{"id": code} for code in extra["languages"]]
+    if extra.get("copyright"):
+        meta["copyright"] = extra["copyright"]
+    if extra.get("repository"):
+        custom["code:codeRepository"] = extra["repository"]
+    if extra.get("programming_language"):
+        custom["code:programmingLanguage"] = [{"id": extra["programming_language"]}]
+    if extra.get("development_status"):
+        custom["code:developmentStatus"] = {"id": extra["development_status"]}
+    # Solo lo que se puede escribir; links, revision_id, etc. son de lectura
+    return {k: record[k] for k in ("access", "files", "metadata", "custom_fields", "pids") if k in record}
 
 
 class Zenodo:
@@ -404,12 +581,14 @@ def prepare_draft(api: Zenodo, title: str, new_version_of: str | None) -> dict:
 def upload(sandbox: bool, new_version_of: str | None, dry_run: bool) -> str:
     """dist/zenodo/ to a draft on Zenodo; the draft's address (or, with DRY_RUN, nothing sent and "")."""
     version, files = check_deposit()
-    data = metadata(version)
+    data, extra = metadata(version)
     base, variable = SERVERS[sandbox]
     print(f"Deposit of {data['title']} {version} on {base}, as a draft:")
     for path in files:
         print(f"  {path.name}  ({path.stat().st_size:,} bytes)")
     print(json.dumps(data, indent=2, ensure_ascii=False))
+    print("Then, through the records API:")
+    print(json.dumps(extra, indent=2, ensure_ascii=False))
     if dry_run:
         return ""
     token = os.environ.get(variable)
@@ -426,7 +605,18 @@ def upload(sandbox: bool, new_version_of: str | None, dry_run: bool) -> str:
         print(f"  uploading {path.name}", flush=True)
         api.upload(draft, path)
     api.call("PUT", f"deposit/depositions/{draft['id']}", body={"metadata": data})
-    return draft["links"].get("html") or f"{base}/uploads/{draft['id']}"
+    url = draft["links"].get("html") or f"{base}/uploads/{draft['id']}"
+    if extra:
+        try:
+            record = api.call("GET", f"records/{draft['id']}/draft")
+            saved = api.call("PUT", f"records/{draft['id']}/draft", body=record_fields(record, extra))
+        except Failed as e:
+            raise Failed(f"{e}\nThe draft is there with its files, but without {', '.join(extra)}: add them by hand "
+                         f"at {url}") from None
+        if saved and saved.get("errors"):
+            raise Failed(f"Zenodo refused some fields of the draft ({json.dumps(saved['errors'])}); fix them by "
+                         f"hand at {url}")
+    return url
 
 
 # ------------------------------------------------------------------ main

@@ -121,8 +121,14 @@ release in it, with their signatures.
 
 At the end of each release, `tools/release.py` sends it to Zenodo as a draft
 (unless `--no-zenodo`; `tools/zenodo.py upload` does the same on its own),
-with the metadata of `.zenodo.json`, the version, the date of the tag and
-links to the tag on Codeberg and GitHub. If Zenodo already has a published
+with the metadata of `.zenodo.json`, the version, the date of the tag,
+links to the tag on Codeberg and GitHub, and the whole `README.md` of the tag
+as the description, in HTML (headings become bold paragraphs and images are
+left out, since Zenodo doesn't take them). What Zenodo's deposit API doesn't
+take is then set on the draft through its records API: the languages
+(`languages` in `.zenodo.json`), the copyright (the year of the tag and the
+first creator), the repository on GitHub, the programming language and the
+development status (`programming_language`, `development_status`). If Zenodo already has a published
 deposit with the same title, the draft is a new version of it, under the
 same concept DOI. The draft is never published by these tools: review it on
 Zenodo and publish it there. The token goes in `$ZENODO_TOKEN` (made at
