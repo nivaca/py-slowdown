@@ -17,7 +17,7 @@ Debian package, the RPM, the wheel and the source, are on
 - **The volume goes up to 150%**, for recordings made quietly; its value is
   shown in percent beside the slider, and above 100% the slider and the
   number are red. What goes beyond full scale is clipped.
-- **The pitch in semitones and cents**, each with a slider and a box: the
+- **The pitch in semitones and cents**, each with a slider, its value shown beside it (no boxes to type in): the
   semitones from −12 to +12, the cents (hundredths of a semitone) from −50
   to +50, to tune a recording to an instrument; they add up. Ctrl+↑ and
   Ctrl+↓ move a semitone and keep the cents; moving the cents never makes

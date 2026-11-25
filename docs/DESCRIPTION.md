@@ -655,9 +655,10 @@ got a submenu of its own, Count-in > Clicks, following the habit of the
 program of having its options in the menu bar.
 
 The pitch was a single box of semitones that also took tenths, written in
-it, which is not how a musician tunes. It became two sliders, each with its
-box: semitones, from −12 to +12, and cents, hundredths of a semitone, from
-−50 to +50, which add up. The engine already kept the pitch to the
+it, which is not how a musician tunes. It became two sliders, at first each
+with a box beside it, and then, at the user's wish, sliders only, with their
+values written next to them: semitones, from −12 to +12, and cents,
+hundredths of a semitone, from −50 to +50, which add up. The engine already kept the pitch to the
 hundredth, so only the window changed. The care was in showing a pitch as
 the two numbers: 2.5 semitones is both 2 and +50 and 3 and −50, and a
 naive rounding made the semitone slider jump while the cents moved. So the
