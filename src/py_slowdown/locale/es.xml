@@ -1150,10 +1150,6 @@
     <tr>Todas las bandas de vuelta a 0 dB</tr>
   </text>
   <text>
-    <en>Close</en>
-    <tr>Cerrar</tr>
-  </text>
-  <text>
     <en>EQ</en>
     <tr>EQ</tr>
   </text>
@@ -1264,5 +1260,17 @@
   <text>
     <en>Bar — · before the first beat</en>
     <tr>Compás — · antes del primer pulso</tr>
+  </text>
+  <text>
+    <en>Sound</en>
+    <tr>Sonido</tr>
+  </text>
+  <text>
+    <en>Channels:</en>
+    <tr>Canales:</tr>
+  </text>
+  <text>
+    <en>Filter:</en>
+    <tr>Filtro:</tr>
   </text>
 </interface>

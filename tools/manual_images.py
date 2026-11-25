@@ -179,8 +179,8 @@ def shoot(lang: str, audio: Path, folder: Path):
     w.show_equalizer()
     w.set_eq((4, -2, 0, 3, -6))
     settle(app)
-    save(w.eq_dialog, "equalizer", lang)
-    w.eq_dialog.close()
+    save(w.sound_panel, "equalizer", lang)
+    w.sound_dock.hide()
     w.set_eq((0, 0, 0, 0, 0))
 
     # Oír: solo los graves, de los dos canales.

@@ -7,6 +7,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Un panel Sonido**, al costado de la ventana, debajo de Marcadores y
+  bucles: los canales y el filtro (como el menú Oír, los dos siempre de
+  acuerdo) y el ecualizador, que ya no es una ventana aparte. EQ y Oír >
+  Ecualizador lo muestran; Ver > Sonido lo muestra o lo esconde.
 - **Un reloj que cambia**: un clic en el tiempo muestra el que falta, y,
   con un primer pulso, el compás y el pulso (al tempo de la cuenta previa,
   tantos pulsos por compás como golpes tiene); se recuerda.

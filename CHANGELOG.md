@@ -7,6 +7,10 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **A panel Sound**, at the side of the window, below Bookmarks and loops:
+  the channels and the filter (as the menu Hear, the two always agreeing)
+  and the equalizer, which is no longer a window of its own. EQ and Hear >
+  Equalizer show it; View > Sound shows or hides it.
 - **A clock that switches**: a click on the time shows the time left, and,
   with a first beat, the bar and the beat (at the count-in's tempo, as
   many beats in a bar as it has clicks); remembered.

@@ -20,10 +20,12 @@ from PySide6.QtCore import QEvent, QPointF, QSettings, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QKeySequence, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QDial,
     QDialog,
     QDockWidget,
     QFileDialog,
+    QFormLayout,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -392,6 +394,51 @@ class PitchDial(Knob):
         self.choices = tuple(sorted({0, *steps, *(-s for s in steps)}))
 
 
+class SoundPanel(QWidget):
+    """The panel Sound, at the side of the window: how the recording is heard (its channels and a filter, as the
+    menu Hear) and the equalizer."""
+
+    def __init__(self, window, parent=None):
+        super().__init__(parent)
+        self.window = window
+        channel_names, filter_names = hearing_names()
+        self.channels = QComboBox(self)
+        for key in CHANNELS:
+            self.channels.addItem(channel_names[key].replace("&", ""), key)
+        self.filter = QComboBox(self)
+        for key in FILTERS:
+            self.filter.addItem(filter_names[key].replace("&", ""), key)
+        self.channels.currentIndexChanged.connect(self._chosen)
+        self.filter.currentIndexChanged.connect(self._chosen)
+        form = QFormLayout()
+        form.addRow(tr("Channels:"), self.channels)
+        form.addRow(tr("Filter:"), self.filter)
+        heading = QLabel(tr("Equalizer"), self)
+        font = heading.font()
+        font.setBold(True)
+        heading.setFont(font)
+        self.eq = EqualizerPanel(window, self)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.addLayout(form)
+        layout.addSpacing(8)
+        layout.addWidget(heading)
+        layout.addWidget(self.eq)
+        layout.addStretch()
+
+    def show_hearing(self, channels: str, filter_: str, stereo: bool = True) -> None:
+        """Put the lists where CHANNELS and FILTER say (without changing the sound again); a mono file has no
+        channels to choose."""
+        for box, key in ((self.channels, channels), (self.filter, filter_)):
+            box.blockSignals(True)
+            box.setCurrentIndex(max(0, box.findData(key)))
+            box.blockSignals(False)
+        self.channels.setEnabled(stereo)
+
+    def _chosen(self, _index=None) -> None:
+        self.window.set_hearing(self.channels.currentData(), self.filter.currentData())
+
+
 class Clock(QLabel):
     """The time, which a click switches: elapsed, remaining, or bars and beats."""
 
@@ -526,15 +573,14 @@ class EqualizerCurve(QWidget):
         painter.end()
 
 
-class EqualizerDialog(QDialog):
-    """The equalizer: a knob for each of its five bands (−12 to +12 dB, 0 at the top, a double click back to 0),
-    On (to hear it with and without), Flat (all to 0) and Close. It changes the sound as the knobs turn; it does
-    not stop the window (it can stay open while playing)."""
+class EqualizerPanel(QWidget):
+    """The equalizer: its curve, a knob for each of its five bands (−12 to +12 dB, 0 at the top, a double click
+    back to 0), On (to hear it with and without), Presets and Flat (all to 0). It changes the sound as the knobs
+    turn. It is the lower part of the panel Sound."""
 
     def __init__(self, window, parent=None):
         super().__init__(parent)
         self.window = window
-        self.setWindowTitle(tr("Equalizer"))
         self.knobs: list[PitchDial] = []
         self.curve = EqualizerCurve(self)
         grid = QHBoxLayout()
@@ -559,8 +605,6 @@ class EqualizerDialog(QDialog):
         flat = QPushButton(tr("&Flat"), self)
         flat.setToolTip(tr("All the bands back to 0 dB"))
         flat.clicked.connect(self.flatten)
-        close = QPushButton(tr("Close"), self)
-        close.clicked.connect(self.close)
         self.presets = QToolButton(self)
         self.presets.setText(tr("&Presets"))
         self.presets.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
@@ -572,8 +616,8 @@ class EqualizerDialog(QDialog):
         buttons.addStretch()
         buttons.addWidget(self.presets)
         buttons.addWidget(flat)
-        buttons.addWidget(close)
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.curve)
         layout.addLayout(grid)
         layout.addLayout(buttons)
@@ -681,7 +725,7 @@ class Window(QMainWindow):
         self.boost_factor = factor if factor in BOOSTS else BOOST  # (por cuánto multiplica el refuerzo)
         self.eq_gains = equalizer.FLAT  # las cinco bandas, en dB, aunque esté apagado
         self.eq_on = True
-        self.eq_dialog: EqualizerDialog | None = None
+
         self._build_transport()
         central = QWidget(self)
         layout = QVBoxLayout(central)
@@ -697,6 +741,15 @@ class Window(QMainWindow):
         self.dock.setObjectName("bookmarks")
         self.dock.setWidget(self.tabs)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
+        # El panel Sonido: cómo se oye y el ecualizador, debajo de los marcadores; al principio, escondido.
+        self.sound_panel = SoundPanel(self, self)
+        self.eq_panel = self.sound_panel.eq
+        self.sound_dock = QDockWidget(tr("Sound"), self)
+        self.sound_dock.setObjectName("sound")
+        self.sound_dock.setWidget(self.sound_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.sound_dock)
+        self.splitDockWidget(self.dock, self.sound_dock, Qt.Orientation.Vertical)
+        self.sound_dock.hide()
 
         self._build_actions()
         self._build_menus()
@@ -1057,6 +1110,7 @@ class Window(QMainWindow):
             view.addSeparator() if action is None else view.addAction(action)
         view.addSeparator()
         view.addAction(self.dock.toggleViewAction())
+        view.addAction(self.sound_dock.toggleViewAction())
 
         settings = bar.addMenu(tr("&Settings"))
         settings.addAction(self.a_edit_shortcuts)
@@ -1895,6 +1949,7 @@ class Window(QMainWindow):
         self.a_filters[filter_].setChecked(True)
         self.settings.setValue("hearing/channels", channels)
         self.settings.setValue("hearing/filter", filter_)
+        self.sound_panel.show_hearing(channels, filter_, self.audio is None or self.audio.channels == 2)
 
     def _hearing_chosen(self) -> None:
         channels = next(k for k, a in self.a_channels.items() if a.isChecked())
@@ -1906,6 +1961,7 @@ class Window(QMainWindow):
         stereo = self.audio is None or self.audio.channels == 2
         for value, action in self.a_channels.items():
             action.setEnabled(stereo or value == "both")
+        self.sound_panel.channels.setEnabled(stereo)
 
     def change_pitch(self, delta: float) -> None:
         self.set_pitch(self.player.pitch + delta, shown=True)
@@ -1994,13 +2050,10 @@ class Window(QMainWindow):
             self.wave.show_value("100%  0 st")
 
     def show_equalizer(self) -> None:
-        """Open the equalizer (or bring it to the front); the button stays as the equalizer is, on or off."""
-        if self.eq_dialog is None:
-            self.eq_dialog = EqualizerDialog(self, self)
-        self.eq_dialog.show_values(self.eq_gains, self.eq_on)
-        self.eq_dialog.show()
-        self.eq_dialog.raise_()
-        self.eq_dialog.activateWindow()
+        """Show the panel Sound, with the equalizer; the button stays as the equalizer is, on or off."""
+        self.eq_panel.show_values(self.eq_gains, self.eq_on)
+        self.sound_dock.show()
+        self.sound_dock.raise_()
         self._show_eq()
 
     def set_eq(self, gains, on: bool = True) -> None:
@@ -2008,8 +2061,7 @@ class Window(QMainWindow):
         self.eq_gains = equalizer.clamp(gains)
         self.eq_on = bool(on)
         self.player.eq = self.eq_gains if self.eq_on else equalizer.FLAT
-        if self.eq_dialog is not None:
-            self.eq_dialog.show_values(self.eq_gains, self.eq_on)
+        self.eq_panel.show_values(self.eq_gains, self.eq_on)
         self._show_eq()
         self._show_title()
 

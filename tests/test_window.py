@@ -371,7 +371,6 @@ def test_count_in(window, app, wav, output, monkeypatch):
     assert "120" in dialog.note.text() and dialog.value() == CountIn(True, 3, 120, False)
     dialog.on.setChecked(False)
     assert not dialog.bpm.isEnabled()
-    dialog.close()
 
 
 def test_count_shown_on_the_waveform(window, app, wav, output):
@@ -852,7 +851,6 @@ def test_tap_in_the_dialog(app, monkeypatch):
         dialog.tap_button.click()
         now[0] += 0.4
     assert dialog.bpm.value() == 150
-    dialog.close()
 
 
 def test_count_in_offset_setting(window, app, wav, monkeypatch):
@@ -1342,13 +1340,13 @@ def test_the_equalizer(window, app, wav):
     hears it with or without them, Flat takes them all back to 0; the button is on while the equalizer changes the
     sound; the bands are kept with the file (in its .slx too) and a new file starts flat."""
     from py_slowdown import sidecar
-    from py_slowdown.window import EqualizerDialog
+    from py_slowdown.window import EqualizerPanel
 
     loaded(window, app, wav)
     assert not window.b_eq.isChecked() and window.player.eq == (0, 0, 0, 0, 0)
     window.b_eq.click()
-    dialog = window.eq_dialog
-    assert isinstance(dialog, EqualizerDialog) and dialog.isVisible() and not window.b_eq.isChecked()
+    dialog = window.eq_panel
+    assert isinstance(dialog, EqualizerPanel) and window.sound_dock.isVisible() and not window.b_eq.isChecked()
     assert [k.text() for k in dialog.knobs] == ["0 dB"] * 5 and dialog.on.isChecked()
     dialog.knobs[0].setValue(4)
     dialog.knobs[4].setValue(-6)
@@ -1544,7 +1542,7 @@ def test_the_equalizer_curve_and_presets(window, app, wav, monkeypatch):
 
     loaded(window, app, wav)
     window.show_equalizer()
-    dialog = window.eq_dialog
+    dialog = window.eq_panel
     dialog.knobs[0].setValue(6)
     assert dialog.curve.gains == (6, 0, 0, 0, 0) and dialog.curve.on
     dialog.curve.grab()
@@ -1607,3 +1605,26 @@ def test_the_clock_switches(window, app, wav):
     assert window.settings.value("clock") == "bars"
     window._tick()
     assert window.time_label.text() == "Bar 1 · beat 3"  # (2 s, un segundo después del primer pulso, a 120)
+
+
+def test_the_sound_panel(window, app, wav, tmp_path):
+    """The panel Sound, at the side, hidden at first: the channels and the filter (as the menu Hear, the two always
+    agreeing) and the equalizer; the button EQ and Hear > Equalizer show it, and View > Sound too."""
+    from conftest import tone, write
+
+    loaded(window, app, wav)
+    panel = window.sound_panel
+    assert window.sound_dock.isHidden()
+    window.a_equalizer.trigger()
+    assert window.sound_dock.isVisible()
+    panel.channels.setCurrentIndex(panel.channels.findData("left"))
+    panel.filter.setCurrentIndex(panel.filter.findData("bass"))
+    assert window.player.hearing == ("left", "bass") and window.a_channels["left"].isChecked()
+    window.a_channels["mono"].trigger()
+    assert panel.channels.currentData() == "mono"  # (el menú y el panel, de acuerdo)
+    view = next(a.menu() for a in window.menuBar().actions() if a.text() == "&View")
+    assert window.sound_dock.toggleViewAction() in view.actions()
+    mono = tmp_path / "mono.wav"
+    write(mono, tone(2.0, channels=1))
+    loaded(window, app, mono)
+    assert not panel.channels.isEnabled()
