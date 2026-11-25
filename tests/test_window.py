@@ -1492,3 +1492,18 @@ def test_speed_knob_detents(window, app, monkeypatch):
     assert knob.detents == (65, 100) and knob.dragged_to(*point(77)) == 77
     window.restore_speed_presets()
     assert knob.detents == window_module.SPEED_PRESETS
+
+
+def test_the_menus_of_the_knobs(window, app, wav, monkeypatch):
+    """A right click on a knob: back to its usual value, and its usual values (the one now ticked); one chosen is
+    set as if the knob had been turned there."""
+    loaded(window, app, wav)
+    assert window.speed_knob.menu_values() == list(window.speed_presets())
+    assert window.semitone_dial.menu_values() == [-12, -7, -5, -3, -2, -1, 0, 1, 2, 3, 5, 7, 12]
+    assert window.cent_dial.menu_values() == [-50, -25, -10, -5, 0, 5, 10, 25, 50]
+    assert window.volume.menu_values() == [0, 25, 50, 75, 100]
+    menu = window.semitone_dial.knob_menu()
+    texts = [a.text() for a in menu.actions() if a.text()]
+    assert texts[0] == "Back to 0 st" and [a.text() for a in menu.actions() if a.isChecked()] == ["0 st"]
+    next(a for a in menu.actions() if a.text() == "+5 st").trigger()
+    assert window.player.pitch == 5.0

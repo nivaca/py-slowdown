@@ -178,6 +178,7 @@ class Knob(QDial):
         self.step = step
         self.warn = warn
         self.detents: tuple[int, ...] = ()  # valores donde la perilla, arrastrada, se detiene (las velocidades)
+        self.choices = ()  # los valores de su menú del clic derecho (o una función que los da)
         self.setWrapping(False)
         self.setFixedSize(self.SIZE, self.SIZE)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -254,6 +255,26 @@ class Knob(QDial):
         self.setValue(self.home)
         event.accept()
 
+    def menu_values(self) -> list[int]:
+        """The values of the knob's menu (its usual ones), within its range."""
+        values = self.choices() if callable(self.choices) else self.choices
+        return [v for v in values if self.minimum() <= v <= self.maximum()]
+
+    def contextMenuEvent(self, event) -> None:
+        # Un clic derecho: volver a lo de siempre, o uno de los valores de costumbre (el de ahora, marcado).
+        self.knob_menu().exec(event.globalPos())
+
+    def knob_menu(self) -> QMenu:
+        """The menu of a right click: back to HOME, then the usual values, the one now ticked."""
+        menu = QMenu(self)
+        menu.addAction(tr("Back to {value}", value=self.format(self.home)), lambda: self.setValue(self.home))
+        menu.addSeparator()
+        for value in self.menu_values():
+            action = menu.addAction(self.format(value), lambda v=value: self.setValue(v))
+            action.setCheckable(True)
+            action.setChecked(value == self.value())
+        return menu
+
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -318,6 +339,14 @@ class PitchDial(Knob):
     def setRange(self, low: int, high: int) -> None:
         super().setRange(low, high)
         self.ticks = tuple(v for v in range(low, high + 1) if v % self.tick == 0 or v in (low, high))
+        # Los valores de su menú: los intervalos de costumbre en semitonos, unos pasos en cents o en dB.
+        if high <= 12 and self.unit.strip() == "st":
+            steps = (1, 2, 3, 5, 7, 12)
+        elif high >= 50:
+            steps = (5, 10, 25, 50)
+        else:
+            steps = (3, 6, 9, 12)
+        self.choices = tuple(sorted({0, *steps, *(-s for s in steps)}))
 
 
 class SaveDialog(QDialog):
@@ -630,6 +659,7 @@ class Window(QMainWindow):
         self.speed_knob.setRange(round(MIN_SPEED * 100), round(MAX_SPEED * 100))
         self.speed_knob.setPageStep(25)
         self.speed_knob.setValue(100)
+        self.speed_knob.choices = self.speed_presets  # (el menú del clic derecho: las velocidades elegidas)
         self.speed_knob.setToolTip(tr("The speed: slower or faster (Down, Up; the mouse wheel by 5%), the pitch "
                                       "stays the same; a double click goes back to 100%"))
         self.b_normal = QToolButton(self)
@@ -679,6 +709,7 @@ class Window(QMainWindow):
         self.volume = Knob(lambda value: f"{value}%", VOLUME_TICKS, top=None, home=NORMAL_VOLUME, step=5,
                            parent=self)
         self.volume.setRange(0, NORMAL_VOLUME)
+        self.volume.choices = (0, 25, 50, 75, 100)
         self.volume.setPageStep(10)
         self.volume.setValue(NORMAL_VOLUME)
         row.addWidget(self.volume)

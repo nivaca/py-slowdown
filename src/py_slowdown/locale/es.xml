@@ -1201,4 +1201,8 @@
     <en>{start} – {end}: a click repeats it</en>
     <tr>{start} – {end}: un clic lo repite</tr>
   </text>
+  <text>
+    <en>Back to {value}</en>
+    <tr>Volver a {value}</tr>
+  </text>
 </interface>

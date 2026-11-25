@@ -7,6 +7,10 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **A menu on every knob**: a right click on a knob offers its usual
+  values (the chosen speeds; the intervals of 1, 2, 3, 5, 7 and 12
+  semitones; steps of cents, volume and decibels), the one now ticked, and
+  Back to its usual one.
 - **The speed knob stops at the chosen speeds**: dragged, it stays at a
   speed of the list (50%, 75%, 100%…) when it passes within a few degrees
   of one; the wheel and the keys move it as before.

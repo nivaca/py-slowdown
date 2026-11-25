@@ -7,6 +7,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Un menú en cada perilla**: un clic derecho en una perilla ofrece sus
+  valores de costumbre (las velocidades elegidas; los intervalos de 1, 2,
+  3, 5, 7 y 12 semitonos; pasos de cents, de volumen y de decibeles), con
+  el de ahora marcado, y Volver a su valor de siempre.
 - **La perilla de la velocidad se detiene en las velocidades elegidas**:
   arrastrada, se queda en una velocidad de la lista (50 %, 75 %, 100 %…)
   cuando pasa a unos pocos grados de ella; la rueda y las teclas la mueven
