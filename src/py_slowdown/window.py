@@ -52,6 +52,7 @@ from .timefmt import clock
 from .waveform import WaveformView
 
 APP = "py-slowdown"
+PLAY_ICON, PLAY_BIG = 29, 38  # píxeles de los íconos de la reproducción (24 y 32, por 1,2), y del de tocar
 SPEED_STEP = 0.05
 KNOB_GAP = 4  # píxeles entre las perillas de la altura y su botón 0
 SEMITONE_TICK, CENT_TICK = 3, 5  # una marca cada tantos semitonos, o cents, alrededor de su perilla
@@ -536,7 +537,7 @@ class Window(QMainWindow):
         # Un botón de la reproducción, con el ícono GLYPH (glyphs.py; _draw_icons lo dibuja en los colores del tema).
         button = QToolButton(self)
         button.setProperty("glyph", glyph)
-        button.setIconSize(QSize(24, 24))
+        button.setIconSize(QSize(PLAY_ICON, PLAY_ICON))
         button.setToolTip(tip)
         button.setAutoRaise(True)
         button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -566,7 +567,7 @@ class Window(QMainWindow):
         self.b_start = self._tool("start", tr("Go to the start (Home)"))
         self.b_back = self._tool("back", "", repeat=True)
         self.b_play = self._tool("play", tr("Play (Space)"))
-        self.b_play.setIconSize(QSize(32, 32))
+        self.b_play.setIconSize(QSize(PLAY_BIG, PLAY_BIG))
         self.b_stop = self._tool("stop", tr("Stop and go back to the start (S)"))
         self.b_forward = self._tool("forward", "", repeat=True)
         self.b_end = self._tool("end", tr("Go to the end (End)"))

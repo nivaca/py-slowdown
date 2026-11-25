@@ -12,7 +12,8 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   los botones de la reproducción, el de repetir y el parlante del volumen,
   que tenían los de Qt, de otro estilo y no siempre aptos para un tema
   oscuro. Todos dibujados en los colores del tema (claro u oscuro, en
-  cualquier sistema), blancos sobre un botón encendido.
+  cualquier sistema), blancos sobre un botón encendido. Los botones de la
+  reproducción son una quinta parte más grandes.
 - **Un ecualizador de cinco bandas**: el botón EQ, a la derecha de los
   mandos, u Oír > Ecualizador, abre cinco perillas (60 Hz, 250 Hz, 1 kHz,
   4 kHz y 12 kHz, cada una de −12 a +12 dB), con Encendido, para comparar,

@@ -12,7 +12,7 @@ Debian package, the RPM, the wheel and the source, are on
   and the buttons of playing, repeat and the speaker of the volume, which
   had Qt's, of another style and not always fit for a dark theme. All drawn
   in the theme's colours (light or dark, on every system), white on a
-  button that is on.
+  button that is on. The buttons of playing are a fifth larger.
 - **A five-band equalizer**: the button EQ, at the right of the controls,
   or Hear > Equalizer, opens five knobs (60 Hz, 250 Hz, 1 kHz, 4 kHz and
   12 kHz, each from −12 to +12 dB), with On, to compare, and Flat. The

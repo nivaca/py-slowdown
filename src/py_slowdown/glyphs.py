@@ -47,7 +47,7 @@ SHAPES = {
     "speed": (f'<g {_LINE}><path d="M4 17a8.5 8.5 0 1 1 16 0"/><path d="M12 15l4-6"/></g>'
               '<circle cx="12" cy="15" r="1.8" fill="INK"/>'),
 }
-SIZES = (24, 48)  # (el doble, para las pantallas de alta densidad)
+SIZES = (24, 29, 38, 48, 58, 76)  # (los de los botones, y el doble, para las pantallas de alta densidad)
 
 
 def svg(name: str, color: str) -> bytes:
