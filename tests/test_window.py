@@ -1507,3 +1507,31 @@ def test_the_menus_of_the_knobs(window, app, wav, monkeypatch):
     assert texts[0] == "Back to 0 st" and [a.text() for a in menu.actions() if a.isChecked()] == ["0 st"]
     next(a for a in menu.actions() if a.text() == "+5 st").trigger()
     assert window.player.pitch == 5.0
+
+
+def test_knobs_with_the_keyboard(window, app, wav):
+    """A knob is reached with Tab; with the focus, the arrows move it a step (not the window's shortcuts), Page
+    Up and Down more, Home back to its usual value; the pointer over it is a hand, and its rim lights up."""
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+
+    loaded(window, app, wav)
+    knob = window.speed_knob
+    assert knob.focusPolicy() == Qt.FocusPolicy.TabFocus and knob.cursor().shape() == Qt.CursorShape.PointingHandCursor
+    override = QKeyEvent(QEvent.Type.ShortcutOverride, Qt.Key.Key_Down, Qt.KeyboardModifier.NoModifier)
+    override.ignore()
+    knob.event(override)
+    assert override.isAccepted()  # (la flecha es de la perilla)
+    ctrl = QKeyEvent(QEvent.Type.ShortcutOverride, Qt.Key.Key_Up, Qt.KeyboardModifier.ControlModifier)
+    ctrl.ignore()
+    knob.event(ctrl)
+    assert not ctrl.isAccepted()  # (Ctrl+↑ sigue siendo de la ventana)
+    for key, speed in ((Qt.Key.Key_Down, 0.95), (Qt.Key.Key_PageDown, 0.7), (Qt.Key.Key_Up, 0.75),
+                       (Qt.Key.Key_Home, 1.0)):
+        knob.keyPressEvent(QKeyEvent(QEvent.Type.KeyPress, key, Qt.KeyboardModifier.NoModifier))
+        assert window.player.speed == speed
+    plain = knob.grab().toImage()
+    knob.setFocus()
+    app.processEvents()
+    if knob.hasFocus():  # (fuera de la pantalla, el foco depende de la plataforma)
+        assert knob.grab().toImage() != plain

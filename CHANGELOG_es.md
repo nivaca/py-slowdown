@@ -7,6 +7,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Perillas que muestran que se giran, también desde el teclado**: el
+  puntero sobre una perilla es una mano y enciende su borde; Tab llega a
+  las perillas, cuyo borde también se enciende, y las flechas la mueven un
+  paso, RePág y AvPág más, Inicio la devuelve a su valor de siempre.
 - **Un menú en cada perilla**: un clic derecho en una perilla ofrece sus
   valores de costumbre (las velocidades elegidas; los intervalos de 1, 2,
   3, 5, 7 y 12 semitonos; pasos de cents, de volumen y de decibeles), con

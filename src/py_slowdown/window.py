@@ -181,7 +181,10 @@ class Knob(QDial):
         self.choices = ()  # los valores de su menú del clic derecho (o una función que los da)
         self.setWrapping(False)
         self.setFixedSize(self.SIZE, self.SIZE)
-        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        # Se llega con Tab (un clic no le quita el foco a la forma de onda); el puntero, una mano: se arrastra.
+        self.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setAttribute(Qt.WidgetAttribute.WA_Hover)
 
     def text(self) -> str:
         """The value as it is written in the knob."""
@@ -251,6 +254,44 @@ class Knob(QDial):
             self.setValue(self.value() + notches * self.step)
         event.accept()
 
+    KEYS = {Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_PageUp,
+            Qt.Key.Key_PageDown, Qt.Key.Key_Home}
+
+    def event(self, event) -> bool:
+        # Con el foco, las flechas (sin otras teclas) son de la perilla, no de los atajos de la ventana.
+        if (event.type() == QEvent.Type.ShortcutOverride and event.key() in self.KEYS
+                and not event.modifiers() & ~Qt.KeyboardModifier.KeypadModifier):
+            event.accept()
+            return True
+        if event.type() in (QEvent.Type.HoverEnter, QEvent.Type.HoverLeave):
+            self.update()
+        return super().event(event)
+
+    def keyPressEvent(self, event) -> None:
+        key = event.key()
+        if key in (Qt.Key.Key_Up, Qt.Key.Key_Right):
+            self.setValue(self.value() + self.step)
+        elif key in (Qt.Key.Key_Down, Qt.Key.Key_Left):
+            self.setValue(self.value() - self.step)
+        elif key == Qt.Key.Key_PageUp:
+            self.setValue(self.value() + self.pageStep())
+        elif key == Qt.Key.Key_PageDown:
+            self.setValue(self.value() - self.pageStep())
+        elif key == Qt.Key.Key_Home:
+            self.setValue(self.home)
+        else:
+            super().keyPressEvent(event)
+            return
+        event.accept()
+
+    def focusInEvent(self, event) -> None:
+        self.update()
+        super().focusInEvent(event)
+
+    def focusOutEvent(self, event) -> None:
+        self.update()
+        super().focusOutEvent(event)
+
     def mouseDoubleClickEvent(self, event) -> None:
         self.setValue(self.home)
         event.accept()
@@ -300,7 +341,9 @@ class Knob(QDial):
         # La cara de la perilla.
         rim = QColor(ink)
         rim.setAlpha(90)
-        painter.setPen(QPen(rim, 1))
+        lit = self.isEnabled() and (self.underMouse() or self.hasFocus())
+        # (con el puntero encima, o con el foco, el borde se enciende del color de la selección)
+        painter.setPen(QPen(palette.color(group, QPalette.ColorRole.Highlight), 2) if lit else QPen(rim, 1))
         painter.setBrush(palette.color(group, QPalette.ColorRole.Button))
         painter.drawEllipse(center, face, face)
         # El indicador: una raya corta en el borde de la cara, lejos del texto del centro; en rojo, más allá de WARN.

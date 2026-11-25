@@ -7,6 +7,10 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Knobs that show they can be turned, also from the keyboard**: the
+  pointer over a knob is a hand and lights up its rim; Tab reaches the
+  knobs, whose rim then lights up too, and the arrows move it a step, Page
+  Up and Down more, Home back to its usual value.
 - **A menu on every knob**: a right click on a knob offers its usual
   values (the chosen speeds; the intervals of 1, 2, 3, 5, 7 and 12
   semitones; steps of cents, volume and decibels), the one now ticked, and
