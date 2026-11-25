@@ -17,6 +17,12 @@ Debian package, the RPM, the wheel and the source, are on
 - **The volume goes up to 150%**, for recordings made quietly; its value is
   shown in percent beside the slider, and above 100% the slider and the
   number are red. What goes beyond full scale is clipped.
+- **The pitch in semitones and cents**, each with a slider and a box: the
+  semitones from −12 to +12, the cents (hundredths of a semitone) from −50
+  to +50, to tune a recording to an instrument; they add up. Ctrl+↑ and
+  Ctrl+↓ move a semitone and keep the cents; moving the cents never makes
+  the semitones jump. The volume moves to the right of the first row, to
+  make room.
 - **Count-in > Clicks**: how many clicks the count-in gives (4 at first),
   from a list in the menu (1 to 8, 12, 16), the one chosen ticked; the
   dialog still takes any number from 1 to 16.

@@ -654,10 +654,22 @@ And the number of clicks of the count-in, which was only in its dialog,
 got a submenu of its own, Count-in > Clicks, following the habit of the
 program of having its options in the menu bar.
 
+The pitch was a single box of semitones that also took tenths, written in
+it, which is not how a musician tunes. It became two sliders, each with its
+box: semitones, from −12 to +12, and cents, hundredths of a semitone, from
+−50 to +50, which add up. The engine already kept the pitch to the
+hundredth, so only the window changed. The care was in showing a pitch as
+the two numbers: 2.5 semitones is both 2 and +50 and 3 and −50, and a
+naive rounding made the semitone slider jump while the cents moved. So the
+two keep what they say while it is still true, a semitone up or down keeps
+the cents of a tuning, and only a pitch from elsewhere (a file, the reset)
+is shown with the nearest semitone. To make room, the volume went to the
+first row.
+
 Testing
 -------
 
-The program has 196 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 197 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -680,7 +692,7 @@ same name, a folder chosen, a folder that cannot be written, the `.xml`
 files of 1.2.0, opening it), the first beat and its grid, the keyboard
 shortcuts and the waveform kept for the next time. The player is
 tested with a sound card that the tests drive themselves, and the window
-offscreen: opening a file, the controls, a pause that goes back, the volume above 100%, the clicks of the count-in, the speed, the bookmarks, the
+offscreen: opening a file, the controls, a pause that goes back, the volume above 100%, the clicks of the count-in, the speed, the pitch in semitones and cents, the bookmarks, the
 point where it was left, a file that is not audio, the window without
 Rubber Band, and the Spanish interface, whose file must have every text of
 the program and no other. Other tests check the packaging and the
@@ -697,4 +709,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 76 files and about 17,700 lines (11,100 of them in Python).
+The program has 76 files and about 17,800 lines (11,200 of them in Python).

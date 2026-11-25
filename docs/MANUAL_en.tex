@@ -344,9 +344,9 @@ An audio file can also be dropped on the window, or opened with
 The waveform takes most of the window (figure~\ref{fig:window_en}). Above
 it is a ruler of times; the red line is the position, the point that is
 heard; what was already played is darker. The bookmarks are dashed lines,
-with their labels on top. Under the waveform are the controls and the
-time, and under them the speed, the pitch (with the button \menu{Formants})
-and the volume; on the right, the panel of the
+with their labels on top. Under the waveform are the controls, the
+time and the volume, and under them the speed and the pitch, in semitones
+and cents (with the button \menu{Formants}); on the right, the panel of the
 bookmarks and the loops, in two tabs, which can be closed, moved or left
 floating (\menu{View\then Bookmarks and loops} brings it back). The status bar says what is being read, and then the format of the
 file: its codec, its sample rate, mono or stereo, and its length.
@@ -418,7 +418,7 @@ player does, there is \menu{Playback\then Continue from the pause}
 first started. \key{S} stops and goes back to the start of the file.
 
 \index{volume}%
-The volume is the slider on the right, with its value in percent beside
+The volume is the slider at the right of the controls, with its value in percent beside
 it. Up to 100\,\% it lowers the sound of the program; from there to
 150\,\% it raises it above that of the recording, for one that was
 recorded quietly, and the slider and the number turn red. What would go
@@ -477,12 +477,16 @@ bar, and the speed stays at 1\,×.
 The pitch can be moved up or down, in semitones, without changing the
 speed: to play along with a recording in another key, to bring a song
 within reach of a voice, or to hear a fast passage slower and an octave
-higher, where its notes stand out. The box \menu{Pitch}, beside the speed,
-goes from 12 semitones down to 12 up (an octave each way), by steps of
-one; \key{Ctrl+↑} and \key{Ctrl+↓} do the same, and \key{Shift+N}, or
-the button \menu{0}, brings back the pitch of the recording. The box also
-takes tenths, written in it (0.5, say): a recording that is a little off
-pitch, as old tapes often are, can be tuned to the instrument.
+higher, where its notes stand out. Beside the speed, \menu{Pitch} has two
+sliders, each with its box. The first moves the pitch in semitones, from
+12 down to 12 up (an octave each way); \key{Ctrl+↑} and \key{Ctrl+↓} move
+it a semitone too. The second moves it in cents, hundredths of a
+semitone, from 50 down to 50 up: a recording that is a little off pitch,
+as old tapes often are, can be tuned to the instrument, and the two add
+up ($+2$\,st and $-15$\,¢ is 1.85 semitones up). A semitone up or down
+keeps the cents of the tuning, and moving the cents never makes the
+semitones jump. \key{Shift+N}, or the button \menu{0}, brings back the
+pitch of the recording.
 
 \index{quality}\index{rubber band@Rubber Band}%
 The pitch can be changed while the recording plays, without a click. It

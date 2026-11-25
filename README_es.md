@@ -43,8 +43,9 @@ Lo que hace
   listan en un panel lateral, se dibujan sobre la forma de onda y se pueden
   exportar a un archivo de texto. Ctrl+← y Ctrl+→ van al marcador anterior
   y al siguiente.
-- Sube o baja la altura, en semitonos (de −12 a +12, también décimas, para
-  afinar una grabación con un instrumento), sin cambiar la velocidad,
+- Sube o baja la altura, en semitonos (de −12 a +12) y cents (centésimas
+  de semitono, de −50 a +50, para afinar una grabación con un
+  instrumento), cada uno con su barra, sin cambiar la velocidad,
   también mientras suena; con Formantes, una voz o un instrumento conserva
   su timbre.
 - Oye una parte de la mezcla (Oír): un canal, los dos en uno, la mezcla sin

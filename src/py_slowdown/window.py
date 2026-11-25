@@ -1,8 +1,8 @@
 """La ventana principal de py-slowdown.
 
 Arriba, la forma de onda; debajo, los mandos de la reproducción (al principio,
-atrás, tocar o pausar, detener, adelante, al final), el tiempo, la velocidad,
-la altura, la manera de oír y el volumen; a la derecha, el panel de los
+atrás, tocar o pausar, detener, adelante, al final), el tiempo y el volumen;
+luego la velocidad y la altura (en semitonos y cents); a la derecha, el panel de los
 marcadores y los bucles. Los menús repiten todo eso con sus atajos de teclado,
 que se pueden cambiar.
 
@@ -12,6 +12,7 @@ otro, o al salir) guarda el punto donde iba, y al volver a abrirlo sigue de all�
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 from PySide6.QtCore import QSettings, QSize, Qt, QTimer
@@ -27,6 +28,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QSlider,
+    QSpinBox,
     QStyle,
     QTabWidget,
     QToolButton,
@@ -49,6 +51,7 @@ from .waveform import WaveformView
 
 APP = "py-slowdown"
 SPEED_STEP = 0.05
+MAX_CENTS = 50  # cents, centésimas de semitono, arriba o abajo: más allá, el semitono siguiente
 SPEED_PRESETS = (50, 60, 70, 75, 80, 90, 100, 110, 125, 150)
 COUNT_CHOICES = (1, 2, 3, 4, 5, 6, 7, 8, 12, 16)  # golpes de la cuenta previa, en su menú (el diálogo, de 1 a 16)
 MAX_VOLUME = 150  # por ciento: por encima de 100 sube el sonido de la grabación (en rojo)  # por ciento: las velocidades de siempre del botón
@@ -71,6 +74,16 @@ def parse_speeds(text: str) -> list[int] | None:
     return sorted(speeds) or None
 SKIPS = (1, 2, 5, 10, 15, 30, 60)
 RECENT = 10
+
+
+def split_pitch(pitch: float, cents_now: int = 0) -> tuple[int, int]:
+    """PITCH (semitones, with decimals) as whole semitones and cents (-50 to 50): with CENTS_NOW, if those cents
+    still fit (a semitone up keeps the cents of a tuning); else with the nearest semitone."""
+    whole = pitch - cents_now / 100
+    if abs(whole - round(whole)) < 0.005 and abs(round(whole)) <= MAX_PITCH:
+        return int(round(whole)), cents_now
+    semitones = math.floor(pitch + 0.5)
+    return semitones, int(round((pitch - semitones) * 100))
 
 
 def hearing_names() -> tuple[dict[str, str], dict[str, str]]:
@@ -206,8 +219,8 @@ class Window(QMainWindow):
         except rubberband.RubberBandError:
             self.stretching = False
             why = tr("The Rubber Band Library is not installed, so the speed stays at 1×.")
-            for widget in (self.speed_slider, self.speed_box, self.b_normal, self.b_speeds, self.pitch_box,
-                           self.b_pitch, self.b_formants):
+            for widget in (self.speed_slider, self.speed_box, self.b_normal, self.b_speeds, self.semitone_slider,
+                           self.semitone_box, self.cent_slider, self.cent_box, self.b_pitch, self.b_formants):
                 widget.setEnabled(False)
                 widget.setToolTip(why)
             for action in (self.a_slower, self.a_faster, self.a_normal, self.a_higher, self.a_lower,
@@ -289,6 +302,21 @@ class Window(QMainWindow):
         self.time_label.setToolTip(tr("Position / length"))
         row.addWidget(self.time_label)
         row.addStretch()
+        # El volumen, a la derecha de la primera fila (en la segunda, la altura tiene dos barras).
+        speaker = QLabel(self)
+        speaker.setPixmap(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume).pixmap(20, 20))
+        row.addWidget(speaker)
+        self.volume = QSlider(Qt.Orientation.Horizontal, self)
+        self.volume.setRange(0, MAX_VOLUME)
+        self.volume.setValue(100)
+        self.volume.setMinimumWidth(80)
+        self.volume.setMaximumWidth(130)
+        self.volume.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        row.addWidget(self.volume)
+        self.volume_label = QLabel(self)
+        self.volume_label.setMinimumWidth(self.volume_label.fontMetrics().horizontalAdvance("150%") + 4)
+        row.addWidget(self.volume_label)
+        self._show_volume(100)
         row = QHBoxLayout()
         rows.addLayout(row)
 
@@ -326,15 +354,12 @@ class Window(QMainWindow):
         row.addWidget(self.b_speeds)
         row.addSpacing(8)
 
+        # La altura: semitonos y cents (centésimas de semitono), cada uno con su barra y su casilla.
         row.addWidget(QLabel(tr("Pitch"), self))
-        self.pitch_box = QDoubleSpinBox(self)
-        self.pitch_box.setRange(-MAX_PITCH, MAX_PITCH)
-        self.pitch_box.setSingleStep(1.0)
-        self.pitch_box.setDecimals(1)
-        self.pitch_box.setSuffix(tr(" st"))
-        self.pitch_box.setValue(0.0)
-        self.pitch_box.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-        self.pitch_box.setToolTip(tr("The pitch, in semitones, up or down (Ctrl+↑, Ctrl+↓); the speed does not change"))
+        semitones_tip = tr("The pitch, in semitones, up or down (Ctrl+↑, Ctrl+↓); the speed does not change")
+        cents_tip = tr("Cents, hundredths of a semitone, up or down: to tune the recording to an instrument")
+        self.semitone_slider, self.semitone_box = self._pitch_pair(int(MAX_PITCH), tr(" st"), semitones_tip)
+        self.cent_slider, self.cent_box = self._pitch_pair(MAX_CENTS, " ¢", cents_tip)
         self.b_pitch = QToolButton(self)
         self.b_pitch.setText("0")
         self.b_pitch.setToolTip(tr("Original pitch (Shift+N)"))
@@ -346,27 +371,30 @@ class Window(QMainWindow):
         self.b_formants.setToolTip(tr("Keep the formants: when the pitch moves, voices and instruments keep their "
                                       "natural timbre"))
         self.b_formants.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        row.addWidget(self.pitch_box)
+        for widget in (self.semitone_slider, self.semitone_box, self.cent_slider, self.cent_box):
+            row.addWidget(widget)
         row.addWidget(self.b_pitch)
         row.addWidget(self.b_formants)
         row.addSpacing(12)
 
-        speaker = QLabel(self)
-        speaker.setPixmap(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume).pixmap(20, 20))
-        row.addWidget(speaker)
-        self.volume = QSlider(Qt.Orientation.Horizontal, self)
-        self.volume.setRange(0, MAX_VOLUME)
-        self.volume.setValue(100)
-        self.volume.setMinimumWidth(80)
-        self.volume.setMaximumWidth(130)
-        self.volume.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        row.addWidget(self.volume)
-        self.volume_label = QLabel(self)
-        self.volume_label.setMinimumWidth(self.volume_label.fontMetrics().horizontalAdvance("150%") + 4)
-        row.addWidget(self.volume_label)
-        self._show_volume(100)
         row.addStretch()
         self._update_skip_tips()
+
+    def _pitch_pair(self, limit: int, suffix: str, tip: str) -> tuple[QSlider, QSpinBox]:
+        # Una barra y su casilla, de -LIMIT a LIMIT, para los semitonos o los cents de la altura.
+        slider = QSlider(Qt.Orientation.Horizontal, self)
+        slider.setRange(-limit, limit)
+        slider.setPageStep(max(1, limit // 4))
+        slider.setMinimumWidth(90)
+        slider.setMaximumWidth(140)
+        slider.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        box = QSpinBox(self)
+        box.setRange(-limit, limit)
+        box.setSuffix(suffix)
+        box.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        for widget in (slider, box):
+            widget.setToolTip(tip)
+        return slider, box
 
     def _action(self, text: str, slot, keys=(), checkable: bool = False) -> QAction:
         action = QAction(text, self)
@@ -560,8 +588,11 @@ class Window(QMainWindow):
         self.b_mark.clicked.connect(self.add_bookmark)
         self.b_normal.clicked.connect(lambda: self.set_speed(1.0))
         self.b_pitch.clicked.connect(lambda: self.set_pitch(0.0))
-        self.pitch_box.valueChanged.connect(self.set_pitch)
-        self.pitch_box.editingFinished.connect(self.wave.setFocus)
+        for slider, box in ((self.semitone_slider, self.semitone_box), (self.cent_slider, self.cent_box)):
+            # (la barra mueve su casilla, y la casilla la altura; _show_pitch las pone a las dos)
+            slider.valueChanged.connect(box.setValue)
+            box.valueChanged.connect(self._pitch_moved)
+            box.editingFinished.connect(self.wave.setFocus)
         self.speed_slider.valueChanged.connect(lambda v: self.set_speed(v / 100))
         self.speed_box.valueChanged.connect(self.set_speed)
         self.speed_box.editingFinished.connect(self.wave.setFocus)
@@ -1105,11 +1136,26 @@ class Window(QMainWindow):
         if not self.stretching:
             return
         self.player.pitch = semitones
-        self.pitch_box.blockSignals(True)
-        self.pitch_box.setValue(self.player.pitch)
-        self.pitch_box.blockSignals(False)
+        self._show_pitch(self.player.pitch)
         self.b_pitch.setEnabled(self.player.pitch != 0.0)
         self._update_formants()
+
+    def _pitch_moved(self, _value: int = 0) -> None:
+        # Una barra o una casilla de la altura: los semitonos más los cents.
+        self.set_pitch(self.semitone_box.value() + self.cent_box.value() / 100)
+
+    def _show_pitch(self, pitch: float) -> None:
+        """The pitch in the bars and boxes, as semitones and cents: as they are, if they already say it (so that
+        the semitones do not jump while the cents move); else with the cents they have, if they fit; else with
+        the nearest semitone."""
+        semitones, cents = split_pitch(pitch, self.cent_box.value())
+        if abs(self.semitone_box.value() + self.cent_box.value() / 100 - pitch) < 0.005:
+            semitones, cents = self.semitone_box.value(), self.cent_box.value()
+        for widget, value in ((self.semitone_slider, semitones), (self.semitone_box, semitones),
+                              (self.cent_slider, cents), (self.cent_box, cents)):
+            widget.blockSignals(True)
+            widget.setValue(value)
+            widget.blockSignals(False)
 
     def set_quality(self, quality: str) -> None:
         """Stretch the sound with QUALITY: "high" (R3), "light" (R3 with a short window, half the processor) or

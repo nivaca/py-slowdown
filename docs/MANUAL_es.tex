@@ -349,9 +349,9 @@ Abrir reciente}.
 La forma de onda ocupa casi toda la ventana (figura~\ref{fig:window_es}).
 Encima tiene una regla de tiempos; la línea roja es la posición, el punto
 que se oye; lo ya tocado se ve más oscuro. Los marcadores son líneas de
-trazos, con su nombre arriba. Debajo de la forma de onda están los mandos y
-el tiempo, y debajo de ellos la velocidad, la altura (con el botón
-\menu{Formantes}) y el volumen; a la derecha, el panel
+trazos, con su nombre arriba. Debajo de la forma de onda están los mandos,
+el tiempo y el volumen, y debajo de ellos la velocidad y la altura, en
+semitonos y cents (con el botón \menu{Formantes}); a la derecha, el panel
 de los marcadores y los bucles, en dos pestañas, que se puede cerrar, mover
 o dejar flotando (\menu{Ver\then Marcadores y bucles} lo vuelve a
 mostrar). La barra de estado dice
@@ -427,7 +427,7 @@ corriente, está \menu{Reproducción\then Seguir desde la pausa}
 tocar la primera vez. \key{S} detiene y vuelve al principio del archivo.
 
 \index{volumen}%
-El volumen es la barra de la derecha, con su valor en por ciento al lado.
+El volumen es la barra a la derecha de los mandos, con su valor en por ciento al lado.
 Hasta 100\,\% baja el sonido del programa; de allí a 150\,\% lo sube por
 encima del de la grabación, para una que se grabó baja, y la barra y el
 número se ponen en rojo. Lo que pasaría del sonido más fuerte que la
@@ -488,13 +488,16 @@ barra de estado, y la velocidad se queda en 1\,×.
 La altura se puede subir o bajar, en semitonos, sin cambiar la velocidad:
 para tocar con una grabación en otra tonalidad, para llevar una canción al
 alcance de una voz, o para oír un pasaje rápido más lento y una octava más
-arriba, donde sus notas se distinguen. La casilla \menu{Altura}, junto a
-la velocidad, va de 12 semitonos abajo a 12 arriba (una octava a cada
-lado), de uno en uno; \key{Ctrl+↑} y \key{Ctrl+↓} hacen lo mismo, y
-\key{Mayús+N}, o el botón \menu{0}, vuelve a la altura de la grabación. La
-casilla acepta también décimas, escritas en ella (0,5, por ejemplo): una
-grabación algo desafinada, como suelen estarlo las cintas viejas, se puede
-afinar con el instrumento.
+arriba, donde sus notas se distinguen. Junto a la velocidad, \menu{Altura}
+tiene dos barras, cada una con su casilla. La primera mueve la altura en
+semitonos, de 12 abajo a 12 arriba (una octava a cada lado); \key{Ctrl+↑}
+y \key{Ctrl+↓} la mueven también un semitono. La segunda la mueve en
+cents, centésimas de semitono, de 50 abajo a 50 arriba: una grabación algo
+desafinada, como suelen estarlo las cintas viejas, se puede afinar con el
+instrumento, y las dos se suman ($+2$\,st y $-15$\,¢ son 1,85 semitonos
+arriba). Un semitono arriba o abajo conserva los cents de la afinación, y
+mover los cents nunca hace saltar los semitonos. \key{Mayús+N}, o el botón
+\menu{0}, vuelve a la altura de la grabación.
 
 \index{calidad}\index{rubber band@Rubber Band}%
 La altura se puede cambiar mientras suena la grabación, sin chasquidos.

@@ -242,7 +242,7 @@ def test_without_rubberband(app, output, tmp_path, monkeypatch, wav):
     settings = QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat)
     w = Window(player=Player(output), store=Store(tmp_path / "b.json"), settings=settings)
     assert not w.speed_slider.isEnabled() and not w.a_faster.isEnabled()
-    assert not w.pitch_box.isEnabled() and not w.a_higher.isEnabled()
+    assert not w.semitone_box.isEnabled() and not w.cent_slider.isEnabled() and not w.a_higher.isEnabled()
     assert "Rubber Band" in w.statusBar().currentMessage()
     w.change_speed(0.5)
     assert w.player.speed == 1.0
@@ -496,20 +496,45 @@ def test_reading_elsewhere_does_not_redraw_the_wave(app):
 
 
 def test_pitch_controls(window, app, wav):
+    """The pitch in semitones and cents (hundredths of a semitone), each with a slider and a box: Ctrl+↑ and
+    Ctrl+↓ move it a semitone and keep the cents; the cents never make the semitones jump while they move."""
     loaded(window, app, wav)
-    assert window.pitch_box.value() == 0.0 and not window.b_pitch.isEnabled()
+    assert window.semitone_box.value() == 0 and window.cent_box.value() == 0 and not window.b_pitch.isEnabled()
+    assert window.semitone_slider.maximum() == 12 and window.cent_slider.maximum() == 50
     window.a_higher.trigger()
     window.a_higher.trigger()
-    assert window.player.pitch == 2.0 and window.pitch_box.value() == 2.0 and window.b_pitch.isEnabled()
+    assert window.player.pitch == 2.0 and window.semitone_box.value() == 2 and window.b_pitch.isEnabled()
+    assert window.semitone_slider.value() == 2
     window.a_lower.trigger()
     assert window.player.pitch == 1.0
-    window.pitch_box.setValue(-3.5)  # (con decimales: para afinar una grabación con el instrumento)
-    assert window.player.pitch == -3.5
+    window.cent_slider.setValue(-15)  # (para afinar una grabación con el instrumento)
+    assert window.player.pitch == pytest.approx(0.85) and window.cent_box.value() == -15
+    window.a_higher.trigger()
+    assert window.player.pitch == pytest.approx(1.85)
+    assert (window.semitone_box.value(), window.cent_box.value()) == (2, -15)  # (los cents se quedan)
+    window.semitone_slider.setValue(-3)
+    assert window.player.pitch == pytest.approx(-3.15)
+    window.cent_box.setValue(50)
+    assert window.player.pitch == pytest.approx(-2.5)
+    assert (window.semitone_box.value(), window.cent_box.value()) == (-3, 50)  # (sin saltar a -2 y -50)
+    window.set_pitch(2.25)  # (de un archivo: el semitono más cercano)
+    assert (window.semitone_box.value(), window.cent_box.value()) == (2, 25)
     window.set_pitch(40)
-    assert window.player.pitch == 12.0 and window.pitch_box.value() == 12.0
+    assert window.player.pitch == 12.0 and (window.semitone_box.value(), window.cent_box.value()) == (12, 0)
+    window.cent_slider.setValue(30)  # (pasaría de 12: se queda en 12)
+    assert window.player.pitch == 12.0 and window.cent_box.value() == 0
     window.a_original_pitch.trigger()
     assert window.player.pitch == 0.0 and not window.b_pitch.isEnabled()
+    assert window.semitone_slider.value() == 0 and window.cent_slider.value() == 0
     assert window.player.speed == 1.0  # (la velocidad no cambió)
+
+
+def test_split_pitch():
+    from py_slowdown.window import split_pitch
+
+    assert split_pitch(2.25) == (2, 25) and split_pitch(-2.25) == (-2, -25)
+    assert split_pitch(2.5) == (3, -50) and split_pitch(2.5, 50) == (2, 50)
+    assert split_pitch(3.85, -15) == (4, -15) and split_pitch(12.0, 30) == (12, 0)
 
 
 def test_count_in_settings_are_easy_to_reach(window, app, monkeypatch):
