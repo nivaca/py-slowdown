@@ -786,7 +786,11 @@ repeated, and, if the count-in was on or there is a first beat, its tempo
 and its offset. Only what
 is not the usual is kept. When the file is opened again, all that comes
 back (the selection, once the file is read that far); a file with nothing
-kept is played as the one before it was.
+kept starts with the usual: normal speed, the recording's pitch, both
+channels, the formants off and the count-in at 100\,BPM, whatever the
+file before had, also when it is dropped on the window. The volume, and
+whether the count-in is on and how many clicks it gives, are not of each
+file, and stay.
 
 \index{slx file@\texttt{.slx} file}\index{settings files}%
 All that is also written, when the file is closed, in a file with the same

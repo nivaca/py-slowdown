@@ -24,6 +24,11 @@ Debian package, the RPM, the wheel and the source, are on
   Ctrl+↓ move a semitone and keep the cents; moving the cents never makes
   the semitones jump. The volume moves to the right of the first row, to
   make room.
+- **Each file starts from the usual settings**: a file with nothing kept
+  opens at normal speed, the recording's pitch, both channels, the
+  formants off and the count-in at 100 BPM, not with those of the file
+  before (also when dropped on the window); a file with settings kept gets
+  its own. The volume, and whether the count-in is on and its clicks, stay.
 - **No Formants button**: keeping the formants is only in the menu,
   Playback > Keep the formants (greyed out, as the button was, while the
   pitch is the recording's). The two pitch knobs sit closer together.

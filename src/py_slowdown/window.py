@@ -689,8 +689,8 @@ class Window(QMainWindow):
         self._show_bookmarks()
         self.loops = kept.loops if kept else self.store.loops(path)
         self.loop_panel.show_loops(self.loops)
-        self.set_speed(self.player.speed)
-        self.set_hearing(*self.player.hearing)
+        # Cada archivo empieza con lo de siempre, y luego con lo que se guardó de él (no con lo del anterior).
+        self._reset_file_settings()
         self._apply_file_settings(kept.settings if kept else self.store.settings(path))
         # Sigue donde se dejó, cuando el archivo esté decodificado hasta allí (_tick).
         self._resume = kept.position if kept else self.store.position(path)
@@ -762,6 +762,23 @@ class Window(QMainWindow):
             # (el tempo y el desfase de la cuenta son de cada pieza; con un primer pulso, aunque esté apagada)
             kept["countin"] = {"bpm": self.count.bpm, "offset": self.count.offset, "on": self.count.on}
         return kept
+
+    def _reset_file_settings(self) -> None:
+        """What belongs to each piece back to the usual: speed 1×, the recording's pitch, the formants off, both
+        channels without a filter, and the count-in's tempo (100 BPM) and offset; what is the user's (the volume,
+        whether the count-in is on, its clicks) stays."""
+        if self.stretching:
+            self.set_speed(1.0)
+            self.set_pitch(0.0)
+            self.a_formants.setChecked(False)
+        else:
+            self.set_speed(self.player.speed)
+        self.set_hearing("both", "none")
+        self.a_repeat.setChecked(False)
+        default = CountIn()
+        self.count.bpm, self.count.offset = default.bpm, default.offset
+        self.count.save(self.settings)
+        self._update_count_tip()
 
     def _apply_file_settings(self, kept: dict) -> None:
         """Play the file as it was played the last time (KEPT, from _file_settings); nothing kept, nothing

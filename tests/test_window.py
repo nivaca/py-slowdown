@@ -562,6 +562,35 @@ def test_pitch_dials(window, app, wav):
     assert window.player.pitch == pytest.approx(-0.01) and window.semitone_label.text() == "0 st"
 
 
+def test_each_file_starts_from_the_defaults(window, app, wav, tmp_path):
+    """A file with nothing kept opens with the usual speed, pitch, formants, way of hearing and count-in tempo, not
+    with those of the file before; one with settings kept gets its own; the volume and whether the count-in is
+    on stay, being the user's."""
+    from conftest import tone, write
+
+    other = tmp_path / "other.wav"
+    write(other, tone(3.0))
+    loaded(window, app, wav)
+    window.set_speed(0.6)
+    window.set_pitch(-2.15)
+    window.a_formants.setChecked(True)
+    window.set_hearing("left", "bass")
+    window.count.bpm = 140
+    window.a_count.setChecked(True)
+    window.volume.setValue(70)
+    window.dropEvent(type("Drop", (), {"mimeData": lambda self: type("M", (), {
+        "urls": lambda self: [__import__("PySide6.QtCore", fromlist=["QUrl"]).QUrl.fromLocalFile(str(other))]})()})())
+    window.audio.wait(10)
+    assert window.audio.path.name == "other.wav"
+    assert window.player.speed == 1.0 and window.player.pitch == 0.0 and not window.player.formants
+    assert window.player.hearing == ("both", "none") and window.count.bpm == 100
+    assert (window.semitone_dial.value(), window.cent_dial.value()) == (0, 0) and window.speed_box.value() == 1.0
+    assert window.volume.value() == 70 and window.count.on  # (del usuario)
+    loaded(window, app, wav)  # (el primero, con lo suyo guardado)
+    assert window.player.speed == 0.6 and window.player.pitch == pytest.approx(-2.15)
+    assert window.player.hearing == ("left", "bass") and window.count.bpm == 140
+
+
 def test_split_pitch():
     from py_slowdown.window import split_pitch
 
@@ -864,7 +893,7 @@ def test_loops_in_the_window(window, app, wav):
 
 def test_settings_of_each_file(window, app, wav, tmp_path):
     """The speed, the pitch, the formants, how it is heard, the selection repeated and the count-in of a file come
-    back when it is opened again; a file with nothing kept leaves them as they are."""
+    back when it is opened again; a file with nothing kept starts from the usual ones."""
     from conftest import tone, write
 
     loaded(window, app, wav)
@@ -879,8 +908,8 @@ def test_settings_of_each_file(window, app, wav, tmp_path):
     window.a_count.setChecked(True)
     other = tmp_path / "other.wav"
     write(other, tone(3.0))
-    loaded(window, app, other)  # (nada guardado: sigue como estaba)
-    assert window.player.speed == 0.6 and window.player.hearing == ("mono", "no_bass")
+    loaded(window, app, other)  # (nada guardado: lo de siempre, no lo del anterior)
+    assert window.player.speed == 1.0 and window.player.hearing == ("both", "none") and window.count.bpm == 100
     window.set_speed(1.0)
     window.set_pitch(0.0)
     window.a_formants.setChecked(False)

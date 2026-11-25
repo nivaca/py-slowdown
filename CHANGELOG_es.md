@@ -24,6 +24,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   Ctrl+↓ mueven un semitono y conservan los cents; mover los cents nunca
   hace saltar los semitonos. El volumen pasa a la derecha de la primera
   fila, para dejar sitio.
+- **Cada archivo empieza con lo de siempre**: un archivo sin nada guardado
+  se abre a velocidad normal, con la altura de la grabación, los dos
+  canales, los formantes apagados y la cuenta previa a 100 pulsos por
+  minuto, no con lo del archivo anterior (también si se suelta en la
+  ventana); uno con ajustes guardados recibe los suyos. El volumen, y si la
+  cuenta previa está encendida y sus golpes, se quedan.
 - **Sin el botón Formantes**: conservar los formantes queda solo en el
   menú, Reproducción > Conservar los formantes (en gris, como lo estaba el
   botón, mientras la altura es la de la grabación). Las dos perillas de la

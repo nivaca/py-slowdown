@@ -671,10 +671,17 @@ first row. The two knobs were then put closer together, each against its
 value, and the button Formants went: keeping the formants is chosen
 seldom, and Playback > Keep the formants is enough for it.
 
+One more thing showed up in use: a file with nothing kept opened with the
+speed and the pitch of the file before, since the window only changed what
+the new file had kept. Now each file first goes back to the usual (speed,
+pitch, formants, way of hearing, the tempo and offset of the count-in), and
+then gets what was kept of it; the volume and the switches of the count-in
+are the user's, not the file's, and stay.
+
 Testing
 -------
 
-The program has 198 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 199 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
