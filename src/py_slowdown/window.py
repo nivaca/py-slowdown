@@ -16,8 +16,8 @@ import json
 import math
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, QSize, Qt, QTimer
-from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QKeySequence, QPalette
+from PySide6.QtCore import QPointF, QSettings, QSize, Qt, QTimer
+from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QKeySequence, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (
     QDial,
     QDockWidget,
@@ -148,15 +148,26 @@ def shortcut_rows() -> list[tuple[str, str]]:
 
 
 class PitchDial(QDial):
-    """A knob for the pitch, 0 at the top: dragged around, or one step for each notch of the mouse wheel (not
-    three, as Qt's); a double click takes it back to 0."""
+    """A knob for the pitch, drawn as on an amplifier: 0 at the top, a short pointer at the edge of its face and
+    its value written in the middle (+2 st, −15 ¢), with a tick for each step (or each TICK steps) around it.
+    Dragged around, or one step for each notch of the mouse wheel (not three, as Qt's); a double click takes it
+    back to 0."""
 
-    def __init__(self, parent=None):
+    SIZE = 52
+
+    def __init__(self, unit: str, tick: int = 1, parent=None):
         super().__init__(parent)
-        self.setNotchesVisible(True)
+        self.unit = unit
+        self.tick = tick
         self.setWrapping(False)
-        self.setFixedSize(36, 36)
+        self.setFixedSize(self.SIZE, self.SIZE)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+    def text(self) -> str:
+        """The value as it is written in the knob: +2 st, −15 ¢, 0 st."""
+        value = self.value()
+        sign = "+" if value > 0 else ("−" if value < 0 else "")
+        return f"{sign}{abs(value)}{self.unit}"
 
     def wheelEvent(self, event) -> None:
         # (un panel táctil manda trozos de muesca: se juntan hasta una entera, 120)
@@ -170,6 +181,48 @@ class PitchDial(QDial):
     def mouseDoubleClickEvent(self, event) -> None:
         self.setValue(0)
         event.accept()
+
+    def angle(self, value: int) -> float:
+        """The angle (radians, counterclockwise from the right) of VALUE: as QDial measures it, from 240° (the
+        lowest, down on the left) to −60° (the highest, down on the right), 0 at the top; so the pointer follows
+        the mouse."""
+        span = self.maximum() - self.minimum() or 1
+        return (8 * math.pi - (value - self.minimum()) * 10 * math.pi / span) / 6
+
+    def paintEvent(self, _event) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        group = QPalette.ColorGroup.Active if self.isEnabled() else QPalette.ColorGroup.Disabled
+        palette = self.palette()
+        center = QPointF(self.width() / 2, self.height() / 2)
+        outer = min(self.width(), self.height()) / 2 - 1
+        face = outer - 6
+
+        def point(angle: float, radius: float) -> QPointF:
+            return QPointF(center.x() + radius * math.cos(angle), center.y() - radius * math.sin(angle))
+
+        # Las marcas alrededor, una por paso (o cada TICK pasos), más larga la del 0.
+        painter.setPen(QPen(palette.color(group, QPalette.ColorRole.Mid), 1))
+        for value in range(self.minimum(), self.maximum() + 1):
+            if value % self.tick == 0 or value in (self.minimum(), self.maximum()):
+                inner = face + (1 if value == 0 else 3)
+                painter.drawLine(point(self.angle(value), inner), point(self.angle(value), outer))
+        # La cara de la perilla.
+        painter.setPen(QPen(palette.color(group, QPalette.ColorRole.Mid), 1))
+        painter.setBrush(palette.color(group, QPalette.ColorRole.Button))
+        painter.drawEllipse(center, face, face)
+        # El indicador: una raya corta en el borde de la cara, lejos del texto del centro.
+        angle = self.angle(self.value())
+        painter.setPen(QPen(palette.color(group, QPalette.ColorRole.Highlight), 3, Qt.PenStyle.SolidLine,
+                            Qt.PenCapStyle.RoundCap))
+        painter.drawLine(point(angle, face * 0.84), point(angle, face - 1))
+        # El valor, en el centro.
+        font = painter.font()
+        font.setPixelSize(10)
+        painter.setFont(font)
+        painter.setPen(palette.color(group, QPalette.ColorRole.ButtonText))
+        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self.text())
+        painter.end()
 
 
 class Window(QMainWindow):
@@ -250,7 +303,7 @@ class Window(QMainWindow):
             self.stretching = False
             why = tr("The Rubber Band Library is not installed, so the speed stays at 1×.")
             for widget in (self.speed_slider, self.speed_box, self.b_normal, self.b_speeds, self.semitone_dial,
-                           self.semitone_label, self.cent_dial, self.cent_label, self.b_pitch):
+                           self.cent_dial, self.b_pitch):
                 widget.setEnabled(False)
                 widget.setToolTip(why)
             for action in (self.a_slower, self.a_faster, self.a_normal, self.a_higher, self.a_lower,
@@ -388,22 +441,14 @@ class Window(QMainWindow):
         row.addWidget(QLabel(tr("Pitch"), self))
         semitones_tip = tr("The pitch, in semitones, up or down (Ctrl+↑, Ctrl+↓); the speed does not change")
         cents_tip = tr("Cents, hundredths of a semitone, up or down: to tune the recording to an instrument")
-        self.semitone_dial, self.semitone_label = self._pitch_pair(int(MAX_PITCH), tr(" st"), semitones_tip)
-        self.cent_dial, self.cent_label = self._pitch_pair(MAX_CENTS, " ¢", cents_tip)
+        self.semitone_dial = self._pitch_dial(int(MAX_PITCH), tr(" st"), semitones_tip)
+        self.cent_dial = self._pitch_dial(MAX_CENTS, " ¢", cents_tip)
         self.b_pitch = QToolButton(self)
-        self.b_pitch.setText("0")
+        self.b_pitch.setText("ø")  # (la altura original)
         self.b_pitch.setToolTip(tr("Original pitch (Shift+N)"))
         self.b_pitch.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.b_pitch.setEnabled(False)
-        # Los dos valores a la izquierda, en el orden de las perillas, y las perillas y el 0 a la misma distancia
-        # unas de otras: +2 st −15 ¢ ◯ ◯ 0. (Los valores, de ancho fijo y a la derecha: nada se mueve al girar.)
-        for label in (self.semitone_label, self.cent_label):
-            label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        values = QHBoxLayout()
-        values.setSpacing(4)
-        values.addWidget(self.semitone_label)
-        values.addWidget(self.cent_label)
-        row.addLayout(values)
+        # Las perillas, cada una con su valor dentro, y el 0, a la misma distancia unas de otras.
         knobs = QHBoxLayout()
         knobs.setSpacing(KNOB_GAP)
         for widget in (self.semitone_dial, self.cent_dial, self.b_pitch):
@@ -415,18 +460,14 @@ class Window(QMainWindow):
         row.addStretch()
         self._update_skip_tips()
 
-    def _pitch_pair(self, limit: int, unit: str, tip: str) -> tuple[PitchDial, QLabel]:
-        # Una rueda, de -LIMIT a LIMIT (el 0 arriba), para los semitonos o los cents de la altura, y su valor al
-        # lado (solo se lee: la altura se elige con la rueda).
-        dial = PitchDial(self)
+    def _pitch_dial(self, limit: int, unit: str, tip: str) -> PitchDial:
+        # Una perilla, de -LIMIT a LIMIT (el 0 arriba), para los semitonos o los cents de la altura, con su valor
+        # escrito dentro.
+        dial = PitchDial(unit, 1 if limit <= 12 else 10, self)
         dial.setRange(-limit, limit)
         dial.setPageStep(max(1, limit // 4))
-        label = QLabel(self)
-        label.setProperty("unit", unit)
-        label.setFixedWidth(label.fontMetrics().horizontalAdvance(f"−{limit}{unit}") + 2)
-        for widget in (dial, label):
-            widget.setToolTip(tip)
-        return dial, label
+        dial.setToolTip(tip)
+        return dial
 
     def _action(self, text: str, slot, keys=(), checkable: bool = False) -> QAction:
         action = QAction(text, self)
@@ -1292,13 +1333,11 @@ class Window(QMainWindow):
         semitones, cents = split_pitch(pitch, self.cent_dial.value())
         if abs(self.semitone_dial.value() + self.cent_dial.value() / 100 - pitch) < 0.005:
             semitones, cents = self.semitone_dial.value(), self.cent_dial.value()
-        for dial, label, value in ((self.semitone_dial, self.semitone_label, semitones),
-                                   (self.cent_dial, self.cent_label, cents)):
+        for dial, value in ((self.semitone_dial, semitones), (self.cent_dial, cents)):
             dial.blockSignals(True)
             dial.setValue(value)
             dial.blockSignals(False)
-            sign = "+" if value > 0 else ("−" if value < 0 else "")
-            label.setText(f"{sign}{abs(value)}{label.property('unit')}")
+            dial.update()  # (su valor, escrito dentro: valueChanged estaba bloqueada)
 
     def set_quality(self, quality: str) -> None:
         """Stretch the sound with QUALITY: "high" (R3), "light" (R3 with a short window, half the processor) or

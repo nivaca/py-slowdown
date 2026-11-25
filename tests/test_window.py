@@ -517,7 +517,7 @@ def test_pitch_controls(window, app, wav):
     assert window.player.pitch == 1.0
     window.cent_dial.setValue(-15)  # (para afinar una grabación con el instrumento)
     assert window.player.pitch == pytest.approx(0.85) and window.cent_dial.value() == -15
-    assert window.semitone_label.text() == "+1 st" and window.cent_label.text() == "−15 ¢"
+    assert window.semitone_dial.text() == "+1 st" and window.cent_dial.text() == "−15 ¢"
     assert not hasattr(window, "pitch_box") and not hasattr(window, "semitone_box")  # (solo barras)
     window.a_higher.trigger()
     assert window.player.pitch == pytest.approx(1.85)
@@ -558,16 +558,16 @@ def test_pitch_dials(window, app, wav):
 
     wheel(window.semitone_dial, 120)
     wheel(window.semitone_dial, 120)
-    assert window.player.pitch == 2.0 and window.semitone_label.text() == "+2 st"
+    assert window.player.pitch == 2.0 and window.semitone_dial.text() == "+2 st"
     for _ in range(3):
         wheel(window.cent_dial, -40)  # (tres tercios de muesca: un cent)
-    assert window.player.pitch == pytest.approx(1.99) and window.cent_label.text() == "−1 ¢"
+    assert window.player.pitch == pytest.approx(1.99) and window.cent_dial.text() == "−1 ¢"
     here = QPointF(18, 18)
     app.sendEvent(window.semitone_dial, QMouseEvent(QMouseEvent.Type.MouseButtonDblClick, here,
                                                     window.semitone_dial.mapToGlobal(here),
                                                     Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton,
                                                     Qt.KeyboardModifier.NoModifier))
-    assert window.player.pitch == pytest.approx(-0.01) and window.semitone_label.text() == "0 st"
+    assert window.player.pitch == pytest.approx(-0.01) and window.semitone_dial.text() == "0 st"
 
 
 def test_each_file_starts_from_the_defaults(window, app, wav, tmp_path):
@@ -703,17 +703,16 @@ def test_close_and_quit_keys(window, app, wav):
 
 
 def test_pitch_knobs_evenly_spaced(window, app):
-    """The semitone knob, the cents knob and the button 0 are the same distance apart; the two values are on their
-    left, in the same order, and keep their place while the knobs turn."""
+    """The semitone knob, the cents knob and the button 0 are the same distance apart; each knob has its value
+    written inside."""
     window.resize(1100, 480)
     app.processEvents()
     st, ct, zero = window.semitone_dial.geometry(), window.cent_dial.geometry(), window.b_pitch.geometry()
     assert ct.x() - (st.x() + st.width()) == zero.x() - (ct.x() + ct.width())
-    assert window.semitone_label.geometry().x() < window.cent_label.geometry().x() < st.x()
-    before = window.cent_label.geometry()
+    assert st.width() == st.height() == 52 and window.b_pitch.text() == "ø"  # (más grandes: su valor va dentro)
     window.cent_dial.setValue(-45)
-    app.processEvents()
-    assert window.cent_label.geometry() == before and window.cent_label.text() == "−45 ¢"
+    window.grab()
+    assert window.cent_dial.text() == "−45 ¢" and not hasattr(window, "cent_label")
 
 
 def test_split_pitch():

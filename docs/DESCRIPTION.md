@@ -671,7 +671,12 @@ naive rounding made the semitone control jump while the cents moved. So the
 two keep what they say while it is still true, a semitone up or down keeps
 the cents of a tuning, and only a pitch from elsewhere (a file, the reset)
 is shown with the nearest semitone. To make room, the volume went to the
-first row. The two knobs were then put closer together, each against its
+first row. The values, first beside the knobs, ended inside them: Qt's dial
+draws its pointer as a dot well inside the knob, where it covered the
+text, so the knobs are drawn by the program, as on an amplifier, with a
+short pointer at the edge of the face and the value in the middle, at the
+same angles as Qt's dial so that the pointer follows the mouse. The
+button of the original pitch became ø. The two knobs were then put closer together, each against its
 value, and the button Formants went: keeping the formants is chosen
 seldom, and Playback > Keep the formants is enough for it.
 

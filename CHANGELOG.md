@@ -20,7 +20,7 @@ Debian package, the RPM, the wheel and the source, are on
   shown in percent beside the slider, and above 100% the slider and the
   number are red. What goes beyond full scale is clipped.
 - **The pitch in semitones and cents**, each with a knob (0 at the top),
-  its value shown beside it: one step for each notch of the mouse wheel, a
+  its value written in the middle, a short pointer at its edge: one step for each notch of the mouse wheel, a
   double click back to 0. The semitones from −12 to +12, the cents (hundredths of a semitone) from −50
   to +50, to tune a recording to an instrument; they add up. Ctrl+↑ and
   Ctrl+↓ move a semitone and keep the cents; moving the cents never makes
@@ -38,8 +38,8 @@ Debian package, the RPM, the wheel and the source, are on
   is now kept with each file). The count-in's clicks stay.
 - **No Formants button**: keeping the formants is only in the menu,
   Playback > Keep the formants (greyed out, as the button was, while the
-  pitch is the recording's). The two pitch knobs and the button 0 are
-  evenly spaced, with the two values on their left.
+  pitch is the recording's). The two pitch knobs and the button ø
+  (the original pitch, until now 0) are evenly spaced.
 - **Count-in > Clicks**: how many clicks the count-in gives (4 at first),
   from a list in the menu (1 to 8, 12, 16), the one chosen ticked; the
   dialog still takes any number from 1 to 16.
