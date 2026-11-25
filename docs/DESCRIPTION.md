@@ -656,12 +656,14 @@ program of having its options in the menu bar.
 
 The pitch was a single box of semitones that also took tenths, written in
 it, which is not how a musician tunes. It became two sliders, at first each
-with a box beside it, and then, at the user's wish, sliders only, with their
-values written next to them: semitones, from −12 to +12, and cents,
+with a box beside it; then, at the user's wish, without the boxes, and at
+last two knobs, as on a mixer, with their values written next to them, 0 at
+the top, one step for each notch of the mouse wheel (Qt's dials move three)
+and a double click back to 0: semitones, from −12 to +12, and cents,
 hundredths of a semitone, from −50 to +50, which add up. The engine already kept the pitch to the
 hundredth, so only the window changed. The care was in showing a pitch as
 the two numbers: 2.5 semitones is both 2 and +50 and 3 and −50, and a
-naive rounding made the semitone slider jump while the cents moved. So the
+naive rounding made the semitone control jump while the cents moved. So the
 two keep what they say while it is still true, a semitone up or down keeps
 the cents of a tuning, and only a pitch from elsewhere (a file, the reset)
 is shown with the nearest semitone. To make room, the volume went to the
@@ -670,7 +672,7 @@ first row.
 Testing
 -------
 
-The program has 197 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 198 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

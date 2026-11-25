@@ -45,7 +45,7 @@ Lo que hace
   y al siguiente.
 - Sube o baja la altura, en semitonos (de −12 a +12) y cents (centésimas
   de semitono, de −50 a +50, para afinar una grabación con un
-  instrumento), cada uno con su barra, sin cambiar la velocidad,
+  instrumento), cada uno con su perilla, sin cambiar la velocidad,
   también mientras suena; con Formantes, una voz o un instrumento conserva
   su timbre.
 - Oye una parte de la mezcla (Oír): un canal, los dos en uno, la mezcla sin

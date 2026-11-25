@@ -242,7 +242,7 @@ def test_without_rubberband(app, output, tmp_path, monkeypatch, wav):
     settings = QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat)
     w = Window(player=Player(output), store=Store(tmp_path / "b.json"), settings=settings)
     assert not w.speed_slider.isEnabled() and not w.a_faster.isEnabled()
-    assert not w.semitone_slider.isEnabled() and not w.cent_slider.isEnabled() and not w.a_higher.isEnabled()
+    assert not w.semitone_dial.isEnabled() and not w.cent_dial.isEnabled() and not w.a_higher.isEnabled()
     assert "Rubber Band" in w.statusBar().currentMessage()
     w.change_speed(0.5)
     assert w.player.speed == 1.0
@@ -499,36 +499,67 @@ def test_pitch_controls(window, app, wav):
     """The pitch in semitones and cents (hundredths of a semitone), each with a slider and a box: Ctrl+↑ and
     Ctrl+↓ move it a semitone and keep the cents; the cents never make the semitones jump while they move."""
     loaded(window, app, wav)
-    assert window.semitone_slider.value() == 0 and window.cent_slider.value() == 0 and not window.b_pitch.isEnabled()
-    assert window.semitone_slider.maximum() == 12 and window.cent_slider.maximum() == 50
+    assert window.semitone_dial.value() == 0 and window.cent_dial.value() == 0 and not window.b_pitch.isEnabled()
+    assert window.semitone_dial.maximum() == 12 and window.cent_dial.maximum() == 50
     window.a_higher.trigger()
     window.a_higher.trigger()
-    assert window.player.pitch == 2.0 and window.semitone_slider.value() == 2 and window.b_pitch.isEnabled()
-    assert window.semitone_slider.value() == 2
+    assert window.player.pitch == 2.0 and window.semitone_dial.value() == 2 and window.b_pitch.isEnabled()
+    assert window.semitone_dial.value() == 2
     window.a_lower.trigger()
     assert window.player.pitch == 1.0
-    window.cent_slider.setValue(-15)  # (para afinar una grabación con el instrumento)
-    assert window.player.pitch == pytest.approx(0.85) and window.cent_slider.value() == -15
+    window.cent_dial.setValue(-15)  # (para afinar una grabación con el instrumento)
+    assert window.player.pitch == pytest.approx(0.85) and window.cent_dial.value() == -15
     assert window.semitone_label.text() == "+1 st" and window.cent_label.text() == "−15 ¢"
     assert not hasattr(window, "pitch_box") and not hasattr(window, "semitone_box")  # (solo barras)
     window.a_higher.trigger()
     assert window.player.pitch == pytest.approx(1.85)
-    assert (window.semitone_slider.value(), window.cent_slider.value()) == (2, -15)  # (los cents se quedan)
-    window.semitone_slider.setValue(-3)
+    assert (window.semitone_dial.value(), window.cent_dial.value()) == (2, -15)  # (los cents se quedan)
+    window.semitone_dial.setValue(-3)
     assert window.player.pitch == pytest.approx(-3.15)
-    window.cent_slider.setValue(50)
+    window.cent_dial.setValue(50)
     assert window.player.pitch == pytest.approx(-2.5)
-    assert (window.semitone_slider.value(), window.cent_slider.value()) == (-3, 50)  # (sin saltar a -2 y -50)
+    assert (window.semitone_dial.value(), window.cent_dial.value()) == (-3, 50)  # (sin saltar a -2 y -50)
     window.set_pitch(2.25)  # (de un archivo: el semitono más cercano)
-    assert (window.semitone_slider.value(), window.cent_slider.value()) == (2, 25)
+    assert (window.semitone_dial.value(), window.cent_dial.value()) == (2, 25)
     window.set_pitch(40)
-    assert window.player.pitch == 12.0 and (window.semitone_slider.value(), window.cent_slider.value()) == (12, 0)
-    window.cent_slider.setValue(30)  # (pasaría de 12: se queda en 12)
-    assert window.player.pitch == 12.0 and window.cent_slider.value() == 0
+    assert window.player.pitch == 12.0 and (window.semitone_dial.value(), window.cent_dial.value()) == (12, 0)
+    window.cent_dial.setValue(30)  # (pasaría de 12: se queda en 12)
+    assert window.player.pitch == 12.0 and window.cent_dial.value() == 0
     window.a_original_pitch.trigger()
     assert window.player.pitch == 0.0 and not window.b_pitch.isEnabled()
-    assert window.semitone_slider.value() == 0 and window.cent_slider.value() == 0
+    assert window.semitone_dial.value() == 0 and window.cent_dial.value() == 0
     assert window.player.speed == 1.0  # (la velocidad no cambió)
+
+
+def test_pitch_dials(window, app, wav):
+    """The pitch dials: one step for each notch of the mouse wheel (a touchpad's pieces of a notch add up),
+    and a double click takes a dial back to 0."""
+    from PySide6.QtCore import QPoint, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent, QWheelEvent
+
+    from py_slowdown.window import PitchDial
+
+    loaded(window, app, wav)
+    assert isinstance(window.semitone_dial, PitchDial) and isinstance(window.cent_dial, PitchDial)
+
+    def wheel(dial, dy):
+        here = QPointF(18, 18)
+        app.sendEvent(dial, QWheelEvent(here, dial.mapToGlobal(here), QPoint(), QPoint(0, dy),
+                                        Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier,
+                                        Qt.ScrollPhase.NoScrollPhase, False))
+
+    wheel(window.semitone_dial, 120)
+    wheel(window.semitone_dial, 120)
+    assert window.player.pitch == 2.0 and window.semitone_label.text() == "+2 st"
+    for _ in range(3):
+        wheel(window.cent_dial, -40)  # (tres tercios de muesca: un cent)
+    assert window.player.pitch == pytest.approx(1.99) and window.cent_label.text() == "−1 ¢"
+    here = QPointF(18, 18)
+    app.sendEvent(window.semitone_dial, QMouseEvent(QMouseEvent.Type.MouseButtonDblClick, here,
+                                                    window.semitone_dial.mapToGlobal(here),
+                                                    Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton,
+                                                    Qt.KeyboardModifier.NoModifier))
+    assert window.player.pitch == pytest.approx(-0.01) and window.semitone_label.text() == "0 st"
 
 
 def test_split_pitch():

@@ -17,8 +17,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 - **El volumen sube hasta 150 %**, para grabaciones hechas bajas; su valor
   aparece en por ciento junto a la barra, y por encima de 100 % la barra y
   el número están en rojo. Lo que pasa del máximo se recorta.
-- **La altura en semitonos y cents**, cada uno con su barra, y su valor al lado (sin casillas para escribir):
-  los semitonos de −12 a +12, los cents (centésimas de semitono) de −50 a
+- **La altura en semitonos y cents**, cada uno con una perilla (el 0
+  arriba) y su valor al lado: un paso por cada muesca de la rueda del
+  ratón, y un doble clic la vuelve a 0. Los semitonos de −12 a +12, los cents (centésimas de semitono) de −50 a
   +50, para afinar una grabación con un instrumento; se suman. Ctrl+↑ y
   Ctrl+↓ mueven un semitono y conservan los cents; mover los cents nunca
   hace saltar los semitonos. El volumen pasa a la derecha de la primera
