@@ -14,10 +14,11 @@ Debian package, the RPM, the wheel and the source, are on
   straight up, 25–100% on its left half and 100–300% on its right; 5% for
   each notch of the wheel, a double click back to 100%. The slider and the
   box beside it go; 1× and Speeds stay.
-- **The volume is a knob too**, beside the pitch, with **Boost**: without
-  it the volume goes up to 100% (the recording's sound), with it up to
-  150%, its value and pointer red above 100%; turned off, the volume comes
-  back to 100%.
+- **The volume is a knob too**, beside the pitch, from 0 to 100% (the
+  recording's sound), with **Boost**, which multiplies the sound by 1.5 and
+  leaves the knob's number as it is; where that is louder than the
+  recording (from 82%), the knob's value and pointer are red. A recording
+  kept by 1.3 above 100% opens boosted, at about the same loudness.
 - **The arrow of Save**, in the question before closing a file: Always
   save, for this recording (from then on saved as it is done, without
   asking); Always save, for all recordings (Ask to save turned off); Never

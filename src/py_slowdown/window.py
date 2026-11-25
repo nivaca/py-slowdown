@@ -58,10 +58,11 @@ SEMITONE_TICK, CENT_TICK = 3, 5  # una marca cada tantos semitonos, o cents, alr
 MAX_CENTS = 50  # cents, centésimas de semitono, arriba o abajo: más allá, el semitono siguiente
 SPEED_PRESETS = (50, 60, 70, 75, 80, 90, 100, 110, 125, 150)
 COUNT_CHOICES = (1, 2, 3, 4, 5, 6, 7, 8, 12, 16)  # golpes de la cuenta previa, en su menú (el diálogo, de 1 a 16)
-MAX_VOLUME = 150  # por ciento, con el refuerzo: por encima de 100 sube el sonido de la grabación (en rojo)
-NORMAL_VOLUME = 100  # por ciento, sin el refuerzo: el sonido de la grabación
+NORMAL_VOLUME = 100  # por ciento: el sonido de la grabación, lo más que da la perilla
+BOOST = 1.5  # el refuerzo multiplica el sonido, sin que la perilla cambie de número
+OLD_MAX_VOLUME = 150  # por ciento: lo más que guardaban las versiones 1.3 (sin refuerzo, la perilla llegaba allí)
 SPEED_TICKS = (25, 50, 75, 100, 150, 200, 250, 300)  # por ciento, alrededor de la perilla de la velocidad
-VOLUME_TICKS = (0, 25, 50, 75, 100, 125, 150)
+VOLUME_TICKS = (0, 25, 50, 75, 100)
 WARNING = QColor(200, 30, 30)  # lo que pasa de lo normal (el volumen por encima de 100 %)
 
 
@@ -581,13 +582,14 @@ class Window(QMainWindow):
         speaker.setToolTip(tr("Volume"))
         row.addWidget(speaker)
         self.volume = Knob(lambda value: f"{value}%", VOLUME_TICKS, top=None, home=NORMAL_VOLUME, step=5,
-                           warn=NORMAL_VOLUME, parent=self)
+                           parent=self)
         self.volume.setRange(0, NORMAL_VOLUME)
         self.volume.setPageStep(10)
         self.volume.setValue(NORMAL_VOLUME)
         row.addWidget(self.volume)
         self.boost = QCheckBox(tr("Boost"), self)
-        self.boost.setToolTip(tr("Volume boost: up to 150%, louder than the recording (it may distort)"))
+        self.boost.setToolTip(tr("Volume boost: the sound times 1.5, louder than the recording (it may distort); "
+                                 "the knob keeps its number"))
         self.boost.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         row.addWidget(self.boost)
         self._show_volume(NORMAL_VOLUME)
@@ -1099,9 +1101,11 @@ class Window(QMainWindow):
             elif kept.get("repeat"):
                 self.a_repeat.setChecked(True)  # (el archivo entero)
             if "volume" in kept:
-                volume = int(min(MAX_VOLUME, max(0, int(kept["volume"]))))
+                volume = int(min(OLD_MAX_VOLUME, max(0, int(kept["volume"]))))
                 if volume > NORMAL_VOLUME:
-                    self.boost.setChecked(True)  # (se tocó más fuerte que la grabación: con el refuerzo)
+                    # (de una versión 1.3, más fuerte que la grabación: con el refuerzo, lo que suena casi igual)
+                    self.boost.setChecked(True)
+                    volume = min(NORMAL_VOLUME, round(volume / math.sqrt(BOOST)))
                 self.volume.setValue(volume)
             countin = kept.get("countin")
             if isinstance(countin, dict):
@@ -1568,26 +1572,32 @@ class Window(QMainWindow):
     def change_pitch(self, delta: float) -> None:
         self.set_pitch(self.player.pitch + delta)
 
+    def _gain(self, value: int) -> float:
+        # A square curve (the steps of the knob sound more even to the ear), times 1.5 with Boost.
+        return (value / 100) ** 2 * (BOOST if self.boost.isChecked() else 1.0)
+
     def _set_volume(self, value: int) -> None:
-        # A square curve: the steps of the slider sound more even to the ear.
-        self.player.volume = (value / 100) ** 2
+        self.player.volume = self._gain(value)
         self.settings.setValue("volume", value)
         self._show_volume(value)
 
     def _show_volume(self, value: int) -> None:
-        """The volume knob's tooltip; above 100% (louder than the recording, only with Boost) the knob draws its
-        value and pointer in red."""
+        """The volume knob's tooltip; where Boost makes the sound louder than the recording's, the knob draws its
+        value (the same number) and pointer in red."""
         tip = tr("Volume: {percent}%", percent=value)
-        if value > NORMAL_VOLUME:
+        if self.boost.isChecked():
+            tip += " " + tr("(boosted: the sound times 1.5)")
+        if self._gain(value) > 1.0:
             tip += " " + tr("(louder than the recording: it may distort)")
+        # (en rojo desde el primer valor que, con el refuerzo, pasa del sonido de la grabación: 82 %)
+        self.volume.warn = math.ceil(100 / math.sqrt(BOOST)) - 1 if self.boost.isChecked() else None
         self.volume.setToolTip(tip + "; " + tr("a double click goes back to 100%"))
         self.volume.update()
 
     def _set_boost(self, on: bool) -> None:
-        """Volume boost: the knob goes up to 150% (louder than the recording); without it, up to 100%, and a
-        volume above that comes back to 100%."""
+        """Volume boost: the sound times 1.5, the knob's number as it is."""
         self.settings.setValue("volume_boost", on)
-        self.volume.setRange(0, MAX_VOLUME if on else NORMAL_VOLUME)  # (Qt baja el valor si pasa del máximo)
+        self._set_volume(self.volume.value())
 
     def _tick(self) -> None:
         audio = self.audio

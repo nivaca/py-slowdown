@@ -16,10 +16,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   300 % en la derecha; 5 % por cada muesca de la rueda, un doble clic la
   devuelve a 100 %. La barra y la casilla de al lado se van; 1× y
   Velocidades se quedan.
-- **El volumen también es una perilla**, junto a la altura, con
-  **Refuerzo**: sin él el volumen llega a 100 % (el sonido de la
-  grabación), con él a 150 %, con el valor y el indicador en rojo por
-  encima de 100 %; al quitarlo, el volumen vuelve a 100 %.
+- **El volumen también es una perilla**, junto a la altura, de 0 a 100 %
+  (el sonido de la grabación), con **Refuerzo**, que multiplica el sonido
+  por 1,5 y deja el número de la perilla como está; donde eso es más fuerte
+  que la grabación (desde 82 %), el valor y el indicador de la perilla se
+  ven en rojo. Una grabación guardada por la 1.3 por encima de 100 % se
+  abre reforzada, a más o menos el mismo volumen.
 - **La flecha de Guardar**, en la pregunta antes de cerrar un archivo:
   Guardar siempre, en esta grabación (desde entonces se guarda al hacerlo,
   sin preguntar); Guardar siempre, en todas las grabaciones (se apaga

@@ -1118,11 +1118,15 @@
     <tr>Volumen</tr>
   </text>
   <text>
-    <en>Volume boost: up to 150%, louder than the recording (it may distort)</en>
-    <tr>Refuerzo del volumen: hasta 150 %, más fuerte que la grabación (puede distorsionar)</tr>
-  </text>
-  <text>
     <en>a double click goes back to 100%</en>
     <tr>un doble clic lo devuelve a 100 %</tr>
+  </text>
+  <text>
+    <en>(boosted: the sound times 1.5)</en>
+    <tr>(reforzado: el sonido por 1,5)</tr>
+  </text>
+  <text>
+    <en>Volume boost: the sound times 1.5, louder than the recording (it may distort); the knob keeps its number</en>
+    <tr>Refuerzo del volumen: el sonido por 1,5, más fuerte que la grabación (puede distorsionar); la perilla conserva su número</tr>
   </text>
 </interface>

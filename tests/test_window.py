@@ -118,35 +118,41 @@ def test_pause_goes_back(window, app, wav, output):
 
 
 def test_volume_knob_and_boost(window, app, wav, output):
-    """The volume is a knob, up to 100% (the recording's sound); with Boost up to 150%, where the knob's value and
-    pointer are red and the sound is clipped at full scale, never wrapped; without Boost again, back to 100%."""
+    """The volume is a knob from 0 to 100%. Boost multiplies the sound by 1.5 and leaves the knob's number as it
+    is; where that makes it louder than the recording (from 82%), the knob's value and pointer are red, and the
+    sound is clipped at full scale, never wrapped. A file kept by a 1.3 version above 100% opens boosted."""
     import numpy as np
 
-    from py_slowdown.window import WARNING, Knob
-
-    assert isinstance(window.volume, Knob) and window.volume.maximum() == 100 and window.volume.text() == "100%"
-    window.volume.setValue(120)
-    assert window.volume.value() == 100  # (sin el refuerzo, no pasa de 100)
+    assert window.volume.maximum() == 100 and window.volume.text() == "100%"
+    window.volume.setValue(80)
+    assert window.player.volume == pytest.approx(0.64)
     window.boost.setChecked(True)
-    assert window.volume.maximum() == 150 and window.settings.value("volume_boost", type=bool)
-    window.volume.setValue(120)
-    assert window.player.volume == pytest.approx(1.44) and window.volume.text() == "120%"
-    assert "distort" in window.volume.toolTip() and window.settings.value("volume", type=int) == 120
-    image = window.volume.grab().toImage()
-    reds = sum(1 for x in range(image.width()) for y in range(image.height())
-               if image.pixelColor(x, y).red() > 150 and image.pixelColor(x, y).green() < 80)
-    assert reds > 10 and WARNING.red() == 200  # (el valor y el indicador, en rojo)
+    assert window.volume.value() == 80 and window.volume.text() == "80%"  # (el número no cambia)
+    assert window.player.volume == pytest.approx(0.96) and window.settings.value("volume_boost", type=bool)
+    assert "times 1.5" in window.volume.toolTip() and "distort" not in window.volume.toolTip()
+
+    def reds():
+        image = window.volume.grab().toImage()
+        return sum(1 for x in range(image.width()) for y in range(image.height())
+                   if image.pixelColor(x, y).red() > 150 and image.pixelColor(x, y).green() < 80)
+
+    assert reds() == 0  # (80 %, reforzado: 0,96, todavía no pasa de la grabación)
+    window.volume.setValue(90)
+    assert window.player.volume == pytest.approx(1.215) and "distort" in window.volume.toolTip() and reds() > 10
+    window.boost.setChecked(False)
+    assert window.player.volume == pytest.approx(0.81) and window.volume.value() == 90 and reds() == 0
     loaded(window, app, wav)
     window.boost.setChecked(True)
-    window.volume.setValue(150)  # (después de abrir: cada archivo empieza en 100 %)
+    window.volume.setValue(100)  # (después de abrir: cada archivo empieza en 100 %)
     window.toggle()
     loudest = 0.0
     for _ in range(300):
         loudest = max(loudest, float(np.abs(output.pull()).max()))
         time.sleep(0.001)
-    assert loudest == pytest.approx(1.0)  # (los golpes de 0,9, a 2,25×, recortados en 1)
+    assert loudest == pytest.approx(1.0)  # (los golpes de 0,9, por 1,5, recortados en 1)
     window.boost.setChecked(False)
-    assert window.volume.value() == 100 and "distort" not in window.volume.toolTip()
+    window._apply_file_settings({"volume": 150})  # (de una versión 1.3)
+    assert window.boost.isChecked() and window.volume.value() == 100
 
 
 def test_count_in_clicks_menu(window, app):
