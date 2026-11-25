@@ -5,6 +5,13 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## 1.3.1 — 2026-11-24
+
+- **Las marcas de las perillas de la altura se ven en los temas oscuros.**
+  Se dibujaban con el color «Mid» del tema, que en muchos temas oscuros
+  (NordicDarker de KDE, por ejemplo) es el del fondo; ahora se dibujan con
+  el color del texto, algo transparente, como el borde de las perillas.
+
 ## 1.3.0 — 2026-11-24
 
 Hecha para practicar: una pausa vuelve adonde empezó a tocar, la cuenta

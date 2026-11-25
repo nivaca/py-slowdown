@@ -714,10 +714,16 @@ Ctrl+F4 here. And the count-in and the volume became part of what each
 file starts from: a new file opens with the count-in off and the volume
 at 100%, and the volume is kept with each file, in its `.slx` too.
 
+Version 1.3.0 had a small fault, found at once on my own desktop: the ticks of the knobs did not show. They were drawn in the
+theme's Mid colour, which in my dark KDE theme is that of the background,
+while the screenshots of the tests use a light palette. They are drawn
+now in the text colour, partly transparent, and a test draws a knob with
+such a dark palette and checks the tick at the top. That was 1.3.1.
+
 Testing
 -------
 
-The program has 204 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 205 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

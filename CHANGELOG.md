@@ -5,6 +5,13 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## 1.3.1 — 2026-11-24
+
+- **The ticks of the pitch knobs show on dark themes.** They were drawn in
+  the theme's Mid colour, which in many dark themes (KDE's NordicDarker,
+  for one) is that of the background; now they are drawn in the text
+  colour, partly transparent, as is the outline of the knobs.
+
 ## 1.3.0 — 2026-11-24
 
 Made for practising: a pause goes back to where playing started, the

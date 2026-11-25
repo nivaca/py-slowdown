@@ -202,14 +202,19 @@ class PitchDial(QDial):
         def point(angle: float, radius: float) -> QPointF:
             return QPointF(center.x() + radius * math.cos(angle), center.y() - radius * math.sin(angle))
 
-        # Las marcas alrededor, una por paso (o cada TICK pasos), más larga la del 0.
-        painter.setPen(QPen(palette.color(group, QPalette.ColorRole.Mid), 1))
+        # Las marcas alrededor, una por paso (o cada TICK pasos), más larga la del 0: del color del texto, algo
+        # transparente (el «Mid» del tema es, en muchos temas oscuros, casi el del fondo, y no se veían).
+        ink = QColor(palette.color(group, QPalette.ColorRole.WindowText))
+        ink.setAlpha(150)
+        painter.setPen(QPen(ink, 1))
         for value in range(self.minimum(), self.maximum() + 1):
             if value % self.tick == 0 or value in (self.minimum(), self.maximum()):
                 inner = face + (1 if value == 0 else 3)
                 painter.drawLine(point(self.angle(value), inner), point(self.angle(value), outer))
         # La cara de la perilla.
-        painter.setPen(QPen(palette.color(group, QPalette.ColorRole.Mid), 1))
+        rim = QColor(ink)
+        rim.setAlpha(90)
+        painter.setPen(QPen(rim, 1))
         painter.setBrush(palette.color(group, QPalette.ColorRole.Button))
         painter.drawEllipse(center, face, face)
         # El indicador: una raya corta en el borde de la cara, lejos del texto del centro.

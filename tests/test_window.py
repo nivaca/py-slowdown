@@ -718,6 +718,27 @@ def test_pitch_knobs_evenly_spaced(window, app):
     assert window.cent_dial.text() == "−45 ¢" and not hasattr(window, "cent_label")
 
 
+def test_knob_ticks_show_on_a_dark_theme(app):
+    """The ticks of the pitch knobs are drawn in the text colour, so they show on a dark theme whose Mid colour is
+    that of the background (as KDE's NordicDarker): they did not, in 1.3.0."""
+    from PySide6.QtGui import QColor, QPalette
+
+    from py_slowdown.window import PitchDial
+
+    dial = PitchDial(" st", 3)
+    dial.setRange(-12, 12)
+    palette = QPalette()
+    for role, rgb in ((QPalette.ColorRole.Window, (46, 52, 64)), (QPalette.ColorRole.Mid, (46, 52, 64)),
+                      (QPalette.ColorRole.Button, (60, 68, 84)), (QPalette.ColorRole.WindowText, (216, 222, 233))):
+        palette.setColor(role, QColor(*rgb))
+    dial.setPalette(palette)
+    dial.setAutoFillBackground(True)
+    image = dial.grab().toImage()
+    # La marca del 0, arriba, entre la cara de la perilla y el borde.
+    top = QColor(image.pixel(dial.width() // 2, 2))
+    assert top.lightness() > QColor(46, 52, 64).lightness() + 40
+
+
 def test_split_pitch():
     from py_slowdown.window import split_pitch
 
