@@ -7,6 +7,10 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Compact mode** (View, Ctrl+Shift+M): only the controls and a short
+  waveform, without the side panels and the status bar, in a small window
+  on top of the others, to practise beside a score; off, the window as it
+  was.
 - **A panel Sound**, at the side of the window, below Bookmarks and loops:
   the channels and the filter (as the menu Hear, the two always agreeing)
   and the equalizer, which is no longer a window of its own. EQ and Hear >

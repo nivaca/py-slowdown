@@ -723,6 +723,7 @@ class Window(QMainWindow):
         except (TypeError, ValueError):
             factor = BOOST
         self.boost_factor = factor if factor in BOOSTS else BOOST  # (por cuánto multiplica el refuerzo)
+        self._normal: tuple | None = None  # en el modo compacto: la ventana de antes (geometría, estado)
         self.eq_gains = equalizer.FLAT  # las cinco bandas, en dB, aunque esté apagado
         self.eq_on = True
 
@@ -1030,6 +1031,7 @@ class Window(QMainWindow):
         self.a_zoom_out = a(tr("Zoom &out"), lambda: self.wave.zoom(0.5), [QKeySequence.StandardKey.ZoomOut])
         self.a_fit = a(tr("&Whole file"), self.wave.fit, ["Ctrl+0"])
         self.a_follow = a(tr("&Follow the position"), self._set_follow, checkable=True)
+        self.a_compact = a(tr("Co&mpact mode"), self.set_compact, ["Ctrl+Shift+M"], checkable=True)
         self.a_follow.setChecked(self.settings.value("follow", True, type=bool))
         self.wave.follow = self.a_follow.isChecked()
         self.a_shortcuts = a(tr("&Keyboard shortcuts"), self.show_shortcuts, ["F1"])
@@ -1111,6 +1113,8 @@ class Window(QMainWindow):
         view.addSeparator()
         view.addAction(self.dock.toggleViewAction())
         view.addAction(self.sound_dock.toggleViewAction())
+        view.addSeparator()
+        view.addAction(self.a_compact)
 
         settings = bar.addMenu(tr("&Settings"))
         settings.addAction(self.a_edit_shortcuts)
@@ -2036,6 +2040,32 @@ class Window(QMainWindow):
         if self.audio is not None:
             self.time_label.setText(self.clock_text(self.player.position, self.audio.duration))
 
+    def set_compact(self, on: bool) -> None:
+        """Compact mode: only the controls and a short waveform, without the side panels and the status bar,
+        always on top (beside the score, say); off, the window as it was."""
+        on = bool(on)
+        if on == (self._normal is not None):
+            return
+        if on:
+            self._normal = (self.saveGeometry(), self.saveState())
+            self.dock.hide()
+            self.sound_dock.hide()
+            self.statusBar().hide()
+            self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+            self.show()  # (cambiar las banderas esconde la ventana)
+            self.resize(max(640, self.transport.sizeHint().width() + 40),
+                        self.menuBar().sizeHint().height() + self.transport.sizeHint().height() + 170)
+        else:
+            geometry, state = self._normal
+            self._normal = None
+            self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
+            self.show()
+            self.restoreGeometry(geometry)
+            self.restoreState(state)
+            self.statusBar().show()
+        if self.a_compact.isChecked() != on:
+            self.a_compact.setChecked(on)
+
     def reset_sound(self) -> None:
         """The recording as it is: speed 100%, its own pitch (the formants off), both channels without a filter,
         the equalizer flat; the volume, which is how loud one listens, stays."""
@@ -2423,6 +2453,8 @@ class Window(QMainWindow):
         if not self.close_file():
             event.ignore()  # (cancelado: el programa sigue)
             return
-        self.settings.setValue("geometry", self.saveGeometry())
-        self.settings.setValue("state", self.saveState())
+        # (compacta, se recuerda la ventana de antes: la próxima vez empieza normal)
+        geometry, state = self._normal if self._normal else (self.saveGeometry(), self.saveState())
+        self.settings.setValue("geometry", geometry)
+        self.settings.setValue("state", state)
         super().closeEvent(event)

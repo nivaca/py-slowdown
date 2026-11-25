@@ -1628,3 +1628,27 @@ def test_the_sound_panel(window, app, wav, tmp_path):
     write(mono, tone(2.0, channels=1))
     loaded(window, app, mono)
     assert not panel.channels.isEnabled()
+
+
+def test_compact_mode(window, app, wav):
+    """View > Compact mode (Ctrl+Shift+M): only the controls and a short waveform, without the side panels and the
+    status bar, on top of other windows; off, the window as it was; closed while compact, the window before is
+    the one remembered."""
+    from PySide6.QtCore import Qt
+
+    loaded(window, app, wav)
+    window.show_equalizer()
+    app.processEvents()
+    before = window.size()
+    window.a_compact.trigger()
+    app.processEvents()
+    assert window.dock.isHidden() and window.sound_dock.isHidden() and window.statusBar().isHidden()
+    assert window.windowFlags() & Qt.WindowType.WindowStaysOnTopHint and window.height() < before.height()
+    assert window.a_compact.shortcut().toString() == "Ctrl+Shift+M"
+    window.a_compact.trigger()
+    app.processEvents()
+    assert not window.dock.isHidden() and not window.sound_dock.isHidden() and not window.statusBar().isHidden()
+    assert not window.windowFlags() & Qt.WindowType.WindowStaysOnTopHint
+    window.a_compact.trigger()
+    window.close()
+    assert window.settings.value("geometry") == window._normal[0]

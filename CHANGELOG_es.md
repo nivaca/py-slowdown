@@ -7,6 +7,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Modo compacto** (Ver, Ctrl+Mayús+M): solo los mandos y una forma de
+  onda baja, sin los paneles del costado ni la barra de estado, en una
+  ventana pequeña encima de las demás, para practicar junto a una
+  partitura; al quitarlo, la ventana como estaba.
 - **Un panel Sonido**, al costado de la ventana, debajo de Marcadores y
   bucles: los canales y el filtro (como el menú Oír, los dos siempre de
   acuerdo) y el ecualizador, que ya no es una ventana aparte. EQ y Oír >
