@@ -5,6 +5,12 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Unreleased
+
+- `tools/zenodo.py`: the description of the deposit leaves out the line
+  that points to the README in other languages and the Screenshots section,
+  whose images Zenodo does not show.
+
 ## 1.5.0 — 2026-11-25
 
 Select the whole file with Ctrl+A, and a Zenodo deposit for each release.

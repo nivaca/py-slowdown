@@ -5,6 +5,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+- `tools/zenodo.py`: la descripción del depósito deja fuera la línea que
+  lleva a los README en otras lenguas y la sección Screenshots, cuyas
+  imágenes Zenodo no muestra.
+
 ## 1.5.0 — 2026-11-25
 
 Seleccionar el archivo entero con Ctrl+A, y un depósito en Zenodo para cada
