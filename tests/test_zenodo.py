@@ -172,6 +172,9 @@ class ZenodoTest(unittest.TestCase):
         (self.root / "README.md").write_text("demo, later\n")
         self.git("commit", "--quiet", "-am", "later")
         self.tool = self.load()
+        # Nunca el llavero de quien corre las pruebas
+        self.keyring = {}
+        self.tool.keyring = self.keyring.get
 
     def tearDown(self):
         os.environ.clear()
@@ -363,6 +366,22 @@ class ZenodoTest(unittest.TestCase):
             "</tbody></table>",
             "<pre><code>uv run demo</code></pre>",
             "<p>A &lt;b&gt; &amp; c</p>"]))
+
+    def test_the_token_from_the_keyring(self):
+        """Without $ZENODO_SANDBOX_TOKEN, the token kept in the keyring (service zenodo-sandbox) is used; with
+        neither, upload stops before sending anything, saying how to keep one."""
+        self.tool.collect(None, packages=False)
+        state = self.serve({})
+        del os.environ["ZENODO_SANDBOX_TOKEN"]
+        with self.assertRaisesRegex(self.tool.Failed, "secret-tool store .* service zenodo-sandbox"):
+            self.tool.upload(sandbox=True, new_version_of=None, dry_run=False)
+        self.assertEqual(state["calls"], [])
+        self.keyring["zenodo"] = "secret"  # (el de zenodo.org no sirve para sandbox)
+        with self.assertRaises(self.tool.Failed):
+            self.tool.token(sandbox=True)
+        self.keyring["zenodo-sandbox"] = "secret"
+        self.assertTrue(self.tool.upload(sandbox=True, new_version_of=None, dry_run=False))
+        self.assertEqual(self.tool.main(["check-token", "--sandbox"]), 0)
 
     def test_dry_run_sends_nothing(self):
         self.tool.collect(None, packages=False)

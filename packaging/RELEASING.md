@@ -131,8 +131,14 @@ first creator), the repository on GitHub, the programming language and the
 development status (`programming_language`, `development_status`). If Zenodo already has a published
 deposit with the same title, the draft is a new version of it, under the
 same concept DOI. The draft is never published by these tools: review it on
-Zenodo and publish it there. The token goes in `$ZENODO_TOKEN` (made at
+Zenodo and publish it there. The token (made at
 https://zenodo.org/account/settings/applications/, with deposit:write and
-deposit:actions). To try the whole thing first, use
-`tools/zenodo.py upload --sandbox`, with a token of sandbox.zenodo.org in
-`$ZENODO_SANDBOX_TOKEN`; `--dry-run` only shows what would be sent.
+deposit:actions) is kept once in the desktop keyring:
+
+    secret-tool store --label="Zenodo token" service zenodo
+
+`$ZENODO_TOKEN`, if it is set, goes before the keyring.
+`tools/zenodo.py check-token` says whether there is one, without showing it.
+To try the whole thing first, use `tools/zenodo.py upload --sandbox`, with a
+token of sandbox.zenodo.org in the keyring as `service zenodo-sandbox` (or in
+`$ZENODO_SANDBOX_TOKEN`); `--dry-run` only shows what would be sent.

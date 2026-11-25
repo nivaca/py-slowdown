@@ -19,6 +19,9 @@ Debian package, the RPM, the wheel and the source, are on
   tag, in HTML. The languages, the copyright, the repository on GitHub, the
   programming language and the development status, which Zenodo's deposit
   API doesn't take, are added to the draft through its records API.
+  The token is taken from `$ZENODO_TOKEN` or, if it isn't set, from the
+  desktop keyring (`secret-tool store --label="Zenodo token" service
+  zenodo`); `tools/zenodo.py check-token` says whether there is one.
 
 ## 1.4.0 — 2026-11-25
 

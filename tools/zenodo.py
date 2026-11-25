@@ -23,8 +23,14 @@ no recibe: los idiomas (las claves "languages" de .zenodo.json), el copyright (e
 autor), la dirección del repositorio en GitHub, el lenguaje de programación y el estado del desarrollo (las claves
 "programming_language" y "development_status"). Si ya hay en Zenodo un depósito
 publicado con el mismo título, hace una versión nueva de él (el DOI de concepto se mantiene); si no, uno nuevo.
-Nunca lo publica: deja un borrador y da su dirección, para revisarlo y publicarlo a mano. El token va en
-$ZENODO_TOKEN ($ZENODO_SANDBOX_TOKEN con --sandbox), con los permisos deposit:write y deposit:actions.
+Nunca lo publica: deja un borrador y da su dirección, para revisarlo y publicarlo a mano.
+
+El token, con los permisos deposit:write y deposit:actions, se toma de $ZENODO_TOKEN ($ZENODO_SANDBOX_TOKEN con
+--sandbox) o, si no está, del llavero del escritorio, donde lo guarda una vez
+
+    secret-tool store --label="Zenodo token" service zenodo
+
+(service zenodo-sandbox, el de sandbox.zenodo.org). check-token dice si hay uno, sin mostrarlo.
 """
 
 from __future__ import annotations
@@ -49,6 +55,8 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "dist" / "zenodo"
 METADATA = ROOT / ".zenodo.json"
 SERVERS = {False: ("https://zenodo.org", "ZENODO_TOKEN"), True: ("https://sandbox.zenodo.org", "ZENODO_SANDBOX_TOKEN")}
+# El servicio con que se guarda el token en el llavero (secret-tool), si no está en la variable
+KEYRING = {False: "zenodo", True: "zenodo-sandbox"}
 
 
 class Failed(Exception):
@@ -578,11 +586,42 @@ def prepare_draft(api: Zenodo, title: str, new_version_of: str | None) -> dict:
     return api.call("GET", f"deposit/depositions/{draft['id']}")
 
 
+def keyring(service: str) -> str | None:
+    """The token kept in the desktop keyring for SERVICE (secret-tool lookup service SERVICE), or None if there is
+    no secret-tool, no keyring or no such entry."""
+    if not shutil.which("secret-tool"):
+        return None
+    try:
+        done = subprocess.run(["secret-tool", "lookup", "service", service], capture_output=True, text=True,
+                              timeout=120, check=False)
+    except subprocess.TimeoutExpired:
+        # (el llavero cerrado pide la contraseña; si nadie la da, se sigue sin token)
+        return None
+    return done.stdout.strip() if done.returncode == 0 and done.stdout.strip() else None
+
+
+def token(sandbox: bool) -> str:
+    """The Zenodo token: $ZENODO_TOKEN ($ZENODO_SANDBOX_TOKEN), or else the one in the keyring."""
+    base, variable = SERVERS[sandbox]
+    found, where = os.environ.get(variable), f"${variable}"
+    if not found:
+        found, where = keyring(KEYRING[sandbox]), f"the keyring (service {KEYRING[sandbox]})"
+    if not found:
+        raise Failed(f"there is no Zenodo token in ${variable} nor in the keyring; make one at "
+                     f"{base}/account/settings/applications/ (with deposit:write and deposit:actions) and keep it "
+                     f'with: secret-tool store --label="Zenodo token" service {KEYRING[sandbox]}')
+    # Un token de Zenodo es ASCII, sin espacios; otra cosa (el "…" de un ejemplo copiado) no llegaría a la cabecera
+    if not found.isascii() or not found.isprintable() or any(c.isspace() for c in found):
+        raise Failed(f"the token in {where} is not a Zenodo token (it has spaces or characters that are not "
+                     f"ASCII); put there the token made at {base}/account/settings/applications/")
+    return found
+
+
 def upload(sandbox: bool, new_version_of: str | None, dry_run: bool) -> str:
     """dist/zenodo/ to a draft on Zenodo; the draft's address (or, with DRY_RUN, nothing sent and "")."""
     version, files = check_deposit()
     data, extra = metadata(version)
-    base, variable = SERVERS[sandbox]
+    base, _variable = SERVERS[sandbox]
     print(f"Deposit of {data['title']} {version} on {base}, as a draft:")
     for path in files:
         print(f"  {path.name}  ({path.stat().st_size:,} bytes)")
@@ -591,15 +630,7 @@ def upload(sandbox: bool, new_version_of: str | None, dry_run: bool) -> str:
     print(json.dumps(extra, indent=2, ensure_ascii=False))
     if dry_run:
         return ""
-    token = os.environ.get(variable)
-    if not token:
-        raise Failed(f"put a Zenodo token in ${variable} (made at {base}/account/settings/applications/, "
-                     "with deposit:write and deposit:actions)")
-    # Un token de Zenodo es ASCII, sin espacios; otra cosa (el "…" de un ejemplo copiado) no llegaría a la cabecera
-    if not token.isascii() or not token.isprintable() or any(c.isspace() for c in token):
-        raise Failed(f"${variable} is not a Zenodo token (it has spaces or characters that are not ASCII); "
-                     f"put in it the token made at {base}/account/settings/applications/")
-    api = Zenodo(base, token)
+    api = Zenodo(base, token(sandbox))
     draft = prepare_draft(api, data["title"], new_version_of)
     for path in files:
         print(f"  uploading {path.name}", flush=True)
@@ -630,10 +661,13 @@ def main(argv=None) -> int:
     c.add_argument("--packages", action="store_true",
                    help="also the files published with the release (those of dist/SHA256SUMS)")
     u = commands.add_parser("upload", help="upload dist/zenodo/ to Zenodo as a draft (never published)")
-    u.add_argument("--sandbox", action="store_true", help="to sandbox.zenodo.org, to try it ($ZENODO_SANDBOX_TOKEN)")
+    u.add_argument("--sandbox", action="store_true", help="to sandbox.zenodo.org, to try it")
     u.add_argument("--new-version-of", metavar="ID", help="the deposit this is a new version of (default: the one "
                                                           "with the same title)")
     u.add_argument("-n", "--dry-run", action="store_true", help="only check dist/zenodo/ and show what would go")
+    t = commands.add_parser("check-token", help="say whether there is a Zenodo token ($ZENODO_TOKEN or the "
+                                                "keyring), without showing it")
+    t.add_argument("--sandbox", action="store_true", help="the token of sandbox.zenodo.org")
     args = parser.parse_args(argv)
     try:
         if args.command == "collect":
@@ -641,6 +675,9 @@ def main(argv=None) -> int:
             print(f"In {OUT.relative_to(ROOT)}/, signed and checked with the published key:")
             for path in files:
                 print(f"  {path.name}")
+        elif args.command == "check-token":
+            token(args.sandbox)
+            print("There is a Zenodo token.")
         else:
             url = upload(args.sandbox, args.new_version_of, args.dry_run)
             if url:
