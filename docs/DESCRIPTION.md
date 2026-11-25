@@ -735,9 +735,10 @@ dragging, which Qt's dial maps evenly, had to be done by the knob itself so
 that the pointer follows the mouse on that uneven scale.
 
 The volume, which went to 150%, now stops at 100%. Boost first let the knob
-go on to 150%; it now multiplies the sound by 1.5 and leaves the knob's
-number as it is. The knob turns red from 82%, where the boosted sound
-passes that of the recording, and a recording kept by 1.3 with a volume
+go on to 150%; it now multiplies the sound and leaves the knob's number as
+it is, by a factor chosen in Settings > Volume boost, 1.8 at first. The
+knob turns red where the boosted sound passes that of the recording (from
+75% with 1.8), and a recording kept by 1.3 with a volume
 above 100% opens boosted, at about the same loudness.
 
 Repeat, with nothing selected, did nothing but show a hint; it now repeats

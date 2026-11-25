@@ -1122,11 +1122,15 @@
     <tr>un doble clic lo devuelve a 100 %</tr>
   </text>
   <text>
-    <en>(boosted: the sound times 1.5)</en>
-    <tr>(reforzado: el sonido por 1,5)</tr>
+    <en>(boosted: the sound times {factor})</en>
+    <tr>(reforzado: el sonido por {factor})</tr>
   </text>
   <text>
-    <en>Volume boost: the sound times 1.5, louder than the recording (it may distort); the knob keeps its number</en>
-    <tr>Refuerzo del volumen: el sonido por 1,5, más fuerte que la grabación (puede distorsionar); la perilla conserva su número</tr>
+    <en>Volume boost: the sound times {factor}, louder than the recording (it may distort); the knob keeps its number. Settings &gt; Volume boost changes how much</en>
+    <tr>Refuerzo del volumen: el sonido por {factor}, más fuerte que la grabación (puede distorsionar); la perilla conserva su número. Configuración &gt; Refuerzo del volumen cambia cuánto</tr>
+  </text>
+  <text>
+    <en>Volume &amp;boost</en>
+    <tr>Re&amp;fuerzo del volumen</tr>
   </text>
 </interface>
