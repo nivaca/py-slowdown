@@ -53,6 +53,7 @@ from .waveform import WaveformView
 APP = "py-slowdown"
 SPEED_STEP = 0.05
 KNOB_GAP = 4  # píxeles entre las perillas de la altura y su botón 0
+SEMITONE_TICK, CENT_TICK = 3, 5  # una marca cada tantos semitonos, o cents, alrededor de su perilla
 MAX_CENTS = 50  # cents, centésimas de semitono, arriba o abajo: más allá, el semitono siguiente
 SPEED_PRESETS = (50, 60, 70, 75, 80, 90, 100, 110, 125, 150)
 COUNT_CHOICES = (1, 2, 3, 4, 5, 6, 7, 8, 12, 16)  # golpes de la cuenta previa, en su menú (el diálogo, de 1 a 16)
@@ -463,7 +464,7 @@ class Window(QMainWindow):
     def _pitch_dial(self, limit: int, unit: str, tip: str) -> PitchDial:
         # Una perilla, de -LIMIT a LIMIT (el 0 arriba), para los semitonos o los cents de la altura, con su valor
         # escrito dentro.
-        dial = PitchDial(unit, 1 if limit <= 12 else 10, self)
+        dial = PitchDial(unit, SEMITONE_TICK if limit <= 12 else CENT_TICK, self)
         dial.setRange(-limit, limit)
         dial.setPageStep(max(1, limit // 4))
         dial.setToolTip(tip)

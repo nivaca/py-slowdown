@@ -710,6 +710,9 @@ def test_pitch_knobs_evenly_spaced(window, app):
     st, ct, zero = window.semitone_dial.geometry(), window.cent_dial.geometry(), window.b_pitch.geometry()
     assert ct.x() - (st.x() + st.width()) == zero.x() - (ct.x() + ct.width())
     assert st.width() == st.height() == 52 and window.b_pitch.text() == "ø"  # (más grandes: su valor va dentro)
+    ticks = [sum(1 for v in range(d.minimum(), d.maximum() + 1) if v % d.tick == 0)
+             for d in (window.semitone_dial, window.cent_dial)]
+    assert ticks == [9, 21]  # (menos marcas en la de los semitonos que en la de los cents)
     window.cent_dial.setValue(-45)
     window.grab()
     assert window.cent_dial.text() == "−45 ¢" and not hasattr(window, "cent_label")
