@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty-four stages.
+in twenty-five stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -792,10 +792,45 @@ Qt's standard icons, of another style and, with some styles, dark on a
 dark theme, were then drawn in the same way, so that the whole row is of
 one hand.
 
+25. Thirteen small things
+-------------------------
+
+After the icons I listed thirteen improvements of the window, small ones,
+and made them one by one, each tested and published on its own. Playback >
+Reset the sound puts speed, pitch, the way of hearing and the equalizer
+back as in the recording at once, leaving the volume. A speed or a pitch
+changed from the keyboard is shown large on the waveform for a moment,
+then fades. The saved loops are drawn at the foot of the waveform, each a
+band of its own colour (from Okabe and Ito's palette, which those who see
+colours badly can tell apart too), and a click on one repeats it. The speed
+knob, dragged, stops at the speeds of the list when it passes within four
+degrees of one; degrees and not percent, so that it feels the same on both
+halves of its uneven scale. A right click on any knob offers its usual
+values, the musical intervals for the semitones. The knobs show that they
+can be turned, a hand over them and their rim lit, and are reached with
+Tab; with the focus, the arrows are theirs and not the window's shortcuts.
+The equalizer draws its curve and has presets, its own for music and the
+user's. Zoomed in, a strip above the waveform shows the whole file. A click
+on the time shows the time left and, with a first beat, the bar and the
+beat, counted from it at the count-in's tempo. Hear and the equalizer
+became a panel Sound at the side, the equalizer no longer a window of its
+own. A compact mode leaves only the controls and a short waveform, always
+on top, to keep beside a score. Without a file, the waveform lists the
+recordings opened last, each with a small picture of its waveform, kept
+with its peaks. And a pinch on a touchpad zooms, as Z zooms to the
+selection.
+
+Two lessons came with them. A test that patched `QMenu.exec` hung the whole
+suite: PySide does not let a patch on the class reach a menu made inside a
+widget, so the menu of a knob is now made by a method of its own, which a
+test can read without opening it. And a Spanish letter of Alt, chosen
+without looking, fell twice on one already taken; the test of every menu's
+letters found both.
+
 Testing
 -------
 
-The program has 221 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 234 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -817,7 +852,10 @@ places of its clicks and its formats; and the loops, the settings kept for
 each file, the `.slx` file of each recording (moved with it, two of the
 same name, a folder chosen, a folder that cannot be written, the `.xml`
 files of 1.2.0, opening it), the first beat and its grid, the keyboard
-shortcuts and the waveform kept for the next time. The player is
+shortcuts and the waveform kept for the next time; and the window's
+details: the menus and the keys of the knobs, the detents of the speed, the
+loops on the waveform, the clock, the panel Sound, the compact mode, the
+start screen and the zoom to the selection. The player is
 tested with a sound card that the tests drive themselves, and the window
 offscreen: opening a file, the controls, a pause that goes back, the volume above 100%, the clicks of the count-in, the speed, the pitch in semitones and cents, the bookmarks, the
 point where it was left, a file that is not audio, the window without
@@ -836,4 +874,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 79 files and about 19,100 lines (12,000 of them in Python).
+The program has 79 files and about 20,700 lines (13,100 of them in Python).
