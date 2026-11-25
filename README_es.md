@@ -30,7 +30,7 @@ Lo que hace
   apretado sigue saltando) y un segundo atrás o adelante. Una pausa lleva
   la posición de vuelta adonde empezó a tocar, para que Espacio toque otra
   vez el mismo pasaje; Mayús+Espacio sigue, en cambio, desde la pausa.
-- Velocidad de 0,25× a 3×, que se cambia mientras suena, sin que cambie la
+- Velocidad de 0,25× a 3× (de 25 a 300 %, en una perilla), que se cambia mientras suena, sin que cambie la
   altura. El estiramiento lo hace la [biblioteca Rubber Band](https://breakfastquay.com/rubberband/),
   con su motor R3 («finer»), el de más calidad, por medio de un enlace
   pequeño, propio de py-slowdown. A 1× el archivo suena tal
@@ -53,7 +53,8 @@ Lo que hace
   menos los graves.
 - Repite una selección sin fin y sin pausa (Mayús+arrastrar sobre la
   forma de onda, o I y O, y luego L): el final del pasaje entra en su
-  principio con un fundido breve, a cualquier velocidad. Las selecciones se
+  principio con un fundido breve, a cualquier velocidad; sin nada
+  seleccionado, se repite el archivo entero. Las selecciones se
   pueden guardar como bucles con un nombre (Mayús+L), para repetirlas de
   nuevo con un doble clic.
 - Cuenta antes de tocar, como un metrónomo (C): se eligen cuántos golpes

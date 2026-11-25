@@ -19,9 +19,10 @@ from pathlib import Path
 from PySide6.QtCore import QPointF, QSettings, QSize, Qt, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QKeySequence, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDial,
+    QDialog,
     QDockWidget,
-    QDoubleSpinBox,
     QFileDialog,
     QHBoxLayout,
     QInputDialog,
@@ -29,7 +30,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
-    QSlider,
+    QPushButton,
     QStyle,
     QTabWidget,
     QToolButton,
@@ -57,7 +58,11 @@ SEMITONE_TICK, CENT_TICK = 3, 5  # una marca cada tantos semitonos, o cents, alr
 MAX_CENTS = 50  # cents, centésimas de semitono, arriba o abajo: más allá, el semitono siguiente
 SPEED_PRESETS = (50, 60, 70, 75, 80, 90, 100, 110, 125, 150)
 COUNT_CHOICES = (1, 2, 3, 4, 5, 6, 7, 8, 12, 16)  # golpes de la cuenta previa, en su menú (el diálogo, de 1 a 16)
-MAX_VOLUME = 150  # por ciento: por encima de 100 sube el sonido de la grabación (en rojo)  # por ciento: las velocidades de siempre del botón
+MAX_VOLUME = 150  # por ciento, con el refuerzo: por encima de 100 sube el sonido de la grabación (en rojo)
+NORMAL_VOLUME = 100  # por ciento, sin el refuerzo: el sonido de la grabación
+SPEED_TICKS = (25, 50, 75, 100, 150, 200, 250, 300)  # por ciento, alrededor de la perilla de la velocidad
+VOLUME_TICKS = (0, 25, 50, 75, 100, 125, 150)
+WARNING = QColor(200, 30, 30)  # lo que pasa de lo normal (el volumen por encima de 100 %)
 
 
 def parse_speeds(text: str) -> list[int] | None:
@@ -148,27 +153,79 @@ def shortcut_rows() -> list[tuple[str, str]]:
     ]
 
 
-class PitchDial(QDial):
-    """A knob for the pitch, drawn as on an amplifier: 0 at the top, a short pointer at the edge of its face and
-    its value written in the middle (+2 st, −15 ¢), with a tick for each step (or each TICK steps) around it.
-    Dragged around, or one step for each notch of the mouse wheel (not three, as Qt's); a double click takes it
-    back to 0."""
+class Knob(QDial):
+    """A knob drawn as on an amplifier: a short pointer at the edge of its face, its value written in the middle
+    (FORMAT gives the text), ticks around it (at TICKS, the one at TOP longer). TOP is the value straight up: the
+    values below it share the left half of the dial and those above it the right half, so a range need not be
+    even around it (the speed: 25% to 100% on the left, 100% to 300% on the right). Dragged around (the pointer
+    follows the mouse), or STEP for each notch of the mouse wheel (not three, as Qt's); a double click goes back to
+    HOME. Values above WARN (if any) are drawn in red."""
 
     SIZE = 52
+    LOWEST, HIGHEST = 240.0, -60.0  # grados de la marca más baja (abajo a la izquierda) y la más alta
 
-    def __init__(self, unit: str, tick: int = 1, parent=None):
+    def __init__(self, format_, ticks=(), top: int | None = None, home: int = 0, step: int = 1,
+                 warn: int | None = None, parent=None):
         super().__init__(parent)
-        self.unit = unit
-        self.tick = tick
+        self.format = format_
+        self.ticks = tuple(ticks)
+        self.top = top
+        self.home = home
+        self.step = step
+        self.warn = warn
         self.setWrapping(False)
         self.setFixedSize(self.SIZE, self.SIZE)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
     def text(self) -> str:
-        """The value as it is written in the knob: +2 st, −15 ¢, 0 st."""
-        value = self.value()
-        sign = "+" if value > 0 else ("−" if value < 0 else "")
-        return f"{sign}{abs(value)}{self.unit}"
+        """The value as it is written in the knob."""
+        return self.format(self.value())
+
+    def _top(self) -> float:
+        # (sin TOP, el valor del medio: la escala pareja de siempre)
+        return self.top if self.top is not None else (self.minimum() + self.maximum()) / 2
+
+    def degrees(self, value: float) -> float:
+        """The angle of VALUE, in degrees counterclockwise from the right: LOWEST at the minimum, 90 (straight
+        up) at TOP, HIGHEST at the maximum."""
+        low, high, top = self.minimum(), self.maximum(), self._top()
+        if value <= top:
+            share = (value - low) / (top - low) if top > low else 1.0
+            return self.LOWEST - share * (self.LOWEST - 90.0)
+        share = (value - top) / (high - top) if high > top else 0.0
+        return 90.0 - share * (90.0 - self.HIGHEST)
+
+    def angle(self, value: int) -> float:
+        """The angle of VALUE in radians (see degrees)."""
+        return math.radians(self.degrees(value))
+
+    def value_at(self, x: float, y: float) -> int:
+        """The value whose pointer is towards the point (X, Y) of the knob; below the knob, the nearest end."""
+        degrees = math.degrees(math.atan2(self.height() / 2 - y, x - self.width() / 2))
+        if degrees < -90.0:
+            degrees += 360.0  # (abajo a la izquierda: de 180 a 270)
+        degrees = min(self.LOWEST, max(self.HIGHEST, degrees))
+        low, high, top = self.minimum(), self.maximum(), self._top()
+        if degrees >= 90.0:
+            value = low + (self.LOWEST - degrees) / (self.LOWEST - 90.0) * (top - low)
+        else:
+            value = top + (90.0 - degrees) / (90.0 - self.HIGHEST) * (high - top)
+        return int(round(value))
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.setValue(self.value_at(event.position().x(), event.position().y()))
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event) -> None:
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            self.setValue(self.value_at(event.position().x(), event.position().y()))
+            event.accept()
+
+    def mouseReleaseEvent(self, event) -> None:
+        event.accept()
 
     def wheelEvent(self, event) -> None:
         # (un panel táctil manda trozos de muesca: se juntan hasta una entera, 120)
@@ -176,19 +233,12 @@ class PitchDial(QDial):
         notches = int(self._turned / 120)
         if notches:
             self._turned -= notches * 120
-            self.setValue(self.value() + notches)
+            self.setValue(self.value() + notches * self.step)
         event.accept()
 
     def mouseDoubleClickEvent(self, event) -> None:
-        self.setValue(0)
+        self.setValue(self.home)
         event.accept()
-
-    def angle(self, value: int) -> float:
-        """The angle (radians, counterclockwise from the right) of VALUE: as QDial measures it, from 240° (the
-        lowest, down on the left) to −60° (the highest, down on the right), 0 at the top; so the pointer follows
-        the mouse."""
-        span = self.maximum() - self.minimum() or 1
-        return (8 * math.pi - (value - self.minimum()) * 10 * math.pi / span) / 6
 
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
@@ -202,14 +252,15 @@ class PitchDial(QDial):
         def point(angle: float, radius: float) -> QPointF:
             return QPointF(center.x() + radius * math.cos(angle), center.y() - radius * math.sin(angle))
 
-        # Las marcas alrededor, una por paso (o cada TICK pasos), más larga la del 0: del color del texto, algo
-        # transparente (el «Mid» del tema es, en muchos temas oscuros, casi el del fondo, y no se veían).
+        # Las marcas alrededor, más larga la de arriba: del color del texto, algo transparente (el «Mid» del tema
+        # es, en muchos temas oscuros, casi el del fondo, y no se veían).
         ink = QColor(palette.color(group, QPalette.ColorRole.WindowText))
         ink.setAlpha(150)
         painter.setPen(QPen(ink, 1))
-        for value in range(self.minimum(), self.maximum() + 1):
-            if value % self.tick == 0 or value in (self.minimum(), self.maximum()):
-                inner = face + (1 if value == 0 else 3)
+        top = self._top()
+        for value in self.ticks:
+            if self.minimum() <= value <= self.maximum():
+                inner = face + (1 if value == top else 3)
                 painter.drawLine(point(self.angle(value), inner), point(self.angle(value), outer))
         # La cara de la perilla.
         rim = QColor(ink)
@@ -217,18 +268,98 @@ class PitchDial(QDial):
         painter.setPen(QPen(rim, 1))
         painter.setBrush(palette.color(group, QPalette.ColorRole.Button))
         painter.drawEllipse(center, face, face)
-        # El indicador: una raya corta en el borde de la cara, lejos del texto del centro.
+        # El indicador: una raya corta en el borde de la cara, lejos del texto del centro; en rojo, más allá de WARN.
+        loud = self.warn is not None and self.value() > self.warn and self.isEnabled()
+        pointer = WARNING if loud else palette.color(group, QPalette.ColorRole.Highlight)
         angle = self.angle(self.value())
-        painter.setPen(QPen(palette.color(group, QPalette.ColorRole.Highlight), 3, Qt.PenStyle.SolidLine,
-                            Qt.PenCapStyle.RoundCap))
+        painter.setPen(QPen(pointer, 3, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
         painter.drawLine(point(angle, face * 0.84), point(angle, face - 1))
         # El valor, en el centro.
         font = painter.font()
         font.setPixelSize(10)
+        font.setBold(loud)
         painter.setFont(font)
-        painter.setPen(palette.color(group, QPalette.ColorRole.ButtonText))
+        painter.setPen(WARNING if loud else palette.color(group, QPalette.ColorRole.ButtonText))
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self.text())
         painter.end()
+
+
+def signed(unit: str):
+    """The text of a knob around 0: +2 st, −15 ¢, 0 st."""
+    def text(value: int) -> str:
+        sign = "+" if value > 0 else ("−" if value < 0 else "")
+        return f"{sign}{abs(value)}{unit}"
+    return text
+
+
+class PitchDial(Knob):
+    """A knob for the pitch, from -N to +N, 0 at the top, a tick every TICK steps; a double click takes it back
+    to 0."""
+
+    def __init__(self, unit: str, tick: int = 1, parent=None):
+        super().__init__(signed(unit), top=0, home=0, step=1, parent=parent)
+        self.unit = unit
+        self.tick = tick
+
+    def setRange(self, low: int, high: int) -> None:
+        super().setRange(low, high)
+        self.ticks = tuple(v for v in range(low, high + 1) if v % self.tick == 0 or v in (low, high))
+
+
+class SaveDialog(QDialog):
+    """Whether to save the changes of a recording before closing it: Save (with an arrow: always for this
+    recording, always for all, never for this one), Discard, or Cancel. ANSWER says which: "save", "discard",
+    "cancel", "always_file", "always_all" or "never_file"."""
+
+    def __init__(self, name: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(APP)
+        self.answer = "cancel"
+        text = QLabel(tr("{name} has changes (bookmarks, loops or how it is played). Save them?", name=name), self)
+        text.setWordWrap(True)
+        icon = QLabel(self)
+        icon.setPixmap(self.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion).pixmap(32, 32))
+        # Guardar es un botón partido: el botón guarda; la flecha de al lado, lo que se hará en adelante.
+        self.save = QToolButton(self)
+        self.save.setText(tr("&Save"))
+        self.save.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        self.save.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        self.save.setMinimumHeight(QPushButton().sizeHint().height())
+        self.save.clicked.connect(lambda: self._done("save"))
+        menu = QMenu(self.save)
+        self.a_always_file = menu.addAction(tr("Always save, for this &recording"), lambda: self._done("always_file"))
+        self.a_always_all = menu.addAction(tr("Always save, for &all recordings"), lambda: self._done("always_all"))
+        self.a_never_file = menu.addAction(tr("&Never save this recording's changes"),
+                                           lambda: self._done("never_file"))
+        self.save.setMenu(menu)
+        discard = QPushButton(tr("&Discard"), self)
+        discard.clicked.connect(lambda: self._done("discard"))
+        cancel = QPushButton(tr("Cancel"), self)
+        cancel.clicked.connect(self.reject)
+        for button in (discard, cancel):
+            button.setAutoDefault(False)
+        top = QHBoxLayout()
+        top.addWidget(icon, 0, Qt.AlignmentFlag.AlignTop)
+        top.addWidget(text, 1)
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        for button in (self.save, discard, cancel):
+            buttons.addWidget(button)
+        layout = QVBoxLayout(self)
+        layout.addLayout(top)
+        layout.addLayout(buttons)
+        self.save.setFocus()
+
+    def _done(self, answer: str) -> None:
+        self.answer = answer
+        self.accept()
+
+    def keyPressEvent(self, event) -> None:
+        # Intro guarda, como el botón por omisión de cualquier diálogo; Esc cancela (el de QDialog).
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self._done("save")
+            return
+        super().keyPressEvent(event)
 
 
 class Window(QMainWindow):
@@ -295,7 +426,8 @@ class Window(QMainWindow):
         state = self.settings.value("state")
         if state is not None:
             self.restoreState(state)
-        self.volume.setValue(int(self.settings.value("volume", 100, type=int)))
+        self.boost.setChecked(self.settings.value("volume_boost", False, type=bool))
+        self.volume.setValue(int(self.settings.value("volume", NORMAL_VOLUME, type=int)))
         self._update_enabled()
         self._check_rubberband()
         self._update_formants()
@@ -308,7 +440,7 @@ class Window(QMainWindow):
         except rubberband.RubberBandError:
             self.stretching = False
             why = tr("The Rubber Band Library is not installed, so the speed stays at 1×.")
-            for widget in (self.speed_slider, self.speed_box, self.b_normal, self.b_speeds, self.semitone_dial,
+            for widget in (self.speed_knob, self.b_normal, self.b_speeds, self.semitone_dial,
                            self.cent_dial, self.b_pitch):
                 widget.setEnabled(False)
                 widget.setToolTip(why)
@@ -371,7 +503,8 @@ class Window(QMainWindow):
         self.b_repeat.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
         self.b_repeat.setCheckable(True)
         self.b_repeat.setAutoRaise(True)
-        self.b_repeat.setToolTip(tr("Repeat the selection without a pause (L); Shift+drag on the waveform selects"))
+        self.b_repeat.setToolTip(tr("Repeat the selection, or the whole file if there is none, without a pause (L); "
+                                    "Shift+drag on the waveform selects"))
         self.b_repeat.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.b_tap = QToolButton(self)
         self.b_tap.setText(tr("Tap"))
@@ -391,40 +524,18 @@ class Window(QMainWindow):
         self.time_label.setToolTip(tr("Position / length"))
         row.addWidget(self.time_label)
         row.addStretch()
-        # El volumen, a la derecha de la primera fila (en la segunda, la altura tiene dos barras).
-        speaker = QLabel(self)
-        speaker.setPixmap(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume).pixmap(20, 20))
-        row.addWidget(speaker)
-        self.volume = QSlider(Qt.Orientation.Horizontal, self)
-        self.volume.setRange(0, MAX_VOLUME)
-        self.volume.setValue(100)
-        self.volume.setMinimumWidth(80)
-        self.volume.setMaximumWidth(130)
-        self.volume.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        row.addWidget(self.volume)
-        self.volume_label = QLabel(self)
-        self.volume_label.setMinimumWidth(self.volume_label.fontMetrics().horizontalAdvance("150%") + 4)
-        row.addWidget(self.volume_label)
-        self._show_volume(100)
         row = QHBoxLayout()
         rows.addLayout(row)
 
         row.addWidget(QLabel(tr("Speed"), self))
-        self.speed_slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.speed_slider.setRange(round(MIN_SPEED * 100), round(MAX_SPEED * 100))
-        self.speed_slider.setSingleStep(5)
-        self.speed_slider.setPageStep(25)
-        self.speed_slider.setValue(100)
-        self.speed_slider.setMinimumWidth(160)
-        self.speed_slider.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.speed_slider.setToolTip(tr("Slower (Down) or faster (Up); the pitch stays the same"))
-        self.speed_box = QDoubleSpinBox(self)
-        self.speed_box.setRange(MIN_SPEED, MAX_SPEED)
-        self.speed_box.setSingleStep(SPEED_STEP)
-        self.speed_box.setDecimals(2)
-        self.speed_box.setSuffix("×")
-        self.speed_box.setValue(1.0)
-        self.speed_box.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        # La velocidad, en por ciento, con 100 % arriba: de 25 a 100 a la izquierda, de 100 a 300 a la derecha.
+        self.speed_knob = Knob(lambda value: f"{value}%", SPEED_TICKS, top=100, home=100,
+                               step=round(SPEED_STEP * 100), parent=self)
+        self.speed_knob.setRange(round(MIN_SPEED * 100), round(MAX_SPEED * 100))
+        self.speed_knob.setPageStep(25)
+        self.speed_knob.setValue(100)
+        self.speed_knob.setToolTip(tr("The speed: slower or faster (Down, Up; the mouse wheel by 5%), the pitch "
+                                      "stays the same; a double click goes back to 100%"))
         self.b_normal = QToolButton(self)
         self.b_normal.setText("1×")
         self.b_normal.setToolTip(tr("Normal speed (N)"))
@@ -437,8 +548,7 @@ class Window(QMainWindow):
         self.speed_menu = QMenu(tr("Spee&d presets"), self)
         self.speed_menu.aboutToShow.connect(self._fill_speed_menu)
         self.b_speeds.setMenu(self.speed_menu)
-        row.addWidget(self.speed_slider)
-        row.addWidget(self.speed_box)
+        row.addWidget(self.speed_knob)
         row.addWidget(self.b_normal)
         row.addWidget(self.b_speeds)
         row.addSpacing(8)
@@ -462,6 +572,23 @@ class Window(QMainWindow):
         row.addLayout(knobs)
         self._show_pitch(0.0)
         row.addSpacing(12)
+
+        # El volumen: hasta 100 % (el sonido de la grabación), o hasta 150 % con el refuerzo, en rojo.
+        speaker = QLabel(self)
+        speaker.setPixmap(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume).pixmap(20, 20))
+        speaker.setToolTip(tr("Volume"))
+        row.addWidget(speaker)
+        self.volume = Knob(lambda value: f"{value}%", VOLUME_TICKS, top=None, home=NORMAL_VOLUME, step=5,
+                           warn=NORMAL_VOLUME, parent=self)
+        self.volume.setRange(0, NORMAL_VOLUME)
+        self.volume.setPageStep(10)
+        self.volume.setValue(NORMAL_VOLUME)
+        row.addWidget(self.volume)
+        self.boost = QCheckBox(tr("Boost"), self)
+        self.boost.setToolTip(tr("Volume boost: up to 150%, louder than the recording (it may distort)"))
+        self.boost.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        row.addWidget(self.boost)
+        self._show_volume(NORMAL_VOLUME)
 
         row.addStretch()
         self._update_skip_tips()
@@ -512,7 +639,7 @@ class Window(QMainWindow):
         self.a_formants = a(tr("&Keep the formants"), self.set_formants, checkable=True)
         self.a_formants.setStatusTip(tr("Keep the formants: when the pitch moves, voices and instruments keep their "
                                         "natural timbre"))
-        self.a_repeat = a(tr("&Repeat the selection"), self._set_repeat, ["L"], checkable=True)
+        self.a_repeat = a(tr("&Repeat (the selection, or the whole file)"), self._set_repeat, ["L"], checkable=True)
         self.a_sel_start = a(tr("Select&ion starts here"), lambda: self.mark_selection(start=True), ["I"])
         self.a_sel_end = a(tr("Selection ends &here"), lambda: self.mark_selection(start=False), ["O"])
         self.a_sel_clear = a(tr("Clear the selecti&on"), lambda: self.set_selection(None), ["Esc"])
@@ -618,6 +745,17 @@ class Window(QMainWindow):
         settings.addAction(self.a_edit_shortcuts)
         settings.addAction(self.a_reopen)
         settings.addAction(self.a_ask_save)
+        # Lo que la grabación abierta tiene por su cuenta (desde la flecha de Guardar, o aquí).
+        self.file_saving_menu = settings.addMenu(tr("Changes of &this recording"))
+        group = QActionGroup(self)
+        self.a_file_saving: dict[str, QAction] = {}
+        for value, name in (("", tr("&As for all recordings")), ("always", tr("A&lways saved")),
+                            ("never", tr("&Never saved"))):
+            action = self.file_saving_menu.addAction(name)
+            action.setCheckable(True)
+            action.triggered.connect(lambda _=False, v=value: self._set_file_saving(v))
+            group.addAction(action)
+            self.a_file_saving[value] = action
         settings.addSeparator()
         files = settings.addMenu(tr("Settings &files of each recording"))
         group = QActionGroup(self)
@@ -676,10 +814,9 @@ class Window(QMainWindow):
         self.b_pitch.clicked.connect(lambda: self.set_pitch(0.0))
         for dial in (self.semitone_dial, self.cent_dial):
             dial.valueChanged.connect(self._pitch_moved)
-        self.speed_slider.valueChanged.connect(lambda v: self.set_speed(v / 100))
-        self.speed_box.valueChanged.connect(self.set_speed)
-        self.speed_box.editingFinished.connect(self.wave.setFocus)
+        self.speed_knob.valueChanged.connect(lambda v: self.set_speed(v / 100))
         self.volume.valueChanged.connect(self._set_volume)
+        self.boost.toggled.connect(self._set_boost)
         self.wave.seekRequested.connect(self.seek)
         self.wave.addBookmarkRequested.connect(self.add_bookmark_at)
         self.wave.removeBookmarkRequested.connect(self.remove_bookmark)
@@ -793,14 +930,21 @@ class Window(QMainWindow):
     def _changed(self) -> bool:
         """Whether the file open has changes not saved yet (only while Ask to save is on: else all is saved as
         it is done)."""
-        return self.audio is not None and self.a_ask_save.isChecked() and self._snapshot() != self._saved
+        return self.audio is not None and self._saving() == "ask" and self._snapshot() != self._saved
+
+    def _saving(self) -> str:
+        """How the changes of the file open are saved: "ask" (on closing it), "always" (as they are made) or
+        "never"; the file's own choice first, else Settings > Ask to save before closing a file."""
+        own = self.store.saving(self.audio.path) if self.audio is not None else ""
+        return own or ("ask" if self.a_ask_save.isChecked() else "always")
 
     def _show_title(self) -> None:
         if self.audio is None:
             self.setWindowTitle(APP)
             return
         mark = "• " if self._changed() else ""  # (cambios sin guardar)
-        title = f"{mark}{self.audio.path.name} — {APP}"
+        never = " " + tr("(changes not saved)") if self._saving() == "never" else ""
+        title = f"{mark}{self.audio.path.name}{never} — {APP}"
         if self.windowTitle() != title:
             self.setWindowTitle(title)
 
@@ -819,12 +963,27 @@ class Window(QMainWindow):
         self._show_title()
 
     def _ask_save(self, name: str) -> str:
-        """Ask whether to save the changes of NAME: "save", "discard" or "cancel"."""
-        buttons = QMessageBox.StandardButton
-        answer = QMessageBox.question(
-            self, APP, tr("{name} has changes (bookmarks, loops or how it is played). Save them?", name=name),
-            buttons.Save | buttons.Discard | buttons.Cancel, buttons.Save)
-        return {buttons.Save: "save", buttons.Discard: "discard"}.get(answer, "cancel")
+        """Ask whether to save the changes of NAME: "save", "discard", "cancel", or, from the arrow of Save,
+        "always_file" (always save this recording's), "always_all" (all recordings') or "never_file"."""
+        dialog = SaveDialog(name, self)
+        dialog.exec()
+        return dialog.answer
+
+    def _set_file_saving(self, saving: str) -> None:
+        """How the changes of the recording open are saved, its own choice: "always", "never", or "" (as for all
+        recordings, Settings > Ask to save before closing a file)."""
+        if self.audio is None:
+            return
+        self.store.set_saving(self.audio.path, saving)
+        if self._saving() == "always" and self._snapshot() != self._saved:
+            self._save_all()  # (lo pendiente, ahora: en adelante se guarda al hacerlo)
+        self._show_file_saving()
+        self._show_title()
+
+    def _show_file_saving(self) -> None:
+        own = self.store.saving(self.audio.path) if self.audio is not None else ""
+        self.a_file_saving[own].setChecked(True)
+        self.file_saving_menu.setEnabled(self.audio is not None)
 
     def _set_reopen(self, on: bool) -> None:
         self.settings.setValue("reopen", on)
@@ -834,14 +993,23 @@ class Window(QMainWindow):
         False if the user cancelled (the file stays open)."""
         if self.audio is None:
             return True
+        path = self.audio.path
         if self._changed():
-            answer = self._ask_save(self.audio.path.name)
+            answer = self._ask_save(path.name)
             if answer == "cancel":
                 return False
-            if answer == "save":
+            if answer == "always_file":
+                self.store.set_saving(path, "always")  # (esta grabación: en adelante, sin preguntar)
+            elif answer == "always_all":
+                self.a_ask_save.setChecked(False)  # (todas: Configuración > Preguntar antes de cerrar, apagado)
+            elif answer == "never_file":
+                self.store.set_saving(path, "never")
+            if answer in ("save", "always_file", "always_all"):
                 self._save_all()
             else:
-                self.store.set_position(self.audio.path, self._position_to_keep())  # (lo demás, como estaba)
+                self.store.set_position(path, self._position_to_keep())  # (lo demás, como estaba)
+        elif self._saving() == "never":
+            self.store.set_position(path, self._position_to_keep())  # (sus cambios no se guardan)
         else:
             self._save_all()
         audio = self.audio
@@ -881,6 +1049,8 @@ class Window(QMainWindow):
             repeat = self.a_repeat.isChecked() if self.selection else self._pending_selection[1]
             if repeat:
                 kept["repeat"] = True
+        elif self.a_repeat.isChecked():
+            kept["repeat"] = True  # (sin selección: el archivo entero)
         if self.volume.value() != 100:
             kept["volume"] = self.volume.value()
         if self.count.on or self.first_beat() is not None:
@@ -924,8 +1094,13 @@ class Window(QMainWindow):
                 start, end = sorted(float(x) for x in selection)
                 # (se elige cuando el archivo esté leído hasta su final: _tick)
                 self._pending_selection = ((start, end), bool(kept.get("repeat", False)))
+            elif kept.get("repeat"):
+                self.a_repeat.setChecked(True)  # (el archivo entero)
             if "volume" in kept:
-                self.volume.setValue(int(min(MAX_VOLUME, max(0, int(kept["volume"])))))
+                volume = int(min(MAX_VOLUME, max(0, int(kept["volume"]))))
+                if volume > NORMAL_VOLUME:
+                    self.boost.setChecked(True)  # (se tocó más fuerte que la grabación: con el refuerzo)
+                self.volume.setValue(volume)
             countin = kept.get("countin")
             if isinstance(countin, dict):
                 self.count.bpm = int(min(MAX_BPM, max(MIN_BPM, int(countin.get("bpm", self.count.bpm)))))
@@ -1231,11 +1406,16 @@ class Window(QMainWindow):
         self.wave.set_selection(self.selection, on)
         self._apply_loop()
         if on and not self.selection:
-            self.statusBar().showMessage(tr("Select a part to repeat: Shift+drag on the waveform, or I and O"), 5000)
+            self.statusBar().showMessage(tr("Repeating the whole file (to repeat only a part, select it: Shift+drag "
+                                            "on the waveform, or I and O)"), 6000)
 
     def _apply_loop(self) -> None:
         if self.audio:
-            loop = self.selection if self.a_repeat.isChecked() else None
+            loop = None
+            if self.a_repeat.isChecked():
+                # Sin selección, el archivo entero, una vez leído (antes, su final no se sabe: _tick lo pone luego).
+                whole = (0.0, self.audio.duration) if self.audio.done else None
+                loop = self.selection or whole
             if loop != self.player.loop:
                 self.player.set_loop(loop)
 
@@ -1273,11 +1453,10 @@ class Window(QMainWindow):
     def set_speed(self, speed: float) -> None:
         speed = min(MAX_SPEED, max(MIN_SPEED, round(float(speed), 2)))
         self.player.speed = speed
-        # Both controls are brought in line without calling this again.
-        for widget, value in ((self.speed_slider, round(speed * 100)), (self.speed_box, speed)):
-            widget.blockSignals(True)
-            widget.setValue(value)
-            widget.blockSignals(False)
+        # The knob is brought in line without calling this again.
+        self.speed_knob.blockSignals(True)
+        self.speed_knob.setValue(round(speed * 100))
+        self.speed_knob.blockSignals(False)
         self.b_normal.setEnabled(speed != 1.0)
 
     def speed_presets(self) -> list[int]:
@@ -1394,21 +1573,19 @@ class Window(QMainWindow):
         self._show_volume(value)
 
     def _show_volume(self, value: int) -> None:
-        """The volume beside its slider, in percent; above 100 (louder than the recording), the slider and the
-        number in red."""
-        loud = value > 100
-        self.volume_label.setText(f"{value}%")
-        red = QColor(200, 30, 30)
-        palette = QPalette(self.palette())  # (la del tema; en rojo, la parte llena de la barra)
-        if loud:
-            palette.setColor(QPalette.ColorRole.Highlight, red)
-        self.volume.setPalette(palette)
-        self.volume_label.setStyleSheet(f"color: {red.name()}; font-weight: bold;" if loud else "")
+        """The volume knob's tooltip; above 100% (louder than the recording, only with Boost) the knob draws its
+        value and pointer in red."""
         tip = tr("Volume: {percent}%", percent=value)
-        if loud:
+        if value > NORMAL_VOLUME:
             tip += " " + tr("(louder than the recording: it may distort)")
-        for widget in (self.volume, self.volume_label):
-            widget.setToolTip(tip)
+        self.volume.setToolTip(tip + "; " + tr("a double click goes back to 100%"))
+        self.volume.update()
+
+    def _set_boost(self, on: bool) -> None:
+        """Volume boost: the knob goes up to 150% (louder than the recording); without it, up to 100%, and a
+        volume above that comes back to 100%."""
+        self.settings.setValue("volume_boost", on)
+        self.volume.setRange(0, MAX_VOLUME if on else NORMAL_VOLUME)  # (Qt baja el valor si pasa del máximo)
 
     def _tick(self) -> None:
         audio = self.audio
@@ -1453,6 +1630,7 @@ class Window(QMainWindow):
             else:
                 self.statusBar().showMessage(self._describe(audio), 0)
             self.wave.viewChanged.emit()
+            self._apply_loop()  # (repetir el archivo entero: ahora se sabe dónde termina)
         elif not audio.done and audio.estimated and audio.length:
             share = min(99, int(100 * audio.decoded / audio.length))
             self.statusBar().showMessage(tr("Reading {name}… {percent}%", name=audio.path.name, percent=share))
@@ -1472,6 +1650,7 @@ class Window(QMainWindow):
 
     def _update_enabled(self) -> None:
         loaded = self.audio is not None
+        self._show_file_saving()
         for widget in (self.b_start, self.b_back, self.b_play, self.b_stop, self.b_forward, self.b_end,
                        self.b_mark, self.b_repeat, self.panel.add_button):
             widget.setEnabled(loaded)
@@ -1513,7 +1692,7 @@ class Window(QMainWindow):
     def _save_bookmarks(self) -> None:
         # En bookmarks.json y, enseguida, en el .slx de la grabación (no solo al cerrarla); con Preguntar antes
         # de cerrar, solo cuando se guarde.
-        if self.audio and not self.a_ask_save.isChecked():
+        if self.audio and self._saving() == "always":
             self.store.set_bookmarks(self.audio.path, self.bookmarks)
             self._write_sidecar()
         self._show_title()
@@ -1586,7 +1765,7 @@ class Window(QMainWindow):
         self.loop_panel.save_button.setEnabled(can)
 
     def _save_loops(self) -> None:
-        if self.audio and not self.a_ask_save.isChecked():
+        if self.audio and self._saving() == "always":
             self.store.set_loops(self.audio.path, self.loops)
             self._write_sidecar()
         self._show_title()

@@ -349,9 +349,9 @@ Abrir reciente}.
 La forma de onda ocupa casi toda la ventana (figura~\ref{fig:window_es}).
 Encima tiene una regla de tiempos; la línea roja es la posición, el punto
 que se oye; lo ya tocado se ve más oscuro. Los marcadores son líneas de
-trazos, con su nombre arriba. Debajo de la forma de onda están los mandos,
-el tiempo y el volumen, y debajo de ellos la velocidad y la altura, en
-semitonos y cents; a la derecha, el panel
+trazos, con su nombre arriba. Debajo de la forma de onda están los mandos y
+el tiempo, y debajo de ellos tres grupos de perillas: la velocidad, la
+altura, en semitonos y cents, y el volumen; a la derecha, el panel
 de los marcadores y los bucles, en dos pestañas, que se puede cerrar, mover
 o dejar flotando (\menu{Ver\then Marcadores y bucles} lo vuelve a
 mostrar). La barra de estado dice
@@ -395,7 +395,7 @@ Los mandos (figura~\ref{fig:controls_es}) son, de izquierda a derecha:
 \begin{description}
 \item[Ir al principio] (\key{Inicio}): el principio del archivo; con la
   cuenta previa encendida y un primer pulso fijado, el primer pulso
-  (sección~\ref{sec:countin}), para que la cuenta lleve a él.
+  (sección~\ref{sec:cuenta}), para que la cuenta lleve a él.
 \item[Atrás] la longitud del salto (\key{←}); con el botón apretado sigue
   retrocediendo, para recorrer el archivo.
 \item[Tocar y pausar] (\key{Espacio}); al pausar, la posición vuelve adonde
@@ -431,10 +431,13 @@ al pie, para distinguirlo de la posición, una línea entera; una pausa después
 tocar la primera vez. \key{S} detiene y vuelve al principio del archivo.
 
 \index{volumen}%
-El volumen es la barra a la derecha de los mandos, con su valor en por ciento al lado.
-Hasta 100\,\% baja el sonido del programa; de allí a 150\,\% lo sube por
-encima del de la grabación, para una que se grabó baja, y la barra y el
-número se ponen en rojo. Lo que pasaría del sonido más fuerte que la
+El volumen es la perilla a la derecha de la altura, con su valor en por
+ciento escrito dentro; la rueda del ratón la mueve de 5 en 5\,\%, y un doble
+clic la devuelve a 100\,\%. Hasta 100\,\% baja el sonido del programa. Con
+\menu{Refuerzo} marcado, a su lado, sigue hasta 150\,\% y sube el sonido por
+encima del de la grabación, para una que se grabó baja; por encima de
+100\,\% el valor y el indicador de la perilla se ponen en rojo. Sin
+\menu{Refuerzo}, un volumen por encima de 100\,\% vuelve a 100. Lo que pasaría del sonido más fuerte que la
 tarjeta puede dar se corta allí, así que una grabación fuerte puede
 entonces distorsionar. El volumen solo cambia lo que se oye, no el audio
 exportado. Se guarda con cada archivo, y uno que se abre por primera vez
@@ -444,9 +447,12 @@ empieza en 100\,\%.
 
 \index{velocidad}%
 La velocidad va de 0,25\,× (cuatro veces más lento) a 3\,× (tres veces más
-rápido). Se cambia con la barra, escribiéndola en la casilla de al lado o
-con las teclas \key{↓} y \key{↑} (o \key{−} y \key{+}), de 0,05 en 0,05;
-\key{N}, o el botón \menu{1×}, vuelve a la velocidad normal. Se puede
+rápido). Se fija con su perilla, en por ciento, escrito dentro: 100\,\% está
+arriba, las velocidades más lentas (de 25 a 100\,\%) en su mitad izquierda y
+las más rápidas (de 100 a 300\,\%) en la derecha. Se gira con el ratón, de 5
+en 5\,\% con cada muesca de la rueda, o con las teclas \key{↓} y \key{↑} (o
+\key{−} y \key{+}), de 5 en 5\,\%; un doble clic en la perilla, \key{N}, o
+el botón \menu{1×}, vuelve a la velocidad normal. Se puede
 cambiar mientras suena; el cambio se oye después de unos 0,15 segundos, el
 sonido que ya estaba preparado a la velocidad anterior.
 
@@ -459,8 +465,7 @@ en por ciento: al principio 50, 60, 70, 75, 80, 90, 100, 110, 125 y 150
 (figura~\ref{fig:speeds_es}). La que suena está marcada. \menu{Cambiar las
 velocidades} cambia la lista: números enteros de 25 a 300, separados por
 comas (\texttt{50, 75, 100, 125}); \menu{Restaurar las de siempre} devuelve
-la primera. El deslizador y la casilla siguen allí para cualquier otra
-velocidad.
+la primera. La perilla sigue allí para cualquier otra velocidad.
 
 \index{calidad}\index{rubber band@Rubber Band}%
 La altura no cambia: una melodía a 0,5\,× suena más despacio, pero en su
@@ -630,10 +635,12 @@ de onda; o, con la posición en su principio, \key{I}, y en su final,
 archivo, o desde su principio); o, con el clic derecho,
 \menu{Seleccionar de aquí al marcador siguiente}. La selección se dibuja
 en verde, también sobre la regla, y la barra de estado dice dónde empieza y
-dónde termina. Luego se activa \menu{Reproducción\then Repetir la
-selección} (\key{L}), o el botón de las dos flechas: cuando la
-reproducción llega al final de la selección, sigue desde su principio
-(figura~\ref{fig:repeat_es}).
+dónde termina. Luego se activa \menu{Reproducción\then Repetir} (\key{L}),
+o el botón de las dos flechas: cuando la reproducción llega al final de la
+selección, sigue desde su principio (figura~\ref{fig:repeat_es}). Sin nada
+seleccionado, se repite el archivo entero: al final, sigue desde el
+principio (una vez leído el archivo hasta el final, cuando se sabe su
+duración).
 
 \index{repetir!sin pausa}%
 Entre el final y el principio no hay pausa ni chasquido: la última
@@ -800,9 +807,26 @@ archivo} marcado (como lo está al principio), lo que se hace en un archivo
 (sus marcadores y bucles, y cómo se toca: velocidad, altura, selección,
 cuenta previa) se guarda solo cuando se pide: con \menu{Archivo\then
 Guardar el .slx} (\key{Ctrl+S}), o al cerrar el archivo, abrir otro o
-salir del programa, cuando este pregunta si guardar los cambios:
-\menu{Guardar}, \menu{Descartar} (el punto donde se dejó el archivo se
-guarda de todos modos) o \menu{Cancelar}, que deja el archivo abierto.
+salir del programa, cuando este pregunta si guardar los cambios
+(figura~\ref{fig:save_es}): \menu{Guardar}, \menu{Descartar} (el punto donde
+se dejó el archivo se guarda de todos modos) o \menu{Cancelar}, que deja el
+archivo abierto.
+
+\shot{save_es}{0.5}{La pregunta antes de cerrar un archivo, y la flecha de Guardar}
+
+\index{guardar!siempre}\index{guardar!nunca}%
+La flecha junto a \menu{Guardar} tiene tres respuestas más, que también se
+recuerdan para la próxima vez: \menu{Guardar siempre, en esta grabación}
+guarda ahora, y desde entonces lo que se hace en esta grabación se guarda a
+medida que se hace, sin preguntar; \menu{Guardar siempre, en todas las
+grabaciones} guarda ahora y desmarca \menu{Preguntar si guardar antes de
+cerrar un archivo}; \menu{No guardar nunca los cambios de esta grabación}
+no guarda nada de ella, ni ahora ni después (el título de la ventana dice
+\menu{(cambios sin guardar)}; solo se guarda el punto donde se dejó), para una
+grabación que debe quedar como está. \menu{Configuración\then Cambios de
+esta grabación} muestra lo que eligió la grabación abierta, y lo cambia:
+\menu{Como en todas las grabaciones} (lo que diga \menu{Preguntar si
+guardar}), \menu{Siempre se guardan} o \menu{Nunca se guardan}.
 Mientras hay cambios sin guardar, el título de la ventana empieza con •.
 Mover la posición no es un cambio. Sin marcarlo, todo se guarda a medida
 que se hace, sin preguntar. \key{Ctrl+W} cierra el archivo y deja abierto

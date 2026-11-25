@@ -117,18 +117,27 @@ def test_pause_goes_back(window, app, wav, output):
     assert window.wave.pause_mark is None
 
 
-def test_volume_up_to_150(window, app, wav, output):
-    """The volume goes up to 150%; above 100 (louder than the recording) the slider's filled part and the
-    number beside it are red, and the sound is clipped at full scale, never wrapped."""
+def test_volume_knob_and_boost(window, app, wav, output):
+    """The volume is a knob, up to 100% (the recording's sound); with Boost up to 150%, where the knob's value and
+    pointer are red and the sound is clipped at full scale, never wrapped; without Boost again, back to 100%."""
     import numpy as np
 
-    assert window.volume.maximum() == 150 and window.volume_label.text() == "100%"
+    from py_slowdown.window import WARNING, Knob
+
+    assert isinstance(window.volume, Knob) and window.volume.maximum() == 100 and window.volume.text() == "100%"
     window.volume.setValue(120)
-    assert window.player.volume == pytest.approx(1.44) and window.volume_label.text() == "120%"
-    assert window.volume.palette().highlight().color().name() == "#c81e1e"
-    assert "c81e1e" in window.volume_label.styleSheet() and "distort" in window.volume.toolTip()
-    assert window.settings.value("volume", type=int) == 120
+    assert window.volume.value() == 100  # (sin el refuerzo, no pasa de 100)
+    window.boost.setChecked(True)
+    assert window.volume.maximum() == 150 and window.settings.value("volume_boost", type=bool)
+    window.volume.setValue(120)
+    assert window.player.volume == pytest.approx(1.44) and window.volume.text() == "120%"
+    assert "distort" in window.volume.toolTip() and window.settings.value("volume", type=int) == 120
+    image = window.volume.grab().toImage()
+    reds = sum(1 for x in range(image.width()) for y in range(image.height())
+               if image.pixelColor(x, y).red() > 150 and image.pixelColor(x, y).green() < 80)
+    assert reds > 10 and WARNING.red() == 200  # (el valor y el indicador, en rojo)
     loaded(window, app, wav)
+    window.boost.setChecked(True)
     window.volume.setValue(150)  # (después de abrir: cada archivo empieza en 100 %)
     window.toggle()
     loudest = 0.0
@@ -136,9 +145,8 @@ def test_volume_up_to_150(window, app, wav, output):
         loudest = max(loudest, float(np.abs(output.pull()).max()))
         time.sleep(0.001)
     assert loudest == pytest.approx(1.0)  # (los golpes de 0,9, a 2,25×, recortados en 1)
-    window.volume.setValue(80)
-    assert window.volume_label.styleSheet() == "" and "distort" not in window.volume.toolTip()
-    assert window.volume.palette().highlight().color() == window.palette().highlight().color()
+    window.boost.setChecked(False)
+    assert window.volume.value() == 100 and "distort" not in window.volume.toolTip()
 
 
 def test_count_in_clicks_menu(window, app):
@@ -162,11 +170,11 @@ def test_count_in_clicks_menu(window, app):
 def test_speed_controls(window, app, wav):
     loaded(window, app, wav)
     window.a_slower.trigger()
-    assert window.player.speed == 0.95 and window.speed_box.value() == 0.95
-    window.speed_slider.setValue(50)
-    assert window.player.speed == 0.5 and window.speed_box.value() == 0.5
+    assert window.player.speed == 0.95 and window.speed_knob.value() == 95 and window.speed_knob.text() == "95%"
+    window.speed_knob.setValue(50)
+    assert window.player.speed == 0.5
     window.a_normal.trigger()
-    assert window.player.speed == 1.0 and window.speed_slider.value() == 100
+    assert window.player.speed == 1.0 and window.speed_knob.value() == 100
     window.set_speed(10)
     assert window.player.speed == 3.0
 
@@ -249,7 +257,7 @@ def test_without_rubberband(app, output, tmp_path, monkeypatch, wav):
     monkeypatch.setattr("py_slowdown.window.Output", type(output))
     settings = QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat)
     w = Window(player=Player(output), store=Store(tmp_path / "b.json"), settings=settings)
-    assert not w.speed_slider.isEnabled() and not w.a_faster.isEnabled()
+    assert not w.speed_knob.isEnabled() and not w.a_faster.isEnabled()
     assert not w.semitone_dial.isEnabled() and not w.cent_dial.isEnabled() and not w.a_higher.isEnabled()
     assert "Rubber Band" in w.statusBar().currentMessage()
     w.change_speed(0.5)
@@ -308,7 +316,8 @@ def test_selection_and_repeat(window, app, wav):
     window.a_repeat.trigger()
     assert window.b_repeat.isChecked() and window.player.loop == pytest.approx((2.0, 3.0))
     window.set_selection(None)
-    assert window.player.loop is None and window.wave.selection is None
+    # Sin selección, se repite el archivo entero (leído ya: el final se sabe)
+    assert window.player.loop == pytest.approx((0.0, 6.0)) and window.wave.selection is None
     # I y O ponen el principio y el final en la posición
     window.seek(1.0)
     window.a_sel_start.trigger()
@@ -592,7 +601,7 @@ def test_each_file_starts_from_the_defaults(window, app, wav, tmp_path):
     assert window.audio.path.name == "other.wav"
     assert window.player.speed == 1.0 and window.player.pitch == 0.0 and not window.player.formants
     assert window.player.hearing == ("both", "none") and window.count.bpm == 100
-    assert (window.semitone_dial.value(), window.cent_dial.value()) == (0, 0) and window.speed_box.value() == 1.0
+    assert (window.semitone_dial.value(), window.cent_dial.value()) == (0, 0) and window.speed_knob.value() == 100
     assert window.volume.value() == 100 and not window.count.on  # (el volumen y la cuenta, como siempre)
     loaded(window, app, wav)  # (el primero, con lo suyo guardado)
     assert window.player.speed == 0.6 and window.player.pitch == pytest.approx(-2.15)
@@ -1138,7 +1147,7 @@ def test_speed_presets(window, app, wav, monkeypatch):
     from py_slowdown import window as window_module
 
     loaded(window, app, wav)
-    assert window.b_speeds.menu() is window.speed_menu and window.speed_slider.isVisible()
+    assert window.b_speeds.menu() is window.speed_menu and window.speed_knob.isVisible()
     playback = next(a.menu() for a in window.menuBar().actions() if a.text() == "&Playback")
     assert window.speed_menu.menuAction() in playback.actions()  # (también en Reproducción)
     window._fill_speed_menu()
@@ -1146,7 +1155,7 @@ def test_speed_presets(window, app, wav, monkeypatch):
     assert [a.text() for a in speeds] == ["50%", "60%", "70%", "75%", "80%", "90%", "100%", "110%", "125%", "150%"]
     assert next(a for a in speeds if a.text() == "100%").isChecked()
     next(a for a in speeds if a.text() == "75%").trigger()
-    assert window.player.speed == 0.75 and window.speed_slider.value() == 75
+    assert window.player.speed == 0.75 and window.speed_knob.value() == 75
     monkeypatch.setattr(window_module.QInputDialog, "getText", lambda *args, **kwargs: ("40, 85%, 120", True))
     window.edit_speed_presets()
     assert window.speed_presets() == [40, 85, 120]
@@ -1205,3 +1214,111 @@ def test_formants_only_with_the_pitch_moved(window, app, wav):
     window.set_pitch(0.0)
     assert not window.a_formants.isEnabled() and window.a_formants.isChecked() and window.player.formants
     assert "QToolButton:checked" in window.transport.styleSheet()
+
+
+def test_the_speed_knob(window, app, wav):
+    """The speed is a knob with 100% straight up: 25% to 100% on its left half, 100% to 300% on its right; the
+    pointer follows the mouse on that uneven scale; the wheel moves it by 5%; a double click goes back to 100%."""
+    from PySide6.QtCore import QPoint, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent, QWheelEvent
+
+    loaded(window, app, wav)
+    knob = window.speed_knob
+    assert knob.degrees(100) == 90.0 and knob.degrees(25) == 240.0 and knob.degrees(300) == -60.0
+    assert knob.degrees(50) == pytest.approx(190.0)  # (un tercio de la mitad izquierda)
+    middle = knob.width() / 2
+    assert knob.value_at(middle, 2) == 100  # (arriba)
+    assert knob.value_at(middle + 20, middle) == 220  # (a la derecha, a 0°: 100 + 200·90/150)
+    assert knob.value_at(middle - 20, middle) == 55  # (a la izquierda, a 180°: 25 + 75·60/150)
+    assert knob.value_at(middle - 5, middle + 30) == 25 and knob.value_at(middle + 5, middle + 30) == 300  # (abajo)
+
+    def wheel(dy):
+        here = QPointF(18, 18)
+        app.sendEvent(knob, QWheelEvent(here, knob.mapToGlobal(here), QPoint(), QPoint(0, dy),
+                                        Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier,
+                                        Qt.ScrollPhase.NoScrollPhase, False))
+
+    wheel(-120)
+    assert window.player.speed == 0.95 and knob.text() == "95%"
+    here = QPointF(middle - 20, middle)
+    app.sendEvent(knob, QMouseEvent(QMouseEvent.Type.MouseButtonPress, here, knob.mapToGlobal(here),
+                                    Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier))
+    assert window.player.speed == 0.55
+    app.sendEvent(knob, QMouseEvent(QMouseEvent.Type.MouseButtonDblClick, here, knob.mapToGlobal(here),
+                                    Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier))
+    assert window.player.speed == 1.0
+
+
+def test_repeat_the_whole_file(window, app, wav, tmp_path):
+    """Repeat without a selection repeats the whole file, once it is read (its end is known); kept with the file."""
+    from py_slowdown import sidecar
+
+    window.a_ask_save.setChecked(False)
+    assert window.open_file(wav)
+    window.a_repeat.setChecked(True)
+    if not window.audio.done:
+        assert window.player.loop is None  # (todavía se lee: no se sabe dónde termina)
+    window.audio.wait(10)
+    window._tick()
+    assert window.player.loop == pytest.approx((0.0, 6.0)) and window.selection is None
+    window.close_file()
+    assert window.store.settings(wav)["repeat"] is True and "selection" not in window.store.settings(wav)
+    assert sidecar.read(sidecar.find(wav)).settings["repeat"] is True
+    loaded(window, app, wav)
+    assert window.a_repeat.isChecked() and window.player.loop == pytest.approx((0.0, 6.0))
+
+
+def test_the_arrow_of_save(window, app, wav, tmp_path, monkeypatch):
+    """The question before closing a file with changes: its Save has an arrow with three choices. Always for this
+    recording saves now and from then on as things are done, without asking; Never for this recording saves
+    nothing of it again (the title says so); Always for all recordings turns Ask to save off. Settings > Changes
+    of this recording shows the recording's choice and takes it back."""
+    from py_slowdown import sidecar
+    from py_slowdown.window import SaveDialog
+    from conftest import tone, write
+
+    dialog = SaveDialog("song.mp3", window)
+    menu = dialog.save.menu()
+    assert dialog.save.popupMode() == dialog.save.ToolButtonPopupMode.MenuButtonPopup
+    assert [a.text() for a in menu.actions()] == ["Always save, for this &recording", "Always save, for &all recordings",
+                                                  "&Never save this recording's changes"]
+    dialog.a_never_file.trigger()
+    assert dialog.answer == "never_file" and dialog.result() == 1
+    dialog.close()
+
+    answers = []
+    monkeypatch.setattr(Window, "_ask_save", lambda self, name: answers.pop(0))
+    loaded(window, app, wav)
+    assert window.file_saving_menu.isEnabled() and window.a_file_saving[""].isChecked()
+    window.add_bookmark_at(1.0)
+    answers.append("always_file")
+    window.close_file()
+    assert window.store.saving(wav) == "always" and [b.time for b in window.store.bookmarks(wav)] == [1.0]
+    loaded(window, app, wav)
+    assert window.a_file_saving["always"].isChecked()
+    window.add_bookmark_at(2.0)  # (guardado al hacerlo, sin preguntar)
+    assert [b.time for b in sidecar.read(sidecar.find(wav)).bookmarks] == [1.0, 2.0] and not window._changed()
+    window.close_file()  # (sin respuestas: no pregunta)
+
+    other = tmp_path / "other.wav"
+    write(other, tone(2.0))
+    loaded(window, app, other)
+    assert window.a_file_saving[""].isChecked()  # (la elección es de cada grabación)
+    window.add_bookmark_at(0.5)
+    answers.append("never_file")
+    window.close_file()
+    assert window.store.saving(other) == "never" and window.store.bookmarks(other) == []
+    loaded(window, app, other)
+    assert "(changes not saved)" in window.windowTitle() and window.a_file_saving["never"].isChecked()
+    window.add_bookmark_at(0.7)
+    assert not window._changed()
+    window.close_file()  # (no pregunta, y no guarda)
+    assert window.store.bookmarks(other) == []
+    loaded(window, app, other)
+    window.a_file_saving[""].trigger()  # (como en todas: vuelve a preguntar)
+    assert window.store.saving(other) == "" and "(changes not saved)" not in window.windowTitle()
+    window.add_bookmark_at(0.9)
+    answers.append("always_all")
+    window.close_file()
+    assert not window.a_ask_save.isChecked() and [b.time for b in window.store.bookmarks(other)] == [0.9]
+    assert answers == [] and not window.file_saving_menu.isEnabled()

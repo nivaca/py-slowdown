@@ -344,9 +344,9 @@ An audio file can also be dropped on the window, or opened with
 The waveform takes most of the window (figure~\ref{fig:window_en}). Above
 it is a ruler of times; the red line is the position, the point that is
 heard; what was already played is darker. The bookmarks are dashed lines,
-with their labels on top. Under the waveform are the controls, the
-time and the volume, and under them the speed and the pitch, in semitones
-and cents; on the right, the panel of the
+with their labels on top. Under the waveform are the controls and the
+time, and under them three groups of knobs: the speed, the pitch, in
+semitones and cents, and the volume; on the right, the panel of the
 bookmarks and the loops, in two tabs, which can be closed, moved or left
 floating (\menu{View\then Bookmarks and loops} brings it back). The status bar says what is being read, and then the format of the
 file: its codec, its sample rate, mono or stereo, and its length.
@@ -422,10 +422,13 @@ foot, so that it can be told from the position, a solid line; a pause after it g
 first started. \key{S} stops and goes back to the start of the file.
 
 \index{volume}%
-The volume is the slider at the right of the controls, with its value in percent beside
-it. Up to 100\,\% it lowers the sound of the program; from there to
-150\,\% it raises it above that of the recording, for one that was
-recorded quietly, and the slider and the number turn red. What would go
+The volume is the knob at the right of the pitch, with its value in percent
+written inside it; the mouse wheel moves it by 5\,\%, and a double click
+brings it back to 100\,\%. Up to 100\,\% it lowers the sound of the
+program. With \menu{Boost} ticked, beside it, it goes on to 150\,\% and
+raises the sound above that of the recording, for one that was recorded
+quietly; above 100\,\% the knob's value and pointer turn red. Without
+\menu{Boost}, a volume above 100\,\% comes back to it. What would go
 above the loudest sound the card can play is cut off there, so a loud
 recording may then distort. The volume only changes what is heard, not
 the audio exported. It is kept with each file, and a file opened for the
@@ -435,10 +438,12 @@ first time starts at 100\,\%.
 
 \index{speed}%
 The speed goes from 0.25\,× (four times slower) to 3\,× (three times
-faster). It is changed with the slider, by writing it in the box beside it,
-or with the keys \key{↓} and \key{↑} (or \key{−} and \key{+}), by
-steps of 0.05; \key{N}, or the button \menu{1×}, brings back the normal
-speed. It can be changed while the recording plays; the change is heard
+faster). It is set with its knob, in percent, written inside it: 100\,\%
+is straight up, the slower speeds (25 to 100\,\%) on its left half and the
+faster ones (100 to 300\,\%) on its right half. It is turned with the mouse,
+by 5\,\% for each notch of the wheel, or with the keys \key{↓} and
+\key{↑} (or \key{−} and \key{+}), by steps of 5\,\%; a double click on
+the knob, \key{N}, or the button \menu{1×}, brings back the normal speed. It can be changed while the recording plays; the change is heard
 after about 0.15 seconds, the sound already prepared at the old speed.
 
 \shot{speeds_en}{0.3}{The speeds of the button Speeds}
@@ -449,8 +454,8 @@ presets}, have a list of speeds chosen beforehand, in percent: at first 50,
 60, 70, 75, 80, 90, 100, 110, 125 and 150 (figure~\ref{fig:speeds_en}). The
 one playing is ticked. \menu{Edit the speeds} changes the list: whole
 numbers from 25 to 300, separated by commas (\texttt{50, 75, 100, 125});
-\menu{Restore the usual speeds} brings back the first one. The slider and
-the box are still there for any other speed.
+\menu{Restore the usual speeds} brings back the first one. The knob is
+still there for any other speed.
 
 \index{quality}\index{rubber band@Rubber Band}%
 The pitch does not change: a melody at 0.5\,× is played more slowly, but in
@@ -617,9 +622,11 @@ waveform; or, with the position at its start, \key{I}, and at its end,
 the start, of the file); or, with a right click, \menu{Select from here to
 the next bookmark}. The selection is drawn in green, also on the ruler,
 and the status bar says where it begins and ends. Then turn on
-\menu{Playback\then Repeat the selection} (\key{L}), or the button with
-the two arrows: when the playing reaches the end of the selection, it goes
-on from its start (figure~\ref{fig:repeat_en}).
+\menu{Playback\then Repeat} (\key{L}), or the button with the two
+arrows: when the playing reaches the end of the selection, it goes on from
+its start (figure~\ref{fig:repeat_en}). With nothing selected, the whole
+file is repeated: at its end, it goes on from its beginning (once the file
+is read to its end, which is when its length is known).
 
 \index{repeat!without a gap}%
 There is no pause and no click between the end and the start: the last
@@ -781,9 +788,24 @@ is at first), what is done to a file (its bookmarks and loops, and how it
 is played: speed, pitch, selection, count-in) is saved only when asked:
 with \menu{File\then Save the .slx} (\key{Ctrl+S}), or when the file is
 closed, another is opened, or the program quits, when the program asks
-whether to save the changes: \menu{Save}, \menu{Discard} (the point where
-the file was left is kept all the same) or \menu{Cancel}, which leaves the
-file open. While there are changes not saved, the title of the window
+whether to save the changes (figure~\ref{fig:save_en}): \menu{Save},
+\menu{Discard} (the point where the file was left is kept all the same) or
+\menu{Cancel}, which leaves the file open.
+
+\shot{save_en}{0.5}{The question before closing a file, and the arrow of Save}
+
+\index{saving!always}\index{saving!never}%
+The arrow beside \menu{Save} has three more answers, which are also kept
+for the next time: \menu{Always save, for this recording} saves now, and
+from then on what is done to this recording is saved as it is done,
+without asking; \menu{Always save, for all recordings} saves now and
+unticks \menu{Ask to save before closing a file}; \menu{Never save this
+recording's changes} saves nothing of it, now or later (the title of the
+window says \menu{(changes not saved)}; only the point where it was left is
+kept), for a recording that should stay as it is.
+\menu{Settings\then Changes of this recording} shows what the recording
+open has chosen, and changes it: \menu{As for all recordings} (what
+\menu{Ask to save} says), \menu{Always saved} or \menu{Never saved}. While there are changes not saved, the title of the window
 begins with •. Moving the position is not a change. Without it ticked,
 everything is saved as it is done, without asking. \key{Ctrl+W} closes the
 file and leaves the program open; \key{Alt+F4} or \key{Ctrl+Q} quits.

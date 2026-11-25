@@ -5,6 +5,26 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Unreleased
+
+- **Repeat without a selection repeats the whole file**: L, or the button
+  with the two arrows, with nothing selected, goes on from the beginning at
+  the end of the file (once it is read to its end). Kept with the file.
+- **The speed is a knob**, as the pitch: its value inside, in percent, 100%
+  straight up, 25–100% on its left half and 100–300% on its right; 5% for
+  each notch of the wheel, a double click back to 100%. The slider and the
+  box beside it go; 1× and Speeds stay.
+- **The volume is a knob too**, beside the pitch, with **Boost**: without
+  it the volume goes up to 100% (the recording's sound), with it up to
+  150%, its value and pointer red above 100%; turned off, the volume comes
+  back to 100%.
+- **The arrow of Save**, in the question before closing a file: Always
+  save, for this recording (from then on saved as it is done, without
+  asking); Always save, for all recordings (Ask to save turned off); Never
+  save this recording's changes (the title says so). Settings > Changes of
+  this recording shows the recording's choice, and takes it back.
+- The Spanish manual pointed to the section of the count-in with a "??".
+
 ## 1.3.1 — 2026-11-24
 
 - **The ticks of the pitch knobs show on dark themes.** They were drawn in

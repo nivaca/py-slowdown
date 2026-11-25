@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty-two stages.
+in twenty-three stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -720,10 +720,45 @@ while the screenshots of the tests use a light palette. They are drawn
 now in the text colour, partly transparent, and a test draws a knob with
 such a dark palette and checks the tick at the top. That was 1.3.1.
 
+23. Knobs for the speed and the volume, and the arrow of Save
+-------------------------------------------------------------
+
+After the pitch, the speed and the volume became knobs too, so that the
+three settings one turns while practising look and work the same: the
+value written inside, the wheel by steps, a double click back to the usual
+value. The knob of the pitch was made a general one. The speed had a
+problem the pitch did not have: 100% is not in the middle of 25% to 300%,
+and a knob with 100% at the bottom right of its travel would hide the
+setting used most. So the knob puts a value straight up and spreads the
+values below it over the left half and those above it over the right half;
+dragging, which Qt's dial maps evenly, had to be done by the knob itself so
+that the pointer follows the mouse on that uneven scale. The volume, which
+went to 150%, now stops at 100% unless Boost is ticked, and its knob turns
+red above 100%.
+
+Repeat, with nothing selected, did nothing but show a hint; it now repeats
+the whole file. Its end is known only once the file is read, so the loop is
+set then, if Repeat was turned on before.
+
+The question before closing a file got an arrow on Save, with three
+answers kept for the next time: always save this recording's changes,
+always save every recording's (which is Ask to save turned off), or never
+save this recording's. The choice of a recording is kept in
+`bookmarks.json`, and Settings > Changes of this recording shows it and
+takes it back; a recording that never saves says so in the title. Qt's
+message box cannot have a button with an arrow, so the question became a
+small dialog of its own.
+
+While testing this I found that `uv run pytest` had been running the tests
+against the program installed on the system, not the source: the virtual
+environment had moved with the folder, and its `pytest` still pointed to
+the old place. `tools/test.py`, which runs `python -m pytest`, was not
+affected.
+
 Testing
 -------
 
-The program has 205 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 208 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -763,4 +798,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 76 files and about 17,800 lines (11,200 of them in Python).
+The program has 76 files and about 18,300 lines (11,500 of them in Python).

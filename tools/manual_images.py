@@ -151,6 +151,30 @@ def shoot(lang: str, audio: Path, folder: Path):
     w._fill_speed_menu()
     menu_shot(app, w.speed_menu, "speeds", lang)
 
+    # La pregunta antes de cerrar, con la flecha de Guardar abierta: el diálogo y su menú, juntos.
+    from PySide6.QtGui import QPainter, QPixmap
+    from py_slowdown.window import SaveDialog
+
+    dialog = SaveDialog("song.flac" if lang == "en" else "canción.flac", w)
+    dialog.show()
+    settle(app)
+    menu = dialog.save.menu()
+    menu.popup(dialog.save.mapToGlobal(dialog.save.rect().bottomLeft()))
+    settle(app)
+    shot, opened = dialog.grab(), menu.grab()
+    below = dialog.save.mapTo(dialog, dialog.save.rect().bottomLeft())
+    picture = QPixmap(max(shot.width(), below.x() + opened.width()), below.y() + opened.height())
+    picture.fill(dialog.palette().window().color())
+    painter = QPainter(picture)
+    painter.drawPixmap(0, 0, shot)
+    painter.drawPixmap(below.x(), below.y(), opened)
+    painter.end()
+    path = OUT / f"save_{lang}.png"
+    picture.save(str(path))
+    print(f"Wrote {path.relative_to(ROOT)}")
+    menu.hide()
+    dialog.close()
+
     # Oír: solo los graves, de los dos canales.
     w.set_hearing("both", "bass")
     menu_shot(app, w.hear_menu, "menu_hear", lang)

@@ -5,6 +5,29 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+- **Repetir sin selección repite el archivo entero**: L, o el botón de las
+  dos flechas, sin nada seleccionado, sigue desde el principio al llegar al
+  final del archivo (una vez leído hasta el final). Se guarda con el
+  archivo.
+- **La velocidad es una perilla**, como la altura: su valor dentro, en por
+  ciento, 100 % arriba, de 25 a 100 % en su mitad izquierda y de 100 a
+  300 % en la derecha; 5 % por cada muesca de la rueda, un doble clic la
+  devuelve a 100 %. La barra y la casilla de al lado se van; 1× y
+  Velocidades se quedan.
+- **El volumen también es una perilla**, junto a la altura, con
+  **Refuerzo**: sin él el volumen llega a 100 % (el sonido de la
+  grabación), con él a 150 %, con el valor y el indicador en rojo por
+  encima de 100 %; al quitarlo, el volumen vuelve a 100 %.
+- **La flecha de Guardar**, en la pregunta antes de cerrar un archivo:
+  Guardar siempre, en esta grabación (desde entonces se guarda al hacerlo,
+  sin preguntar); Guardar siempre, en todas las grabaciones (se apaga
+  Preguntar si guardar); No guardar nunca los cambios de esta grabación (el
+  título lo dice). Configuración > Cambios de esta grabación muestra la
+  elección de la grabación, y la deshace.
+- El manual en español remitía a la sección de la cuenta previa con un «??».
+
 ## 1.3.1 — 2026-11-24
 
 - **Las marcas de las perillas de la altura se ven en los temas oscuros.**

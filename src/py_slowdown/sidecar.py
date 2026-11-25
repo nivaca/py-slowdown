@@ -166,6 +166,8 @@ def read(path: Path) -> FileState | None:
             settings["selection"] = [start, end]
             if _flag(selection, "repeat"):
                 settings["repeat"] = True
+    if "selection" not in settings and _flag(root.find("repeat"), "whole"):
+        settings["repeat"] = True  # (sin selección: el archivo entero)
     countin = root.find("countin")
     if countin is not None:
         # (apagada, se guarda igual si hay un primer pulso: su tempo es el de la pieza)
@@ -211,6 +213,8 @@ def save(audio: Path, state: FileState, folder: Path | None = None) -> Path:
         start, end = settings["selection"]
         ET.SubElement(root, "selection", start=_text(start), end=_text(end),
                       repeat="true" if settings.get("repeat") else "false")
+    elif settings.get("repeat"):
+        ET.SubElement(root, "repeat", whole="true")
     countin = settings.get("countin")
     if countin:
         ET.SubElement(root, "countin", on="true" if countin.get("on", True) else "false",

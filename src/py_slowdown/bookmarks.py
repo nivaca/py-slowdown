@@ -111,6 +111,18 @@ class Store:
         self._tidy(audio_path)
         self.save()
 
+    def saving(self, audio_path) -> str:
+        """How the changes of this file are saved, if the user chose it for it: "always", "never", or "" (as
+        Settings > Ask to save says for all)."""
+        value = self._files.get(self.key(audio_path), {}).get("saving", "")
+        return value if value in ("always", "never") else ""
+
+    def set_saving(self, audio_path, saving: str) -> None:
+        entry = self._files.setdefault(self.key(audio_path), {})
+        entry["saving"] = saving if saving in ("always", "never") else ""
+        self._tidy(audio_path)
+        self.save()
+
     def settings(self, audio_path) -> dict:
         """What was kept of how the file was played (see Window): {} if nothing."""
         value = self._files.get(self.key(audio_path), {}).get("settings", {})
@@ -138,7 +150,7 @@ class Store:
         # Un archivo sin marcadores y leído desde el principio no ocupa lugar.
         key = self.key(audio_path)
         entry = self._files.get(key, {})
-        for name in ("bookmarks", "loops", "settings"):
+        for name in ("bookmarks", "loops", "settings", "saving"):
             if not entry.get(name):
                 entry.pop(name, None)
         if not entry.get("position"):

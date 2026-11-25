@@ -29,7 +29,7 @@ What it does
   going), and one second back or forward. A pause takes the position back
   to where playing started, so that Space plays the same passage again;
   Shift+Space continues from the pause instead.
-- Speed from 0.25× to 3×, changed while it plays, with the pitch kept. The
+- Speed from 0.25× to 3× (25% to 300%, on a knob), changed while it plays, with the pitch kept. The
   stretching is done by the [Rubber Band Library](https://breakfastquay.com/rubberband/),
   with its R3 ("finer") engine, its highest quality, called through a small
   binding of py-slowdown's own. At 1× the file is
@@ -50,7 +50,8 @@ What it does
   bass, or everything but the bass.
 - Repeats a selection without end and without a gap (Shift+drag on the
   waveform, or I and O, then L): the end of the passage runs into its
-  start through a short fade, at any speed. Selections can be kept as
+  start through a short fade, at any speed; with nothing selected, the whole
+  file is repeated. Selections can be kept as
   loops with a name (Shift+L), to repeat them again with a double click.
 - Counts in before playing, as a metronome (C): the number of clicks and
   the tempo are chosen, and the tempo can follow the speed; the tempo can

@@ -288,10 +288,6 @@
     <tr>Velocidad</tr>
   </text>
   <text>
-    <en>Slower (Down) or faster (Up); the pitch stays the same</en>
-    <tr>Más lento (Abajo) o más rápido (Arriba); la altura no cambia</tr>
-  </text>
-  <text>
     <en>Normal speed (N)</en>
     <tr>Velocidad normal (N)</tr>
   </text>
@@ -500,10 +496,6 @@
     <tr>&amp;Seguir la velocidad</tr>
   </text>
   <text>
-    <en>&amp;Repeat the selection</en>
-    <tr>Repet&amp;ir la selección</tr>
-  </text>
-  <text>
     <en>&amp;Tempo:</en>
     <tr>&amp;Tempo:</tr>
   </text>
@@ -542,14 +534,6 @@
   <text>
     <en>Repeat the selection</en>
     <tr>Repetir la selección</tr>
-  </text>
-  <text>
-    <en>Repeat the selection without a pause (L); Shift+drag on the waveform selects</en>
-    <tr>Repetir la selección sin pausa (L); Mayús+arrastrar sobre la forma de onda selecciona</tr>
-  </text>
-  <text>
-    <en>Select a part to repeat: Shift+drag on the waveform, or I and O</en>
-    <tr>Seleccione una parte para repetir: Mayús+arrastrar sobre la forma de onda, o I y O</tr>
   </text>
   <text>
     <en>Select from here to the next bookmark</en>
@@ -1068,5 +1052,77 @@
   <text>
     <en>Write whole numbers from 25 to 300, separated by commas: 50, 75, 100, 125.</en>
     <tr>Escriba números enteros de 25 a 300, separados por comas: 50, 75, 100, 125.</tr>
+  </text>
+  <text>
+    <en>&amp;As for all recordings</en>
+    <tr>&amp;Como en todas las grabaciones</tr>
+  </text>
+  <text>
+    <en>&amp;Discard</en>
+    <tr>&amp;Descartar</tr>
+  </text>
+  <text>
+    <en>&amp;Never save this recording's changes</en>
+    <tr>&amp;No guardar nunca los cambios de esta grabación</tr>
+  </text>
+  <text>
+    <en>&amp;Never saved</en>
+    <tr>&amp;Nunca se guardan</tr>
+  </text>
+  <text>
+    <en>&amp;Repeat (the selection, or the whole file)</en>
+    <tr>Repet&amp;ir (la selección, o el archivo entero)</tr>
+  </text>
+  <text>
+    <en>&amp;Save</en>
+    <tr>&amp;Guardar</tr>
+  </text>
+  <text>
+    <en>(changes not saved)</en>
+    <tr>(cambios sin guardar)</tr>
+  </text>
+  <text>
+    <en>A&amp;lways saved</en>
+    <tr>&amp;Siempre se guardan</tr>
+  </text>
+  <text>
+    <en>Always save, for &amp;all recordings</en>
+    <tr>Guardar siempre, en &amp;todas las grabaciones</tr>
+  </text>
+  <text>
+    <en>Always save, for this &amp;recording</en>
+    <tr>Guardar siempre, en esta &amp;grabación</tr>
+  </text>
+  <text>
+    <en>Boost</en>
+    <tr>Refuerzo</tr>
+  </text>
+  <text>
+    <en>Changes of &amp;this recording</en>
+    <tr>Cambios de &amp;esta grabación</tr>
+  </text>
+  <text>
+    <en>Repeat the selection, or the whole file if there is none, without a pause (L); Shift+drag on the waveform selects</en>
+    <tr>Repetir la selección, o el archivo entero si no hay, sin pausa (L); Mayús+arrastrar sobre la forma de onda selecciona</tr>
+  </text>
+  <text>
+    <en>Repeating the whole file (to repeat only a part, select it: Shift+drag on the waveform, or I and O)</en>
+    <tr>Se repite el archivo entero (para repetir solo una parte, selecciónela: Mayús+arrastrar sobre la forma de onda, o I y O)</tr>
+  </text>
+  <text>
+    <en>The speed: slower or faster (Down, Up; the mouse wheel by 5%), the pitch stays the same; a double click goes back to 100%</en>
+    <tr>La velocidad: más lenta o más rápida (Abajo, Arriba; la rueda del ratón, de 5 en 5 %), sin cambiar la altura; un doble clic la devuelve a 100 %</tr>
+  </text>
+  <text>
+    <en>Volume</en>
+    <tr>Volumen</tr>
+  </text>
+  <text>
+    <en>Volume boost: up to 150%, louder than the recording (it may distort)</en>
+    <tr>Refuerzo del volumen: hasta 150 %, más fuerte que la grabación (puede distorsionar)</tr>
+  </text>
+  <text>
+    <en>a double click goes back to 100%</en>
+    <tr>un doble clic lo devuelve a 100 %</tr>
   </text>
 </interface>
