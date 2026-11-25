@@ -26,7 +26,9 @@ What it does
   A long file can be played while it is still being read.
 - Play, pause, stop, go to the start or to the end, back and forward (by a
   skip length chosen in Settings, 1 to 60 seconds; hold the button to keep
-  going), and one second back or forward.
+  going), and one second back or forward. A pause takes the position back
+  to where playing started, so that Space plays the same passage again;
+  Shift+Space continues from the pause instead.
 - Speed from 0.25× to 3×, changed while it plays, with the pitch kept. The
   stretching is done by the [Rubber Band Library](https://breakfastquay.com/rubberband/),
   with its R3 ("finer") engine, its highest quality, called through a small
@@ -64,7 +66,7 @@ What it does
   at once. All that is also written in a file with the recording's name and
   the extension `.slx` (`song.slx` for `song.mp3`), beside it or in a
   folder chosen, so that it travels with the recording; opening the `.slx`
-  opens the recording. It can also reopen the last file when it starts
+  opens the recording. File > Save the .slx (Ctrl+S) writes it at once. It can also reopen the last file when it starts
   (Settings > Reopen the last file when starting).
 - The keyboard shortcuts can be changed (Settings > Keyboard shortcuts),
   also for a foot pedal that sends keys.
@@ -75,7 +77,8 @@ Keyboard
 
 | Action                         | Keys                             |
 |--------------------------------|----------------------------------|
-| Play / pause                   | Space                            |
+| Play / pause (and go back)     | Space                            |
+| Continue from the pause        | Shift+Space                      |
 | Stop and go back to the start  | S                                |
 | Go to the start / end          | Home / End                       |
 | Back / forward (skip length)   | ← / →                            |
@@ -95,6 +98,7 @@ Keyboard
 | Tap the tempo (with the beat)  | T                                |
 | The first beat is here         | Shift+C                          |
 | Open a file                    | Ctrl+O                           |
+| Save the .slx                  | Ctrl+S                           |
 | Export the audio               | Ctrl+E                           |
 
 These are the keys of always; Settings > Keyboard shortcuts changes them.

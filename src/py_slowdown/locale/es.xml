@@ -16,6 +16,30 @@
     <tr>Abrir &amp;reciente</tr>
   </text>
   <text>
+    <en>&amp;Save the .slx</en>
+    <tr>&amp;Guardar el .slx</tr>
+  </text>
+  <text>
+    <en>Save the .slx</en>
+    <tr>Guardar el .slx</tr>
+  </text>
+  <text>
+    <en>Saved {path}</en>
+    <tr>Guardado: {path}</tr>
+  </text>
+  <text>
+    <en>Volume: {percent}%</en>
+    <tr>Volumen: {percent} %</tr>
+  </text>
+  <text>
+    <en>(louder than the recording: it may distort)</en>
+    <tr>(más alto que la grabación: puede distorsionar)</tr>
+  </text>
+  <text>
+    <en>C&amp;licks</en>
+    <tr>&amp;Golpes</tr>
+  </text>
+  <text>
     <en>&amp;Close</en>
     <tr>&amp;Cerrar</tr>
   </text>
@@ -30,6 +54,22 @@
   <text>
     <en>&amp;Play/Pause</en>
     <tr>&amp;Tocar/Pausa</tr>
+  </text>
+  <text>
+    <en>&amp;Continue from the pause</en>
+    <tr>Seguir desde la pausa</tr>
+  </text>
+  <text>
+    <en>Continue from the last pause</en>
+    <tr>Seguir desde la última pausa</tr>
+  </text>
+  <text>
+    <en>Paused at {time}; back to {start} (Shift+Space continues from the pause)</en>
+    <tr>Pausa en {time}; de vuelta en {start} (Mayús+Espacio sigue desde la pausa)</tr>
+  </text>
+  <text>
+    <en>Shift+Space</en>
+    <tr>Mayús+Espacio</tr>
   </text>
   <text>
     <en>&amp;Stop</en>
@@ -204,8 +244,8 @@
     <tr>Tocar (Espacio)</tr>
   </text>
   <text>
-    <en>Pause (Space)</en>
-    <tr>Pausa (Espacio)</tr>
+    <en>Pause and go back to where it started (Space); Shift+Space continues from the pause</en>
+    <tr>Pausar y volver adonde empezó (Espacio); Mayús+Espacio sigue desde la pausa</tr>
   </text>
   <text>
     <en>Stop and go back to the start (S)</en>
@@ -230,10 +270,6 @@
   <text>
     <en>Normal speed (N)</en>
     <tr>Velocidad normal (N)</tr>
-  </text>
-  <text>
-    <en>Volume</en>
-    <tr>Volumen</tr>
   </text>
   <text>
     <en>Back {n} s (Left); hold to keep going</en>
@@ -320,8 +356,8 @@
     <tr>Acerca de py-slowdown</tr>
   </text>
   <text>
-    <en>Play or pause</en>
-    <tr>Tocar o pausar</tr>
+    <en>Play, or pause and go back to where it started</en>
+    <tr>Tocar, o pausar y volver adonde empezó</tr>
   </text>
   <text>
     <en>Stop and go back to the start</en>

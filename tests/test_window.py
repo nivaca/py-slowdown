@@ -57,6 +57,100 @@ def test_open_play_and_bookmarks(window, app, wav, output):
     assert [b.label for b in window.store.bookmarks(wav)] == ["the end part"]
 
 
+def test_pause_goes_back(window, app, wav, output):
+    """For practising: Space pauses and takes the position back to where playing started, to hear the passage
+    again; Continue from the pause (Shift+Space) goes on from where it was paused, and pausing then goes back to
+    the same start. Moved while it plays, it goes back to the new place; at the end of the file, too."""
+
+    def play_for(seconds):
+        # (la tarjeta falsa pide sonido hasta que la posición avanza SECONDS, o el archivo se acaba)
+        until = window.player.position + seconds
+        for _ in range(3000):
+            output.pull()
+            time.sleep(0.001)
+            if window.player.position >= until or window.player.ended:
+                break
+        app.processEvents()
+
+    loaded(window, app, wav)
+    assert not window.a_continue.isEnabled()
+    window.seek(1.0)
+    window.toggle()
+    play_for(1.0)
+    paused = window.player.position
+    assert paused > 1.5
+    window.toggle()
+    assert not window.player.playing and window.player.position == pytest.approx(1.0)
+    assert window._paused_at == pytest.approx(paused) and window.a_continue.isEnabled()
+    window.toggle()  # (otra vez el mismo pasaje)
+    play_for(0.5)
+    window.toggle()
+    assert window.player.position == pytest.approx(1.0)
+    # Seguir desde la pausa, como antes; pausar vuelve al principio de siempre
+    window.a_continue.trigger()
+    assert window.player.playing and window.player.position >= window._paused_at - 0.01
+    resumed = window._paused_at
+    play_for(0.5)
+    window.toggle()
+    assert window.player.position == pytest.approx(1.0) and window._paused_at > resumed
+    # Llevada a otro lugar mientras suena: vuelve allí
+    window.toggle()
+    window.seek(3.0)
+    play_for(0.3)
+    window.toggle()
+    assert window.player.position == pytest.approx(3.0)
+    # Al final del archivo, también vuelve
+    window.seek(5.5)
+    window.toggle()
+    play_for(1.0)
+    window._tick()
+    assert not window.player.playing and window.player.position == pytest.approx(5.5)
+    window.stop()
+    assert window.player.position == 0.0 and not window.a_continue.isEnabled()
+
+
+def test_volume_up_to_150(window, app, wav, output):
+    """The volume goes up to 150%; above 100 (louder than the recording) the slider's filled part and the
+    number beside it are red, and the sound is clipped at full scale, never wrapped."""
+    import numpy as np
+
+    assert window.volume.maximum() == 150 and window.volume_label.text() == "100%"
+    window.volume.setValue(120)
+    assert window.player.volume == pytest.approx(1.44) and window.volume_label.text() == "120%"
+    assert window.volume.palette().highlight().color().name() == "#c81e1e"
+    assert "c81e1e" in window.volume_label.styleSheet() and "distort" in window.volume.toolTip()
+    assert window.settings.value("volume", type=int) == 120
+    window.volume.setValue(150)
+    loaded(window, app, wav)
+    window.toggle()
+    loudest = 0.0
+    for _ in range(300):
+        loudest = max(loudest, float(np.abs(output.pull()).max()))
+        time.sleep(0.001)
+    assert loudest == pytest.approx(1.0)  # (los golpes de 0,9, a 2,25×, recortados en 1)
+    window.volume.setValue(80)
+    assert window.volume_label.styleSheet() == "" and "distort" not in window.volume.toolTip()
+    assert window.volume.palette().highlight().color() == window.palette().highlight().color()
+
+
+def test_count_in_clicks_menu(window, app):
+    """Count-in > Clicks: how many clicks the count-in gives (4 at first), the one chosen ticked; the dialog's
+    number is the same, and one chosen there that is not in the list is added to it."""
+    menu = {a.text(): a.menu() for a in window.menuBar().actions()}["&Count-in"]
+    assert window.clicks_menu in [a.menu() for a in menu.actions()]
+    window._fill_clicks_menu()
+    ticked = [a.text() for a in window.clicks_menu.actions() if a.isChecked()]
+    assert ticked == ["4"] and window.count.beats == 4
+    next(a for a in window.clicks_menu.actions() if a.text() == "3").trigger()
+    assert window.count.beats == 3 and "3 clicks" in window.a_count.statusTip()
+    from py_slowdown.countin import CountIn
+
+    assert CountIn.load(window.settings).beats == 3
+    window.set_count_beats(10)
+    window._fill_clicks_menu()
+    assert [a.text() for a in window.clicks_menu.actions() if a.isChecked()] == ["10"]
+
+
 def test_speed_controls(window, app, wav):
     loaded(window, app, wav)
     window.a_slower.trigger()

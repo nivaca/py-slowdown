@@ -388,7 +388,8 @@ The controls (figure~\ref{fig:controls_en}) are, from the left:
 \item[Go to the start] (\key{Home}).
 \item[Back] by the skip length (\key{←}); held down, it keeps going back,
   to run through the file.
-\item[Play and pause] (\key{Space}).
+\item[Play and pause] (\key{Space}); pausing takes the position back to
+  where playing started (below).
 \item[Stop] and go back to the start (\key{S}).
 \item[Forward] by the skip length (\key{→}); held down, it keeps going.
 \item[Go to the end] (\key{End}).
@@ -401,12 +402,29 @@ The controls (figure~\ref{fig:controls_en}) are, from the left:
 The skip length is 5 seconds unless another is chosen in
 \menu{Settings\then Skip length} (1 to 60 seconds).
 \key{Shift+←} and \key{Shift+→} go back and forward one second, which is
-what is most often needed when working out a passage. At the end of the file the
-playing stops; \key{Space} then plays it again from the start.
+what is most often needed when working out a passage.
+
+\index{pause}\index{position!after a pause}\index{continue from the pause}%
+A pause takes the position back to where playing started, so that
+\key{Space} again plays the same passage from the same place, as many
+times as needed: the line on the waveform goes back there, and the status
+bar says where it was paused. If the position is moved while the recording
+plays (a click on the waveform, a bookmark, the arrows), the place to go
+back to is that new one; with a selection repeated, it is always inside
+the selection. At the end of the file the playing stops, and the position
+also goes back. To go on from where it was paused instead, as a usual
+player does, there is \menu{Playback\then Continue from the pause}
+(\key{Shift+Space}); a pause after it goes back, again, to where playing
+first started. \key{S} stops and goes back to the start of the file.
 
 \index{volume}%
-The volume is the slider on the right. It only lowers the sound of the
-program, never raises it above that of the file.
+The volume is the slider on the right, with its value in percent beside
+it. Up to 100\,\% it lowers the sound of the program; from there to
+150\,\% it raises it above that of the recording, for one that was
+recorded quietly, and the slider and the number turn red. What would go
+above the loudest sound the card can play is cut off there, so a loud
+recording may then distort. The volume only changes what is heard, not
+the audio exported.
 
 \section{The speed}
 
@@ -687,7 +705,8 @@ receive silence, and take a moment to wake, so that, without it, they
 swallowed the short clicks of the count.
 
 \menu{Count-in\then Count-in settings} opens its settings, and, with the
-pointer over the items of that menu, the status bar says what they are now. They set how many counts (from 1 to 16) and the tempo, in beats per minute
+pointer over the items of that menu, the status bar says what they are now. They set how many counts (from 1 to 16; 4 at first, and also in
+\menu{Count-in\then Clicks}, from a list: 1 to 8, 12 and 16) and the tempo, in beats per minute
 (from 20 to 300; figure~\ref{fig:countin_en}). With \menu{Follow the
 speed}, the tempo changes with the speed: a song at 120 BPM played at
 0.5\,× is counted at 60, as it will sound. The dialog says what will be
@@ -791,7 +810,10 @@ too).
 
 \menu{Settings\then Settings files of each recording} chooses where they
 go: \menu{Beside the audio file} (at first), \menu{In a folder} (one asks
-which), or \menu{Not saved}. Where a \texttt{.slx} file cannot be written (a
+which), or \menu{Not saved}. \menu{File\then Save the .slx} (\key{Ctrl+S})
+writes it at once, without closing the file, to keep what was done so far;
+with \menu{Not saved}, it writes it beside the recording all the same,
+since it was asked for. Where a \texttt{.slx} file cannot be written (a
 folder that cannot be written in), the status bar says so, and nothing else
 changes.
 

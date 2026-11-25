@@ -15,7 +15,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import QSettings, QSize, Qt, QTimer
-from PySide6.QtGui import QAction, QActionGroup, QIcon, QKeySequence
+from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QKeySequence, QPalette
 from PySide6.QtWidgets import (
     QDockWidget,
     QDoubleSpinBox,
@@ -40,7 +40,7 @@ from .bookmarks import Bookmark, Loop, Store, export_text
 from . import export, shortcuts, sidecar
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, grid_offset, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
-from .engine import MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
+from .engine import MAX_BEATS, MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
 from .hearing import CHANNELS, FILTERS
 from .interface import tr
 from .panel import BookmarkPanel, LoopPanel
@@ -49,7 +49,9 @@ from .waveform import WaveformView
 
 APP = "py-slowdown"
 SPEED_STEP = 0.05
-SPEED_PRESETS = (50, 60, 70, 75, 80, 90, 100, 110, 125, 150)  # por ciento: las velocidades de siempre del botón
+SPEED_PRESETS = (50, 60, 70, 75, 80, 90, 100, 110, 125, 150)
+COUNT_CHOICES = (1, 2, 3, 4, 5, 6, 7, 8, 12, 16)  # golpes de la cuenta previa, en su menú (el diálogo, de 1 a 16)
+MAX_VOLUME = 150  # por ciento: por encima de 100 sube el sonido de la grabación (en rojo)  # por ciento: las velocidades de siempre del botón
 
 
 def parse_speeds(text: str) -> list[int] | None:
@@ -99,7 +101,8 @@ ICON = Path(__file__).resolve().parent / "icons" / "py-slowdown.svg"
 def shortcut_rows() -> list[tuple[str, str]]:
     """(what, keys) of each keyboard shortcut: for Help > Keyboard shortcuts and the manual page."""
     return [
-        (tr("Play or pause"), tr("Space")),
+        (tr("Play, or pause and go back to where it started"), tr("Space")),
+        (tr("Continue from the last pause"), tr("Shift+Space")),
         (tr("Stop and go back to the start"), "S"),
         (tr("Go to the start / to the end"), tr("Home / End")),
         (tr("Back / forward (skip length)"), "← / →"),
@@ -121,6 +124,7 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Tap the tempo (with the beat)"), "T"),
         (tr("The first beat is here (count-in)"), tr("Shift+C")),
         (tr("Open a file"), "Ctrl+O"),
+        (tr("Save the .slx"), "Ctrl+S"),
         (tr("Export the audio"), "Ctrl+E"),
         (tr("Change the shortcuts"), tr("Settings > Keyboard shortcuts")),
     ]
@@ -137,6 +141,10 @@ class Window(QMainWindow):
         self.bookmarks: list[Bookmark] = []
         self.loops: list[Loop] = []
         self._resume = 0.0  # where to go once the file is decoded that far
+        # Al pausar, la posición vuelve adonde empezó a tocar (para oír el pasaje otra vez); Continuar sigue
+        # desde donde se pausó.
+        self._return_to: float | None = None  # where playing started
+        self._paused_at: float | None = None  # where the last pause was
         self._pending_selection: tuple[tuple[float, float], bool] | None = None  # (selección, repetir), al leerla
         self._announced: Audio | None = None  # the file whose end of reading was told
         self.skip = float(self.settings.value("skip", 5, type=float))
@@ -347,12 +355,16 @@ class Window(QMainWindow):
         speaker.setPixmap(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume).pixmap(20, 20))
         row.addWidget(speaker)
         self.volume = QSlider(Qt.Orientation.Horizontal, self)
-        self.volume.setRange(0, 100)
-        self.volume.setMinimumWidth(70)
-        self.volume.setMaximumWidth(110)
+        self.volume.setRange(0, MAX_VOLUME)
+        self.volume.setValue(100)
+        self.volume.setMinimumWidth(80)
+        self.volume.setMaximumWidth(130)
         self.volume.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.volume.setToolTip(tr("Volume"))
         row.addWidget(self.volume)
+        self.volume_label = QLabel(self)
+        self.volume_label.setMinimumWidth(self.volume_label.fontMetrics().horizontalAdvance("150%") + 4)
+        row.addWidget(self.volume_label)
+        self._show_volume(100)
         row.addStretch()
         self._update_skip_tips()
 
@@ -370,9 +382,11 @@ class Window(QMainWindow):
         a = self._action
         self.a_open = a(tr("&Open…"), self.open_dialog, [QKeySequence.StandardKey.Open])
         self.a_close = a(tr("&Close"), self.close_file, [QKeySequence.StandardKey.Close])
+        self.a_save_slx = a(tr("&Save the .slx"), self.save_sidecar, [QKeySequence.StandardKey.Save])
         self.a_export_audio = a(tr("E&xport the audio…"), self.export_audio, ["Ctrl+E"])
         self.a_quit = a(tr("&Quit"), self.close, [QKeySequence.StandardKey.Quit])
         self.a_play = a(tr("&Play/Pause"), self.toggle, ["Space"])
+        self.a_continue = a(tr("&Continue from the pause"), self.continue_playing, ["Shift+Space"])
         self.a_stop = a(tr("&Stop"), self.stop, ["S"])
         self.a_start = a(tr("Go to the s&tart"), lambda: self.seek(0.0), ["Home"])
         self.a_end = a(tr("Go to the &end"), self.go_end, ["End"])
@@ -427,13 +441,14 @@ class Window(QMainWindow):
         file.addAction(self.a_open)
         self.recent_menu = file.addMenu(tr("Open &recent"))
         self.recent_menu.aboutToShow.connect(self._fill_recent)
+        file.addAction(self.a_save_slx)
         file.addAction(self.a_export_audio)
         file.addAction(self.a_close)
         file.addSeparator()
         file.addAction(self.a_quit)
 
         play = bar.addMenu(tr("&Playback"))
-        for action in (self.a_play, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
+        for action in (self.a_play, self.a_continue, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
                        self.a_forward_1, self.a_forward, self.a_end, None,
                        self.a_slower, self.a_faster, self.a_normal, self.speed_menu, None,
                        self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, None,
@@ -465,9 +480,16 @@ class Window(QMainWindow):
         self.set_hearing(channels if channels in CHANNELS else "both", filter_ if filter_ in FILTERS else "none")
 
         count = bar.addMenu(tr("&Count-in"))
-        for action in (self.a_count, self.a_tap, None, self.a_first_beat, self.a_no_first_beat, None,
-                       self.a_count_settings):
-            count.addSeparator() if action is None else count.addAction(action)
+        self.clicks_menu = QMenu(tr("C&licks"), self)
+        self.clicks_menu.aboutToShow.connect(self._fill_clicks_menu)
+        for action in (self.a_count, self.a_tap, self.clicks_menu, None, self.a_first_beat, self.a_no_first_beat,
+                       None, self.a_count_settings):
+            if action is None:
+                count.addSeparator()
+            elif isinstance(action, QMenu):
+                count.addMenu(action)
+            else:
+                count.addAction(action)
 
         marks = bar.addMenu(tr("&Bookmarks"))
         for action in (self.a_mark, self.a_prev_mark, self.a_next_mark, None, self.a_export):
@@ -659,6 +681,7 @@ class Window(QMainWindow):
         self.loops = []
         self.loop_panel.show_loops(self.loops)
         self._resume = 0.0
+        self._return_to = self._paused_at = None
         self._pending_selection = None
         self.wave.set_audio(None)
         self.selection = None
@@ -734,18 +757,27 @@ class Window(QMainWindow):
         on, folder = self._sidecar_place()
         return sidecar.load(path, folder) if on else None
 
-    def _write_sidecar(self) -> None:
+    def _write_sidecar(self, asked: bool = False) -> Path | None:
+        """Write the .slx of the file open, where the settings say; ASKED (File > Save the .slx), also when they
+        say Not saved, then beside the recording. Its path, or None."""
         on, folder = self._sidecar_place()
-        if not on or self.audio is None:
-            return
+        if (not on and not asked) or self.audio is None:
+            return None
         state = sidecar.FileState(self._position_to_keep(), self._file_settings(), list(self.bookmarks),
                                   list(self.loops))
         try:
-            sidecar.save(self.audio.path, state, folder)
+            return sidecar.save(self.audio.path, state, folder)
         except OSError as error:
             # (una carpeta de solo lectura, un disco lleno: bookmarks.json lo guarda de todos modos)
             self.statusBar().showMessage(tr("Cannot write the settings file of {name}: {error}",
                                             name=self.audio.path.name, error=error.strerror or error), 8000)
+            return None
+
+    def save_sidecar(self) -> None:
+        """File > Save the .slx: write it now, without closing the file."""
+        path = self._write_sidecar(asked=True)
+        if path is not None:
+            self.statusBar().showMessage(tr("Saved {path}", path=str(path)), 5000)
 
     def _sidecar_chosen(self, mode: str) -> None:
         if mode == "folder":
@@ -792,15 +824,55 @@ class Window(QMainWindow):
     # --- reproducción
 
     def toggle(self) -> None:
+        """Play from the position; or pause, and go back to where playing started, to hear the passage again
+        (Continue from the pause goes on from where it was paused)."""
         if not self.audio:
             return
         if self.player.playing:
-            self.player.pause()
-        elif self.count.on:
+            self._pause()
+        else:
+            self._play()
+            self._return_to = self.player.position  # (después de play: al final, vuelve a empezar desde 0)
+        self._update_play_button()
+
+    def continue_playing(self) -> None:
+        """Play from where the last pause was, as a pause without going back would have left it; pausing
+        then goes back to where playing first started, as before."""
+        if not self.audio or self.player.playing:
+            return
+        if self._paused_at is None:
+            self.toggle()
+            return
+        start = self._return_to
+        self.player.seek(min(self._paused_at, self.audio.duration))
+        self._play()
+        self._return_to = start if start is not None else self.player.position
+        self._update_play_button()
+
+    def _play(self) -> None:
+        if self.count.on:
             self.player.play(self.count.beats, self.count.tempo(self.player.speed), self.count_offset())
         else:
             self.player.play()
-        self._update_play_button()
+
+    def _pause(self) -> None:
+        self.player.pause()
+        self._paused_at = self.player.position
+        back = self._return_point()
+        if back is not None:
+            self.player.seek(back)
+            self.statusBar().showMessage(tr("Paused at {time}; back to {start} (Shift+Space continues from the "
+                                            "pause)", time=clock(self._paused_at, tenths=True),
+                                            start=clock(back, tenths=True)), 4000)
+        self._tick()
+
+    def _return_point(self) -> float | None:
+        # Adonde vuelve la posición: donde empezó a tocar; con una selección que se repite, dentro de ella.
+        back = self._return_to
+        loop = self.player.loop
+        if back is not None and loop and not loop[0] <= back < loop[1]:
+            back = loop[0]
+        return back
 
     # --- la cuenta previa y la selección repetida
 
@@ -816,6 +888,24 @@ class Window(QMainWindow):
             self.count.save(self.settings)
             self.a_count.setChecked(self.count.on)
             self._update_count_tip()
+
+    def _fill_clicks_menu(self) -> None:
+        # Cuántos golpes da la cuenta previa; el de ahora, marcado (también si se eligió otro en el diálogo).
+        menu = self.clicks_menu
+        menu.clear()
+        group = QActionGroup(menu)
+        for beats in sorted(set(COUNT_CHOICES) | {self.count.beats}):
+            action = menu.addAction(str(beats))
+            action.setCheckable(True)
+            action.setChecked(beats == self.count.beats)
+            action.triggered.connect(lambda _=False, n=beats: self.set_count_beats(n))
+            group.addAction(action)
+
+    def set_count_beats(self, beats: int) -> None:
+        """How many clicks the count-in gives (1 to 16; 4 at first)."""
+        self.count.beats = min(MAX_BEATS, max(1, int(beats)))
+        self.count.save(self.settings)
+        self._update_count_tip()
 
     def tap_tempo(self) -> None:
         """A tap with the beat of the music: after a few, the tempo of the count-in. What is tapped is the tempo
@@ -942,12 +1032,15 @@ class Window(QMainWindow):
 
     def stop(self) -> None:
         self.player.stop()
+        self._return_to = self._paused_at = None
         self._update_play_button()
 
     def seek(self, seconds: float) -> None:
         if self.audio:
             self.player.seek(seconds)
             self._resume = 0.0
+            if self.player.playing:
+                self._return_to = self.player.position  # (llevada a otro lugar mientras suena: desde allí)
             self._tick()
 
     def jump(self, seconds: float) -> None:
@@ -1065,6 +1158,24 @@ class Window(QMainWindow):
         # A square curve: the steps of the slider sound more even to the ear.
         self.player.volume = (value / 100) ** 2
         self.settings.setValue("volume", value)
+        self._show_volume(value)
+
+    def _show_volume(self, value: int) -> None:
+        """The volume beside its slider, in percent; above 100 (louder than the recording), the slider and the
+        number in red."""
+        loud = value > 100
+        self.volume_label.setText(f"{value}%")
+        red = QColor(200, 30, 30)
+        palette = QPalette(self.palette())  # (la del tema; en rojo, la parte llena de la barra)
+        if loud:
+            palette.setColor(QPalette.ColorRole.Highlight, red)
+        self.volume.setPalette(palette)
+        self.volume_label.setStyleSheet(f"color: {red.name()}; font-weight: bold;" if loud else "")
+        tip = tr("Volume: {percent}%", percent=value)
+        if loud:
+            tip += " " + tr("(louder than the recording: it may distort)")
+        for widget in (self.volume, self.volume_label):
+            widget.setToolTip(tip)
 
     def _tick(self) -> None:
         audio = self.audio
@@ -1080,6 +1191,10 @@ class Window(QMainWindow):
             self._resume = 0.0
         if self.player.ended:
             self.player.ended = False
+            if self._return_point() is not None:
+                # (al acabar el archivo, también vuelve adonde empezó a tocar)
+                self.player.seek(self._return_point())
+                self._paused_at = None
             self._update_play_button()
         position = self.player.position
         self.wave.follow_reading()
@@ -1112,16 +1227,18 @@ class Window(QMainWindow):
     def _update_play_button(self) -> None:
         playing = self.player.playing
         self.b_play.setProperty("playing", playing)
+        self.a_continue.setEnabled(self.audio is not None and not playing and self._paused_at is not None)
         icon = QStyle.StandardPixmap.SP_MediaPause if playing else QStyle.StandardPixmap.SP_MediaPlay
         self.b_play.setIcon(self.style().standardIcon(icon))
-        self.b_play.setToolTip(tr("Pause (Space)") if playing else tr("Play (Space)"))
+        self.b_play.setToolTip(tr("Pause and go back to where it started (Space); Shift+Space continues from the "
+                                  "pause") if playing else tr("Play (Space)"))
 
     def _update_enabled(self) -> None:
         loaded = self.audio is not None
         for widget in (self.b_start, self.b_back, self.b_play, self.b_stop, self.b_forward, self.b_end,
                        self.b_mark, self.b_repeat, self.panel.add_button):
             widget.setEnabled(loaded)
-        for action in (self.a_close, self.a_export_audio, self.a_play, self.a_stop, self.a_start, self.a_end, self.a_back,
+        for action in (self.a_close, self.a_save_slx, self.a_export_audio, self.a_play, self.a_stop, self.a_start, self.a_end, self.a_back,
                        self.a_forward, self.a_back_1, self.a_forward_1, self.a_mark, self.a_prev_mark,
                        self.a_next_mark, self.a_zoom_in, self.a_zoom_out, self.a_fit, self.a_repeat,
                        self.a_sel_start, self.a_sel_end, self.a_sel_clear):

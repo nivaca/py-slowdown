@@ -188,6 +188,16 @@ def test_the_window_keeps_it(tmp_path, monkeypatch, output):
     w.open_file(song)
     w.close_file()
     assert not xml.exists() and not (keep / "song.slx").exists()
+    # Archivo > Guardar el .slx (Ctrl+S): ahora, sin cerrar; con «No se guardan», junto a la grabación
+    w.open_file(song)
+    w.audio.wait(10)
+    w.set_speed(0.8)
+    assert w.a_save_slx.isEnabled() and w.a_save_slx.shortcut().toString() == "Ctrl+S"
+    w.a_save_slx.trigger()
+    assert ET.parse(xml).getroot().find("playback").get("speed") == "0.8"
+    assert str(xml) in w.statusBar().currentMessage() and w.audio is not None
+    w.close_file()
+    assert not w.a_save_slx.isEnabled()
     w.close()
 
 

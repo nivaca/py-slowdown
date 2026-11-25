@@ -396,7 +396,8 @@ Los mandos (figura~\ref{fig:controls_es}) son, de izquierda a derecha:
 \item[Ir al principio] (\key{Inicio}).
 \item[Atrás] la longitud del salto (\key{←}); con el botón apretado sigue
   retrocediendo, para recorrer el archivo.
-\item[Tocar y pausar] (\key{Espacio}).
+\item[Tocar y pausar] (\key{Espacio}); al pausar, la posición vuelve adonde
+  empezó a tocar (véase más abajo).
 \item[Detener] y volver al principio (\key{S}).
 \item[Adelante] la longitud del salto (\key{→}); con el botón apretado
   sigue avanzando.
@@ -410,12 +411,29 @@ Los mandos (figura~\ref{fig:controls_es}) son, de izquierda a derecha:
 El salto es de 5 segundos, salvo que se elija otro en
 \menu{Configuración\then Longitud del salto} (de 1 a 60 segundos).
 \key{Mayús+←} y \key{Mayús+→} retroceden y avanzan un segundo, que es lo
-que más hace falta al sacar un pasaje. Al final del archivo la reproducción se
-detiene; \key{Espacio} vuelve entonces a tocarlo desde el principio.
+que más hace falta al sacar un pasaje.
+
+\index{pausa}\index{posición!tras una pausa}\index{seguir desde la pausa}%
+Una pausa lleva la posición de vuelta adonde empezó a tocar, de modo que
+\key{Espacio} vuelve a tocar el mismo pasaje desde el mismo lugar, cuantas
+veces haga falta: la línea de la forma de onda regresa allí, y la barra de
+estado dice dónde se pausó. Si la posición se mueve mientras suena (un clic
+en la forma de onda, un marcador, las flechas), el lugar al que vuelve es
+ese nuevo; con una selección que se repite, siempre queda dentro de ella.
+Al final del archivo la reproducción se detiene, y la posición también
+vuelve. Para seguir desde donde se pausó, como en un reproductor
+corriente, está \menu{Reproducción\then Seguir desde la pausa}
+(\key{Mayús+Espacio}); una pausa después vuelve, otra vez, adonde empezó a
+tocar la primera vez. \key{S} detiene y vuelve al principio del archivo.
 
 \index{volumen}%
-El volumen es la barra de la derecha. Solo baja el sonido del programa;
-nunca lo sube por encima del del archivo.
+El volumen es la barra de la derecha, con su valor en por ciento al lado.
+Hasta 100\,\% baja el sonido del programa; de allí a 150\,\% lo sube por
+encima del de la grabación, para una que se grabó baja, y la barra y el
+número se ponen en rojo. Lo que pasaría del sonido más fuerte que la
+tarjeta puede dar se corta allí, así que una grabación fuerte puede
+entonces distorsionar. El volumen solo cambia lo que se oye, no el audio
+exportado.
 
 \section{La velocidad}
 
@@ -707,7 +725,9 @@ tragaban los golpes cortos de la cuenta.
 
 \menu{Cuenta previa\then Ajustes de la cuenta previa} abre sus ajustes, y,
 con el puntero sobre las acciones de ese menú, la barra de estado dice
-cuáles son ahora. Fijan cuántos golpes (de 1 a 16) y el tempo, en pulsos por
+cuáles son ahora. Fijan cuántos golpes (de 1 a 16; 4 al principio, y
+también en \menu{Cuenta previa\then Golpes}, de una lista: de 1 a 8, 12 y
+16) y el tempo, en pulsos por
 minuto (de 20 a 300; figura~\ref{fig:countin_es}). Con \menu{Seguir la
 velocidad}, el tempo cambia con la velocidad: una canción a 120 BPM tocada
 a 0,5\,× se cuenta a 60, como va a sonar. El diálogo dice lo que se oirá a
@@ -809,7 +829,10 @@ también terminan en \texttt{.slx}).
 
 \menu{Configuración\then Archivos de ajustes de cada grabación} elige dónde
 van: \menu{Junto al archivo de audio} (al principio), \menu{En una carpeta}
-(se pregunta cuál) o \menu{No se guardan}. Donde un archivo \texttt{.slx} no se puede
+(se pregunta cuál) o \menu{No se guardan}. \menu{Archivo\then Guardar el
+.slx} (\key{Ctrl+S}) lo escribe enseguida, sin cerrar el archivo, para
+guardar lo hecho hasta ese momento; con \menu{No se guardan}, lo escribe
+igual junto a la grabación, porque se pidió. Donde un archivo \texttt{.slx} no se puede
 escribir (una carpeta en la que no se puede escribir), la barra de estado lo
 dice, y nada más cambia.
 

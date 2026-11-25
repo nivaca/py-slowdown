@@ -7,6 +7,22 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Una pausa vuelve adonde empezó a tocar**: Espacio, o el botón, pausa y
+  lleva la posición de vuelta allí, para tocar otra vez el mismo pasaje
+  desde el mismo lugar; la barra de estado dice dónde se pausó. Si se mueve
+  mientras suena, vuelve al lugar nuevo; con una selección que se repite,
+  dentro de ella; al final del archivo, también. Reproducción > Seguir
+  desde la pausa (Mayús+Espacio) sigue desde donde se pausó, como hacía
+  Espacio hasta ahora.
+- **El volumen sube hasta 150 %**, para grabaciones hechas bajas; su valor
+  aparece en por ciento junto a la barra, y por encima de 100 % la barra y
+  el número están en rojo. Lo que pasa del máximo se recorta.
+- **Cuenta previa > Golpes**: cuántos golpes da la cuenta previa (4 al
+  principio), de una lista en el menú (de 1 a 8, 12, 16), el elegido
+  marcado; el diálogo sigue aceptando cualquier número de 1 a 16.
+- **Archivo > Guardar el .slx** (Ctrl+S) escribe el `.slx` de la grabación
+  enseguida, sin cerrarla; con Archivos de ajustes en No se guardan, lo
+  escribe igual junto a la grabación.
 - **Los archivos de ajustes terminan en `.slx`**: `canción.slx` para
   `canción.mp3` (y `canción.flac.slx`, si `canción.slx` es de otro
   archivo), con XML dentro, como antes. Los `canción.xml` de 1.2.0 se leen

@@ -7,6 +7,22 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **A pause goes back to where playing started**: Space, or the button,
+  pauses and takes the position back there, so that the same passage is
+  played again from the same place; the status bar says where it was
+  paused. Moved while it plays, it goes back to the new place; with a
+  selection repeated, inside it; at the end of the file, too. Playback >
+  Continue from the pause (Shift+Space) goes on from where it was paused,
+  as Space did until now.
+- **The volume goes up to 150%**, for recordings made quietly; its value is
+  shown in percent beside the slider, and above 100% the slider and the
+  number are red. What goes beyond full scale is clipped.
+- **Count-in > Clicks**: how many clicks the count-in gives (4 at first),
+  from a list in the menu (1 to 8, 12, 16), the one chosen ticked; the
+  dialog still takes any number from 1 to 16.
+- **File > Save the .slx** (Ctrl+S) writes the recording's `.slx` at once,
+  without closing it; with Settings files set to Not saved, beside the
+  recording all the same.
 - **The settings files end in `.slx`**: `song.slx` for `song.mp3` (and
   `song.flac.slx`, if `song.slx` is another file's), still XML inside. The
   `song.xml` files of 1.2.0 are still read, and removed once their `.slx`

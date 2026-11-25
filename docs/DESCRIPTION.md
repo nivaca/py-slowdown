@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty-one stages.
+in twenty-two stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -606,7 +606,10 @@ on Windows py-slowdown becomes the program of `.slx` only where no other
 program had it, and the uninstaller gives it back only if it is still
 py-slowdown's. The `song.xml` files of 1.2.0 are read as before, and each
 one is removed when the `.slx` that replaces it has been written, but only
-if it names that same recording.
+if it names that same recording. Since the `.slx` was written only when
+a file was closed, File > Save the .slx (Ctrl+S) writes it at any moment,
+and also when the settings say Not saved, beside the recording, because it
+was asked for.
 
 The first beat of the count-in was the other problem. It was kept as an
 offset from the position, so that moving the position moved it too: after
@@ -625,10 +628,36 @@ whose tempo moves the grid is less exact far from the first beat, but it
 never misses by more than half a beat. With a first beat the offset of the
 dialog is not needed, so the dialog greys it out.
 
+22. Back to where it started
+----------------------------
+
+Space paused and left the position where the music stopped, as every
+player does. But a musician who pauses usually wants to hear the same
+passage again, and had to find its start each time. So a pause now takes
+the position back to where playing started, and Space plays the passage
+again from there. The place to go back to is taken when playing starts,
+and again when the position is moved while it plays, since a click on the
+waveform during the music means "from here"; with a selection repeated it
+is kept inside the selection, and at the end of the file the position goes
+back too. The old way stays, as Playback > Continue from the pause
+(Shift+Space), which goes on from the last pause but keeps the first place
+to go back to. In Spanish, every letter of the natural names for it was
+already taken in that menu, so it has no letter of Alt there, only its
+key.
+
+The volume, which until then could only lower the sound, now goes up to
+150%, for recordings made quietly. Above the recording's level a sample
+can pass full scale, so the output is clipped there, and the slider and a
+number beside it turn red, as a warning that the sound may distort. The
+slider keeps its square curve, so that 150% is a gain of 2.25, about 7 dB.
+And the number of clicks of the count-in, which was only in its dialog,
+got a submenu of its own, Count-in > Clicks, following the habit of the
+program of having its options in the menu bar.
+
 Testing
 -------
 
-The program has 193 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 196 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -651,7 +680,7 @@ same name, a folder chosen, a folder that cannot be written, the `.xml`
 files of 1.2.0, opening it), the first beat and its grid, the keyboard
 shortcuts and the waveform kept for the next time. The player is
 tested with a sound card that the tests drive themselves, and the window
-offscreen: opening a file, the controls, the speed, the bookmarks, the
+offscreen: opening a file, the controls, a pause that goes back, the volume above 100%, the clicks of the count-in, the speed, the bookmarks, the
 point where it was left, a file that is not audio, the window without
 Rubber Band, and the Spanish interface, whose file must have every text of
 the program and no other. Other tests check the packaging and the
@@ -668,4 +697,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 76 files and about 17,300 lines (10,900 of them in Python).
+The program has 76 files and about 17,700 lines (11,100 of them in Python).

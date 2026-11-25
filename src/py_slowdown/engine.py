@@ -726,3 +726,5 @@ class Player:
             self._gain = target
         if self.volume != 1.0:
             out *= self.volume
+            if self.volume > 1.0:
+                np.clip(out, -1.0, 1.0, out=out)  # (más alto que la grabación: lo que pase del máximo se recorta)

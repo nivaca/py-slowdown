@@ -27,7 +27,9 @@ Lo que hace
   todavía se lee.
 - Tocar, pausar, detener, ir al principio o al final, atrás y adelante (un
   salto que se elige en Configuración, de 1 a 60 segundos; con el botón
-  apretado sigue saltando) y un segundo atrás o adelante.
+  apretado sigue saltando) y un segundo atrás o adelante. Una pausa lleva
+  la posición de vuelta adonde empezó a tocar, para que Espacio toque otra
+  vez el mismo pasaje; Mayús+Espacio sigue, en cambio, desde la pausa.
 - Velocidad de 0,25× a 3×, que se cambia mientras suena, sin que cambie la
   altura. El estiramiento lo hace la [biblioteca Rubber Band](https://breakfastquay.com/rubberband/),
   con su motor R3 («finer»), el de más calidad, por medio de un enlace
@@ -68,7 +70,8 @@ Lo que hace
   enseguida. Todo eso se escribe además en un archivo con el nombre de la
   grabación y la extensión `.slx` (`canción.slx` para `canción.mp3`), junto
   a ella o en una carpeta elegida, de modo que viaja con la grabación;
-  abrir el `.slx` abre la grabación. También puede reabrir el último
+  abrir el `.slx` abre la grabación. Archivo > Guardar el .slx (Ctrl+S)
+  lo escribe enseguida. También puede reabrir el último
   archivo al empezar (Configuración > Reabrir el último archivo al
   empezar).
 - Los atajos de teclado se pueden cambiar (Configuración > Atajos de
@@ -80,7 +83,8 @@ Teclado
 
 | Acción                            | Teclas                           |
 |-----------------------------------|----------------------------------|
-| Tocar / pausar                    | Espacio                          |
+| Tocar / pausar (y volver)         | Espacio                          |
+| Seguir desde la pausa             | Mayús+Espacio                    |
 | Detener y volver al principio     | S                                |
 | Ir al principio / al final        | Inicio / Fin                     |
 | Atrás / adelante (el salto)       | ← / →                            |
@@ -100,6 +104,7 @@ Teclado
 | Marcar el tempo (con el pulso)    | T                                |
 | El primer pulso está aquí         | Mayús+C                          |
 | Abrir un archivo                  | Ctrl+O                           |
+| Guardar el .slx                   | Ctrl+S                           |
 | Exportar el audio                 | Ctrl+E                           |
 
 Son las teclas de siempre; Configuración > Atajos de teclado las cambia.
