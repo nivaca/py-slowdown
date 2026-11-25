@@ -685,10 +685,16 @@ file, so Go to the start (Home) now goes to the first beat while the
 count-in is on, and to the beginning of the file otherwise; its tooltip
 says which, since the same key does two things.
 
+Starting the program with the count-in left on then failed with an error
+that the tests had not seen: ticking the count-in while the menus were
+being made reached for a menu item not made yet. PySide only prints an
+error raised in a slot, and the test goes on, so every test now fails if
+one is printed.
+
 Testing
 -------
 
-The program has 200 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 201 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

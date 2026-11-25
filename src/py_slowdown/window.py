@@ -945,7 +945,9 @@ class Window(QMainWindow):
     def _set_count_on(self, on: bool) -> None:
         self.count.on = on
         self.count.save(self.settings)
-        self._update_count_tip()
+        if "a_count_settings" in vars(self):
+            # (al armar las acciones, la cuenta guardada encendida llega aquí antes que las demás; _connect lo dice)
+            self._update_count_tip()
 
     def count_settings(self) -> None:
         beat = self.first_beat()

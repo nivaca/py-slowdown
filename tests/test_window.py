@@ -618,6 +618,22 @@ def test_go_to_the_start(window, app, wav):
     assert window.player.position == 0.0 and window.b_start.toolTip() == "Go to the start (Home)"
 
 
+def test_starts_with_the_count_in_on(app, output, tmp_path, monkeypatch):
+    """With the count-in left on in the settings, the window opens without an error (its actions are made before
+    the tooltips they change), and says so. (An error in a slot is only printed by PySide: it is caught here.)"""
+    import sys
+
+    errors = []
+    monkeypatch.setattr(sys, "excepthook", lambda *info: errors.append(info))
+    monkeypatch.setattr("py_slowdown.window.Output", type(output))
+    settings = QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat)
+    settings.setValue("countin/on", True)
+    w = Window(player=Player(output), store=Store(tmp_path / "b.json"), settings=settings)
+    assert errors == []
+    assert w.a_count.isChecked() and w.count.on and "clicks at" in w.a_count_settings.statusTip()
+    w.close()
+
+
 def test_split_pitch():
     from py_slowdown.window import split_pitch
 

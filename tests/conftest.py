@@ -156,3 +156,18 @@ class FakeOutput:
 @pytest.fixture
 def output():
     return FakeOutput()
+
+
+@pytest.fixture(autouse=True)
+def no_errors_in_slots(monkeypatch):
+    """An error in a Qt slot (a button, a timer, a signal) is only printed by PySide, and the test would go on:
+    every test fails if one happened."""
+    import sys
+
+    errors = []
+    monkeypatch.setattr(sys, "excepthook", lambda *info: errors.append(info))
+    yield
+    if errors:
+        import traceback
+
+        pytest.fail("an error in a Qt slot:\n" + "".join(traceback.format_exception(*errors[0])))
