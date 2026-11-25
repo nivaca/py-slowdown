@@ -105,7 +105,10 @@ class FakeZenodo(BaseHTTPRequestHandler):
                 return self.reply(202, self.deposition(d))
         if parts[:2] == ["api", "records"] and parts[3:] == ["draft"]:
             # La API de registros (InvenioRDM): el mismo borrador, con sus campos de solo lectura
+            # Como Zenodo: con "application/json", el formato de la API de depósitos; el de InvenioRDM hay que pedirlo
             d = deps[int(parts[2])]
+            if method == "GET" and self.headers.get("Accept") != "application/vnd.inveniordm.v1+json":
+                return self.reply(200, self.deposition(d))
             if method == "GET":
                 return self.reply(200, d.get("record") or {
                     "id": str(d["id"]), "metadata": {"title": d["metadata"].get("title")}, "custom_fields": {},
@@ -319,6 +322,9 @@ class ZenodoTest(unittest.TestCase):
             "code:codeRepository": "https://github.com/someone/demo",
             "code:programmingLanguage": [{"id": "python"}], "code:developmentStatus": {"id": "active"}})
         self.assertNotIn("links", record)
+        # Lo que se manda es el borrador en el formato de InvenioRDM, no en el de la API de depósitos
+        self.assertEqual(record["access"], {"record": "public"})
+        self.assertEqual(record["files"], {"enabled": True})
         self.assertNotIn("revision_id", record)
 
     def test_next_upload_is_a_new_version_without_the_old_files(self):
@@ -366,6 +372,15 @@ class ZenodoTest(unittest.TestCase):
             "</tbody></table>",
             "<pre><code>uv run demo</code></pre>",
             "<p>A &lt;b&gt; &amp; c</p>"]))
+
+    def test_fields_zenodo_did_not_keep_stop_upload(self):
+        """If the draft, read again, lacks a field that was sent (Spanish, say), upload says so."""
+        self.tool.collect(None, packages=False)
+        self.serve({})
+        keep = self.tool.record_fields
+        self.tool.record_fields = lambda record, extra: keep(record, dict(extra, languages=["eng"]))
+        with self.assertRaisesRegex(self.tool.Failed, "did not keep languages"):
+            self.tool.upload(sandbox=True, new_version_of=None, dry_run=False)
 
     def test_the_token_from_the_keyring(self):
         """Without $ZENODO_SANDBOX_TOKEN, the token kept in the keyring (service zenodo-sandbox) is used; with

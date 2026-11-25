@@ -496,6 +496,25 @@ def metadata(version: str) -> tuple[dict, dict]:
     return data, extra
 
 
+# Con "application/json", Zenodo da los registros en el formato de la API de depósitos, sin languages ni copyright
+# ni custom_fields: el de InvenioRDM hay que pedirlo
+RDM_JSON = "application/vnd.inveniordm.v1+json"
+
+
+def missing_fields(record: dict, extra: dict) -> list[str]:
+    """Those of EXTRA's fields that RECORD (as the records API gives it, in RDM_JSON) doesn't have."""
+    meta, custom = record.get("metadata") or {}, record.get("custom_fields") or {}
+    have = {
+        "languages": [l.get("id") for l in meta.get("languages") or []] == list(extra.get("languages") or []),
+        "copyright": meta.get("copyright") == extra.get("copyright"),
+        "repository": custom.get("code:codeRepository") == extra.get("repository"),
+        "programming_language": [l.get("id") for l in custom.get("code:programmingLanguage") or []]
+                                == [extra.get("programming_language")],
+        "development_status": (custom.get("code:developmentStatus") or {}).get("id") == extra.get("development_status"),
+    }
+    return [key for key in extra if not have.get(key, True)]
+
+
 def record_fields(record: dict, extra: dict) -> dict:
     """RECORD (a draft as the records API gives it) with the fields of EXTRA that the deposit API doesn't take:
     the languages, the copyright and the software's fields (repository, programming language, status)."""
@@ -522,10 +541,11 @@ class Zenodo:
     def __init__(self, base: str, token: str):
         self.base, self.token = base.rstrip("/"), token
 
-    def call(self, method: str, url: str, body: dict | None = None, data=None, size: int | None = None):
+    def call(self, method: str, url: str, body: dict | None = None, data=None, size: int | None = None,
+             accept: str = "application/json"):
         if not url.startswith("http"):
             url = f"{self.base}/api/{url}"
-        headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/json"}
+        headers = {"Authorization": f"Bearer {self.token}", "Accept": accept}
         if body is not None:
             data = json.dumps(body).encode()
             headers["Content-Type"] = "application/json"
@@ -639,14 +659,16 @@ def upload(sandbox: bool, new_version_of: str | None, dry_run: bool) -> str:
     url = draft["links"].get("html") or f"{base}/uploads/{draft['id']}"
     if extra:
         try:
-            record = api.call("GET", f"records/{draft['id']}/draft")
-            saved = api.call("PUT", f"records/{draft['id']}/draft", body=record_fields(record, extra))
+            record = api.call("GET", f"records/{draft['id']}/draft", accept=RDM_JSON)
+            saved = api.call("PUT", f"records/{draft['id']}/draft", body=record_fields(record, extra), accept=RDM_JSON)
+            # Se vuelve a leer: lo que Zenodo no guardó se dice, en vez de darlo por hecho
+            missing = missing_fields(api.call("GET", f"records/{draft['id']}/draft", accept=RDM_JSON), extra)
         except Failed as e:
             raise Failed(f"{e}\nThe draft is there with its files, but without {', '.join(extra)}: add them by hand "
                          f"at {url}") from None
-        if saved and saved.get("errors"):
-            raise Failed(f"Zenodo refused some fields of the draft ({json.dumps(saved['errors'])}); fix them by "
-                         f"hand at {url}")
+        if missing:
+            errors = f" ({json.dumps(saved['errors'], ensure_ascii=False)})" if saved and saved.get("errors") else ""
+            raise Failed(f"Zenodo did not keep {', '.join(missing)} in the draft{errors}; add them by hand at {url}")
     return url
 
 
