@@ -94,6 +94,7 @@ class Waveform(QWidget):
         self.repeating = False  # whether the selection is repeated (it is drawn stronger)
         self.count: int | None = None  # the beat of a count-in, drawn big
         self.first_beat: float | None = None  # the beat on which the recording comes in after the count
+        self.pause_mark: float | None = None  # where the last pause was, to continue from it (Shift+Space)
         self._dragging = False
         self._selecting: float | None = None  # where a Shift+drag began
         self._cache_key = None
@@ -273,6 +274,7 @@ class Waveform(QWidget):
         self._paint_wave(painter, colors, w, top, h - top)
         self._paint_selection(painter, colors, h)  # (encima de la onda, transparente: la tiñe)
         self._paint_first_beat(painter, colors, h)
+        self._paint_pause_mark(painter, colors, h)
         self._paint_marks(painter, colors, h)
         x = self.x_of(self.position)
         painter.setPen(QPen(colors["cursor"], 2))
@@ -288,6 +290,24 @@ class Waveform(QWidget):
             painter.setPen(shade)
             painter.drawText(QRectF(0, RULER, w, h - RULER), Qt.AlignmentFlag.AlignCenter, str(self.count))
         painter.end()
+
+    def set_pause_mark(self, seconds: float | None) -> None:
+        if seconds != self.pause_mark:
+            self.pause_mark = seconds
+            self.update()
+
+    def _paint_pause_mark(self, painter: QPainter, colors, h: int) -> None:
+        # Donde fue la última pausa (para seguir desde allí): una línea de puntos del color de la posición, y el
+        # signo de pausa, dos barritas, abajo (arriba están la regla y los nombres de los marcadores).
+        if self.pause_mark is None:
+            return
+        x = self.x_of(self.pause_mark)
+        color = colors["cursor"]
+        painter.setPen(QPen(color, 2, Qt.PenStyle.DotLine))
+        painter.drawLine(QPointF(x, RULER), QPointF(x, h))
+        painter.fillRect(QRectF(x - 9, h - 18, 18, 16), colors["base"])
+        for left in (x - 6, x + 2):
+            painter.fillRect(QRectF(left, h - 16, 4, 12), color)
 
     def set_first_beat(self, seconds: float | None) -> None:
         if seconds != self.first_beat:

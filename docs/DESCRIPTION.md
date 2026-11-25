@@ -641,7 +641,9 @@ waveform during the music means "from here"; with a selection repeated it
 is kept inside the selection, and at the end of the file the position goes
 back too. The old way stays, as Playback > Continue from the pause
 (Shift+Space), which goes on from the last pause but keeps the first place
-to go back to. In Spanish, every letter of the natural names for it was
+to go back to. The place of the last pause could not be seen, so while the music does not play
+the waveform marks it with a red dotted line and a pause sign at its foot,
+apart from the position, a solid line. In Spanish, every letter of the natural names for it was
 already taken in that menu, so it has no letter of Alt there, only its
 key.
 

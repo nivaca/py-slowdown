@@ -13,7 +13,9 @@ Debian package, the RPM, the wheel and the source, are on
   paused. Moved while it plays, it goes back to the new place; with a
   selection repeated, inside it; at the end of the file, too. Playback >
   Continue from the pause (Shift+Space) goes on from where it was paused,
-  as Space did until now.
+  as Space did until now. While it does not play, the place of that pause
+  is marked on the waveform with a red dotted line and a pause sign at its
+  foot.
 - **The volume goes up to 150%**, for recordings made quietly; its value is
   shown in percent beside the slider, and above 100% the slider and the
   number are red. What goes beyond full scale is clipped.

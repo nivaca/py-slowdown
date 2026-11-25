@@ -82,6 +82,9 @@ def test_pause_goes_back(window, app, wav, output):
     window.toggle()
     assert not window.player.playing and window.player.position == pytest.approx(1.0)
     assert window._paused_at == pytest.approx(paused) and window.a_continue.isEnabled()
+    window._tick()
+    assert window.wave.pause_mark == pytest.approx(paused)  # (la línea de puntos de la pausa)
+    window.grab()
     window.toggle()  # (otra vez el mismo pasaje)
     play_for(0.5)
     window.toggle()
@@ -89,6 +92,8 @@ def test_pause_goes_back(window, app, wav, output):
     # Seguir desde la pausa, como antes; pausar vuelve al principio de siempre
     window.a_continue.trigger()
     assert window.player.playing and window.player.position >= window._paused_at - 0.01
+    window._tick()
+    assert window.wave.pause_mark is None  # (sonando, no se muestra)
     resumed = window._paused_at
     play_for(0.5)
     window.toggle()
@@ -107,6 +112,8 @@ def test_pause_goes_back(window, app, wav, output):
     assert not window.player.playing and window.player.position == pytest.approx(5.5)
     window.stop()
     assert window.player.position == 0.0 and not window.a_continue.isEnabled()
+    window._tick()
+    assert window.wave.pause_mark is None
 
 
 def test_volume_up_to_150(window, app, wav, output):

@@ -1306,6 +1306,9 @@ class Window(QMainWindow):
         offset = self.count_offset() if self.count.on and not self.player.playing else 0.0
         beat = position - offset if offset else None
         self.wave.set_first_beat(beat if beat is None or beat >= 0 else None)
+        # La última pausa, mientras no suena: desde allí sigue Mayús+Espacio.
+        paused = self._paused_at if not self.player.playing else None
+        self.wave.set_pause_mark(paused if paused is not None and abs(paused - position) > 0.01 else None)
         self.time_label.setText(f"{clock(position, tenths=True)} / {clock(audio.duration, tenths=True)}")
         if self.b_play.property("playing") != self.player.playing:
             self._update_play_button()

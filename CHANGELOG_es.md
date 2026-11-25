@@ -13,7 +13,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   mientras suena, vuelve al lugar nuevo; con una selección que se repite,
   dentro de ella; al final del archivo, también. Reproducción > Seguir
   desde la pausa (Mayús+Espacio) sigue desde donde se pausó, como hacía
-  Espacio hasta ahora.
+  Espacio hasta ahora. Mientras no suena, el lugar de esa pausa se marca
+  en la forma de onda con una línea roja de puntos y un signo de pausa al
+  pie.
 - **El volumen sube hasta 150 %**, para grabaciones hechas bajas; su valor
   aparece en por ciento junto a la barra, y por encima de 100 % la barra y
   el número están en rojo. Lo que pasa del máximo se recorta.
