@@ -1197,4 +1197,8 @@
     <en>Ctrl+Shift+N</en>
     <tr>Ctrl+Mayús+N</tr>
   </text>
+  <text>
+    <en>{start} – {end}: a click repeats it</en>
+    <tr>{start} – {end}: un clic lo repite</tr>
+  </text>
 </interface>

@@ -7,6 +7,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Los bucles sobre la forma de onda**: cada bucle guardado es una banda
+  de su color al pie de la forma de onda, con su nombre; un clic en ella lo
+  elige, lo repite y va a su comienzo.
 - **El valor recién cambiado, grande sobre la forma de onda**: una
   velocidad cambiada desde el teclado o desde el menú de las velocidades, o
   una altura cambiada desde el teclado, se ve en el medio de la forma de

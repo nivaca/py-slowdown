@@ -26,6 +26,10 @@ from .interface import tr
 from .timefmt import clock
 
 RULER = 22  # height of the ruler, in pixels
+LANE = 16  # alto de la franja de los bucles, al pie de la forma de onda
+# Los colores de los bucles, uno tras otro (de la paleta de Okabe e Ito, que se distinguen también sin ver bien
+# los colores)
+LOOP_COLORS = ("#e69f00", "#56b4e9", "#009e73", "#cc79a7", "#d55e00", "#0072b2", "#f0e442")
 FLAG = 16  # alto de la banda de los marcadores
 MIN_FPP = 1.0  # a lo sumo un cuadro por píxel
 GRAB = 5  # píxeles a cada lado de un marcador que cuentan como suyos
@@ -81,6 +85,7 @@ class Waveform(QWidget):
     selectionChanged = Signal(object)  # (start, end) in seconds, or None
     firstBeatRequested = Signal(object)  # seconds: the recording's first beat, for the count-in
     viewChanged = Signal()
+    loopClicked = Signal(int)  # the saved loop (its row) whose band is clicked
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -93,6 +98,7 @@ class Waveform(QWidget):
         self.selection: tuple[float, float] | None = None  # seconds
         self.repeating = False  # whether the selection is repeated (it is drawn stronger)
         self.count: int | None = None  # the beat of a count-in, drawn big
+        self.loops: list = []  # los bucles guardados (bookmarks.Loop), dibujados al pie
         self.flash: str | None = None  # un valor que acaba de cambiar (la velocidad, la altura), grande un momento
         self._flash_timer = QTimer(self)
         self._flash_timer.setSingleShot(True)
@@ -281,6 +287,7 @@ class Waveform(QWidget):
         self._paint_first_beat(painter, colors, h)
         self._paint_pause_mark(painter, colors, h)
         self._paint_marks(painter, colors, h)
+        self._paint_loops(painter, colors, w, h)
         x = self.x_of(self.position)
         painter.setPen(QPen(colors["cursor"], 2))
         painter.drawLine(QPointF(x, RULER), QPointF(x, h))
@@ -333,6 +340,42 @@ class Waveform(QWidget):
         painter.fillRect(box, color)
         painter.setPen(colors["base"])
         painter.drawText(box, Qt.AlignmentFlag.AlignCenter, "1")
+
+    def set_loops(self, loops) -> None:
+        self.loops = list(loops)
+        self.update()
+
+    def loop_at(self, x: float, y: float) -> int | None:
+        """The saved loop whose band (at the foot of the waveform) is at X, Y: the last drawn, if they overlap."""
+        if not self.loops or y < self.height() - LANE:
+            return None
+        seconds = self.seconds_at(x)
+        found = None
+        for i, loop in enumerate(self.loops):
+            if loop.start <= seconds <= loop.end:
+                found = i
+        return found
+
+    def _paint_loops(self, painter: QPainter, colors, w: int, h: int) -> None:
+        # Cada bucle, una banda de su color al pie, con su nombre; encima de la onda, algo transparente.
+        metrics = QFontMetrics(painter.font())
+        for i, loop in enumerate(self.loops):
+            x0, x1 = self.x_of(loop.start), self.x_of(loop.end)
+            if x1 < 0 or x0 > w:
+                continue
+            color = QColor(LOOP_COLORS[i % len(LOOP_COLORS)])
+            band = QRectF(x0, h - LANE, max(2.0, x1 - x0), LANE - 1)
+            fill = QColor(color)
+            fill.setAlpha(170)
+            painter.fillRect(band, fill)
+            painter.setPen(QPen(color, 1))
+            painter.drawLine(QPointF(x0, h - LANE), QPointF(x0, h))
+            label = loop.label or f"{clock(loop.start, tenths=True)} – {clock(loop.end, tenths=True)}"
+            room = band.width() - 8
+            if room > 12:
+                painter.setPen(QColor("#000000"))
+                painter.drawText(band.adjusted(4, 0, -4, 0), Qt.AlignmentFlag.AlignVCenter,
+                                 metrics.elidedText(label, Qt.TextElideMode.ElideRight, int(room)))
 
     def show_value(self, text: str) -> None:
         """Show TEXT large in the middle of the waveform for a moment (about a second), fading at the end: the
@@ -514,6 +557,10 @@ class Waveform(QWidget):
         if mark is not None:
             self.seekRequested.emit(self.bookmarks[mark].time)
             return
+        loop = self.loop_at(x, event.position().y())
+        if loop is not None:
+            self.loopClicked.emit(loop)  # (lo elige, lo repite y va a su comienzo)
+            return
         self._dragging = True
         self.seekRequested.emit(self.seconds_at(x))
 
@@ -532,6 +579,12 @@ class Waveform(QWidget):
             if mark is not None:
                 b = self.bookmarks[mark]
                 tip = f"{clock(b.time, tenths=True)}  {b.label}".rstrip()
+            loop = self.loop_at(x, event.position().y())
+            if loop is not None:
+                one = self.loops[loop]
+                tip = (f"{one.label}  " if one.label else "") + tr(
+                    "{start} – {end}: a click repeats it", start=clock(one.start, tenths=True),
+                    end=clock(one.end, tenths=True))
             self.setToolTip(tip)
 
     def mouseReleaseEvent(self, event) -> None:

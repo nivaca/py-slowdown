@@ -7,6 +7,9 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **The loops on the waveform**: each saved loop is a band of its own
+  colour at the foot of the waveform, with its name; a click on it selects
+  it, repeats it and goes to its start.
 - **The value just changed, large on the waveform**: a speed changed from
   the keyboard or the menu of speeds, or a pitch changed from the keyboard,
   is shown in the middle of the waveform for a moment, then fades.

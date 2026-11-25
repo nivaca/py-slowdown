@@ -933,6 +933,7 @@ class Window(QMainWindow):
         self.wave.renameBookmarkRequested.connect(self.rename_bookmark)
         self.wave.selectionChanged.connect(self.set_selection)
         self.wave.firstBeatRequested.connect(self.set_first_beat)
+        self.wave.loopClicked.connect(self.repeat_loop)
         self.b_repeat.toggled.connect(self.a_repeat.setChecked)
         self.a_repeat.toggled.connect(self.b_repeat.setChecked)
         self.b_tap.clicked.connect(self.tap_tempo)
@@ -999,7 +1000,7 @@ class Window(QMainWindow):
         self.bookmarks = kept.bookmarks if kept else self.store.bookmarks(path)
         self._show_bookmarks()
         self.loops = kept.loops if kept else self.store.loops(path)
-        self.loop_panel.show_loops(self.loops)
+        self._show_loops()
         # Cada archivo empieza con lo de siempre, y luego con lo que se guardó de él (no con lo del anterior).
         self._reset_file_settings()
         self._apply_file_settings(kept.settings if kept else self.store.settings(path))
@@ -1128,7 +1129,7 @@ class Window(QMainWindow):
         self.audio = None
         self.bookmarks = []
         self.loops = []
-        self.loop_panel.show_loops(self.loops)
+        self._show_loops()
         self._resume = 0.0
         self._return_to = self._paused_at = None
         self._pending_selection = None
@@ -1985,7 +1986,7 @@ class Window(QMainWindow):
         for row, loop in enumerate(self.loops):
             if abs(loop.start - start) < 0.05 and abs(loop.end - end) < 0.05:
                 self.tabs.setCurrentWidget(self.loop_panel)
-                self.loop_panel.show_loops(self.loops, row)
+                self._show_loops(row)
                 return
         loop = Loop(round(start, 3), round(end, 3), "")
         self.loops.append(loop)
@@ -1994,7 +1995,7 @@ class Window(QMainWindow):
         self._save_loops()
         self.dock.show()
         self.tabs.setCurrentWidget(self.loop_panel)
-        self.loop_panel.show_loops(self.loops, row)
+        self._show_loops(row)
         self.loop_panel.edit_label(row)
         self.statusBar().showMessage(tr("Loop {start} – {end}: write its name", start=clock(start, tenths=True),
                                         end=clock(end, tenths=True)), 4000)
@@ -2012,12 +2013,18 @@ class Window(QMainWindow):
         if 0 <= row < len(self.loops):
             del self.loops[row]
             self._save_loops()
-            self.loop_panel.show_loops(self.loops)
+            self._show_loops()
 
     def _loop_renamed(self, row: int, text: str) -> None:
         if 0 <= row < len(self.loops):
             self.loops[row].label = text
             self._save_loops()
+            self.wave.set_loops(self.loops)
+
+    def _show_loops(self, select: int | None = None) -> None:
+        # En su pestaña, y como bandas al pie de la forma de onda.
+        self.loop_panel.show_loops(self.loops, select)
+        self.wave.set_loops(self.loops)
 
     def export_audio(self) -> None:
         """Save the recording (or the selection) as it sounds: at the speed and pitch chosen, and, if asked, as

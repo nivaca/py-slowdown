@@ -1446,3 +1446,26 @@ def test_values_shown_on_the_waveform(window, app, wav):
         app.processEvents()
         clock.sleep(0.02)
     assert window.wave.flash is None
+
+
+def test_loops_on_the_waveform(window, app, wav):
+    """The saved loops are bands of colour at the foot of the waveform, with their names; a click on one selects
+    it, repeats it and goes to its start."""
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtTest import QTest
+
+    from py_slowdown.bookmarks import Loop
+    from py_slowdown.waveform import LANE
+
+    loaded(window, app, wav)
+    window.loops = [Loop(1.0, 2.0, "Intro"), Loop(3.0, 5.0, "Riff")]
+    window._show_loops()
+    wave = window.wave
+    assert [x.label for x in wave.loops] == ["Intro", "Riff"]
+    y = wave.height() - LANE // 2
+    assert wave.loop_at(wave.x_of(4.0), y) == 1 and wave.loop_at(wave.x_of(4.0), 40) is None
+    wave.grab()
+    QTest.mouseClick(wave, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, QPoint(round(wave.x_of(4.0)), y))
+    assert window.selection == (3.0, 5.0) and window.a_repeat.isChecked() and window.player.loop == (3.0, 5.0)
+    window.remove_loop(0)
+    assert [x.label for x in wave.loops] == ["Riff"]
