@@ -99,6 +99,7 @@ Teclado
 | Añadir un marcador                | B                                |
 | Marcador anterior / siguiente     | Ctrl+← / Ctrl+→, RePág / AvPág   |
 | Acercar / alejar / todo           | Ctrl++ / Ctrl+− / Ctrl+0         |
+| Acercar a la selección            | Z                                |
 | Un semitono más agudo / grave     | Ctrl+↑ / Ctrl+↓                  |
 | Altura original                   | Mayús+N                          |
 | Deshacer los cambios del sonido   | Ctrl+Mayús+N                     |

@@ -1285,4 +1285,12 @@
     <en>{folder} (not found)</en>
     <tr>{folder} (no se encuentra)</tr>
   </text>
+  <text>
+    <en>Zoom to the &amp;selection</en>
+    <tr>Ace&amp;rcar a la selección</tr>
+  </text>
+  <text>
+    <en>Zoom to the selection</en>
+    <tr>Acercar a la selección</tr>
+  </text>
 </interface>

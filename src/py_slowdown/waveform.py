@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 
 import numpy as np
-from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPen
 from PySide6.QtWidgets import QMenu, QScrollBar, QSizePolicy, QVBoxLayout, QWidget
 
@@ -211,6 +211,36 @@ class Waveform(QWidget):
         self.set_start(anchor - anchor_x * self.current_fpp())
         self.viewChanged.emit()
         self.update()
+
+    def zoom_to(self, start: float, end: float) -> None:
+        """Show from START to END seconds, with a twentieth of that on each side (the whole file if it is
+        wider)."""
+        if not self.audio or end <= start:
+            return
+        rate = self.audio.rate
+        margin = (end - start) * rate / 20
+        fpp = max(MIN_FPP, ((end - start) * rate + 2 * margin) / max(1, self.width()))
+        if fpp >= self.fit_fpp():
+            self.fit()
+            return
+        self.fpp = fpp
+        self.start = 0.0
+        self.set_start(start * rate - margin)
+        self.viewChanged.emit()
+        self.update()
+
+    def pinch(self, value: float, x: float) -> None:
+        """A pinch on a touchpad: VALUE more (or less, below 0) of detail around X (Qt's zoom gesture)."""
+        self.zoom(max(0.2, 1.0 + value), x)
+
+    def event(self, event) -> bool:
+        # Pellizcar en un panel táctil (Wayland, X11, macOS): Qt lo entrega como un gesto de zoom.
+        if event.type() == QEvent.Type.NativeGesture and \
+                event.gestureType() == Qt.NativeGestureType.ZoomNativeGesture:
+            self.pinch(event.value(), event.position().x())
+            event.accept()
+            return True
+        return super().event(event)
 
     def fit(self) -> None:
         self.fpp = 0.0

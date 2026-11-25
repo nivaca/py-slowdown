@@ -1677,3 +1677,20 @@ def test_the_start_screen(window, app, wav, tmp_path):
     assert window.audio is not None and window.audio.path == wav.resolve()
     window.close_file()
     assert window.time_label.text() == "0:00.0 / 0:00.0"  # (cerrado, el reloj vuelve a cero)
+
+
+def test_zoom_to_the_selection_and_pinch(window, app, wav):
+    """View > Zoom to the selection (Z) shows the selection with a little room on each side; a pinch on a touchpad
+    zooms around the fingers."""
+    loaded(window, app, wav)
+    assert not window.a_zoom_selection.isEnabled()
+    window.set_selection((2.0, 3.0))
+    assert window.a_zoom_selection.isEnabled() and window.a_zoom_selection.shortcut().toString() == "Z"
+    window.a_zoom_selection.trigger()
+    wave = window.wave
+    shown = (wave.start / window.audio.rate, (wave.start + wave.visible_frames()) / window.audio.rate)
+    assert shown == pytest.approx((1.95, 3.05), abs=0.01)
+    wave.fit()
+    before = wave.current_fpp()
+    wave.pinch(1.0, wave.width() / 2)  # (los dedos se separan: el doble de cerca)
+    assert wave.current_fpp() == pytest.approx(before / 2, rel=0.01)

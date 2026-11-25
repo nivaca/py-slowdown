@@ -7,6 +7,8 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Zoom to the selection** (View, Z): just the selection, with a little
+  room on each side; and on a touchpad, a pinch zooms around the fingers.
 - **A start screen**: without a file, the waveform lists the recordings
   opened last, each with a small picture of its waveform (from its peaks
   kept); a click opens one; one gone is greyed, not found. The clock goes

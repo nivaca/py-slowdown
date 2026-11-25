@@ -7,6 +7,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Acercar a la selección** (Ver, Z): solo la selección, con un poco de
+  margen a cada lado; y en un panel táctil, pellizcar acerca o aleja
+  alrededor de los dedos.
 - **Una pantalla de inicio**: sin archivo, la forma de onda muestra las
   grabaciones abiertas últimamente, cada una con un pequeño dibujo de su
   forma de onda (de sus picos guardados); un clic abre una; una que ya no

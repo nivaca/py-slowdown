@@ -92,6 +92,7 @@ Keyboard
 | Add a bookmark                 | B                                |
 | Previous / next bookmark       | Ctrl+← / Ctrl+→, PgUp / PgDn     |
 | Zoom in / out / whole file     | Ctrl++ / Ctrl+− / Ctrl+0         |
+| Zoom to the selection          | Z                                |
 | A semitone higher / lower      | Ctrl+↑ / Ctrl+↓                  |
 | Original pitch                 | Shift+N                          |
 | Reset the sound                | Ctrl+Shift+N                     |

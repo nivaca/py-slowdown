@@ -141,6 +141,7 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Add a bookmark"), "B"),
         (tr("Previous / next bookmark"), tr("Ctrl+← / Ctrl+→   PgUp / PgDn")),
         (tr("Zoom in / out / whole file"), "Ctrl++ / Ctrl+− / Ctrl+0"),
+        (tr("Zoom to the selection"), "Z"),
         (tr("Zoom around the pointer"), tr("Ctrl+wheel")),
         (tr("Repeat the selection"), "L"),
         (tr("Select with the mouse"), tr("Shift+drag")),
@@ -1031,6 +1032,7 @@ class Window(QMainWindow):
         self.a_zoom_in = a(tr("Zoom &in"), lambda: self.wave.zoom(2.0), [QKeySequence.StandardKey.ZoomIn, "Ctrl+="])
         self.a_zoom_out = a(tr("Zoom &out"), lambda: self.wave.zoom(0.5), [QKeySequence.StandardKey.ZoomOut])
         self.a_fit = a(tr("&Whole file"), self.wave.fit, ["Ctrl+0"])
+        self.a_zoom_selection = a(tr("Zoom to the &selection"), self.zoom_to_selection, ["Z"])
         self.a_follow = a(tr("&Follow the position"), self._set_follow, checkable=True)
         self.a_compact = a(tr("Co&mpact mode"), self.set_compact, ["Ctrl+Shift+M"], checkable=True)
         self.a_follow.setChecked(self.settings.value("follow", True, type=bool))
@@ -1109,7 +1111,7 @@ class Window(QMainWindow):
             marks.addSeparator() if action is None else marks.addAction(action)
 
         view = bar.addMenu(tr("&View"))
-        for action in (self.a_zoom_in, self.a_zoom_out, self.a_fit, None, self.a_follow):
+        for action in (self.a_zoom_in, self.a_zoom_out, self.a_fit, self.a_zoom_selection, None, self.a_follow):
             view.addSeparator() if action is None else view.addAction(action)
         view.addSeparator()
         view.addAction(self.dock.toggleViewAction())
@@ -2302,9 +2304,14 @@ class Window(QMainWindow):
 
     # --- bucles: selecciones guardadas con un nombre
 
+    def zoom_to_selection(self) -> None:
+        if self.audio is not None and self.selection:
+            self.wave.zoom_to(*self.selection)
+
     def _update_loop_saving(self) -> None:
         can = self.audio is not None and self.selection is not None
         self.a_save_loop.setEnabled(can)
+        self.a_zoom_selection.setEnabled(can)
         self.loop_panel.save_button.setEnabled(can)
 
     def _save_loops(self) -> None:
