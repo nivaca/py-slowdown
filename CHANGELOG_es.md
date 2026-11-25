@@ -24,6 +24,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   Ctrl+↓ mueven un semitono y conservan los cents; mover los cents nunca
   hace saltar los semitonos. El volumen pasa a la derecha de la primera
   fila, para dejar sitio.
+- **Sin el botón Formantes**: conservar los formantes queda solo en el
+  menú, Reproducción > Conservar los formantes (en gris, como lo estaba el
+  botón, mientras la altura es la de la grabación). Las dos perillas de la
+  altura quedan más juntas.
 - **Cuenta previa > Golpes**: cuántos golpes da la cuenta previa (4 al
   principio), de una lista en el menú (de 1 a 8, 12, 16), el elegido
   marcado; el diálogo sigue aceptando cualquier número de 1 a 16.

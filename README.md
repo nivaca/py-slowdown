@@ -44,7 +44,7 @@ What it does
 - Moves the pitch up or down, in semitones (from −12 to +12) and cents
   (hundredths of a semitone, from −50 to +50, to tune a recording to an
   instrument), each with a knob, without changing the speed, also
-  while it plays; with Formants, a voice or an instrument keeps its timbre.
+  while it plays; with Playback > Keep the formants, a voice or an instrument keeps its timbre.
 - Hears one part of the mix (Hear): one channel, the two in one, the mix
   without its centre (where the voice and the solo usually are), only the
   bass, or everything but the bass.

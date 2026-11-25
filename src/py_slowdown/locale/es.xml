@@ -720,10 +720,6 @@
     <tr>&amp;Reabrir el último archivo al empezar</tr>
   </text>
   <text>
-    <en>Formants</en>
-    <tr>Formantes</tr>
-  </text>
-  <text>
     <en>Keep the formants: when the pitch moves, voices and instruments keep their natural timbre</en>
     <tr>Conservar los formantes: cuando la altura se mueve, las voces y los instrumentos conservan su timbre natural</tr>
   </text>

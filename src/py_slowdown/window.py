@@ -245,7 +245,7 @@ class Window(QMainWindow):
             self.stretching = False
             why = tr("The Rubber Band Library is not installed, so the speed stays at 1×.")
             for widget in (self.speed_slider, self.speed_box, self.b_normal, self.b_speeds, self.semitone_dial,
-                           self.semitone_label, self.cent_dial, self.cent_label, self.b_pitch, self.b_formants):
+                           self.semitone_label, self.cent_dial, self.cent_label, self.b_pitch):
                 widget.setEnabled(False)
                 widget.setToolTip(why)
             for action in (self.a_slower, self.a_faster, self.a_normal, self.a_higher, self.a_lower,
@@ -390,17 +390,15 @@ class Window(QMainWindow):
         self.b_pitch.setToolTip(tr("Original pitch (Shift+N)"))
         self.b_pitch.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.b_pitch.setEnabled(False)
-        self.b_formants = QToolButton(self)
-        self.b_formants.setText(tr("Formants"))
-        self.b_formants.setCheckable(True)
-        self.b_formants.setToolTip(tr("Keep the formants: when the pitch moves, voices and instruments keep their "
-                                      "natural timbre"))
-        self.b_formants.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        for widget in (self.semitone_dial, self.semitone_label, self.cent_dial, self.cent_label):
-            row.addWidget(widget)
+        # (las dos perillas juntas, cada una pegada a su valor)
+        knobs = QHBoxLayout()
+        knobs.setSpacing(2)
+        for dial, label in ((self.semitone_dial, self.semitone_label), (self.cent_dial, self.cent_label)):
+            knobs.addWidget(dial)
+            knobs.addWidget(label)
+        row.addLayout(knobs)
         self._show_pitch(0.0)
         row.addWidget(self.b_pitch)
-        row.addWidget(self.b_formants)
         row.addSpacing(12)
 
         row.addStretch()
@@ -414,7 +412,7 @@ class Window(QMainWindow):
         dial.setPageStep(max(1, limit // 4))
         label = QLabel(self)
         label.setProperty("unit", unit)
-        label.setMinimumWidth(label.fontMetrics().horizontalAdvance(f"−{limit}{unit}") + 6)
+        label.setFixedWidth(label.fontMetrics().horizontalAdvance(f"−{limit}{unit}") + 2)
         for widget in (dial, label):
             widget.setToolTip(tip)
         return dial, label
@@ -452,6 +450,8 @@ class Window(QMainWindow):
         self.a_lower = a(tr("A semitone lo&wer"), lambda: self.change_pitch(-1.0), ["Ctrl+Down"])
         self.a_original_pitch = a(tr("Ori&ginal pitch"), lambda: self.set_pitch(0.0), ["Shift+N"])
         self.a_formants = a(tr("&Keep the formants"), self.set_formants, checkable=True)
+        self.a_formants.setStatusTip(tr("Keep the formants: when the pitch moves, voices and instruments keep their "
+                                        "natural timbre"))
         self.a_repeat = a(tr("&Repeat the selection"), self._set_repeat, ["L"], checkable=True)
         self.a_sel_start = a(tr("Select&ion starts here"), lambda: self.mark_selection(start=True), ["I"])
         self.a_sel_end = a(tr("Selection ends &here"), lambda: self.mark_selection(start=False), ["O"])
@@ -626,8 +626,6 @@ class Window(QMainWindow):
         self.b_repeat.toggled.connect(self.a_repeat.setChecked)
         self.a_repeat.toggled.connect(self.b_repeat.setChecked)
         self.b_tap.clicked.connect(self.tap_tempo)
-        self.b_formants.toggled.connect(self.a_formants.setChecked)
-        self.a_formants.toggled.connect(self.b_formants.setChecked)
         self.a_formants.setChecked(self.settings.value("formants", False, type=bool))
         self._update_count_tip()
         self.panel.activated.connect(lambda row: self.seek(self.bookmarks[row].time))
@@ -1187,9 +1185,8 @@ class Window(QMainWindow):
         self.settings.setValue("quality", quality)
 
     def _update_formants(self) -> None:
-        # Los formantes solo cuentan cuando la altura se movió: si no, el botón está apagado (y guarda su estado).
+        # Los formantes solo cuentan cuando la altura se movió: si no, la acción está en gris (y guarda su estado).
         moved = self.stretching and self.player.pitch != 0.0
-        self.b_formants.setEnabled(moved)
         self.a_formants.setEnabled(moved)
 
     def set_formants(self, on: bool) -> None:

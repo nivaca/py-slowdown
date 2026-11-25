@@ -667,7 +667,9 @@ naive rounding made the semitone control jump while the cents moved. So the
 two keep what they say while it is still true, a semitone up or down keeps
 the cents of a tuning, and only a pitch from elsewhere (a file, the reset)
 is shown with the nearest semitone. To make room, the volume went to the
-first row.
+first row. The two knobs were then put closer together, each against its
+value, and the button Formants went: keeping the formants is chosen
+seldom, and Playback > Keep the formants is enough for it.
 
 Testing
 -------

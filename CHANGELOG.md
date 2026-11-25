@@ -24,6 +24,9 @@ Debian package, the RPM, the wheel and the source, are on
   Ctrl+↓ move a semitone and keep the cents; moving the cents never makes
   the semitones jump. The volume moves to the right of the first row, to
   make room.
+- **No Formants button**: keeping the formants is only in the menu,
+  Playback > Keep the formants (greyed out, as the button was, while the
+  pitch is the recording's). The two pitch knobs sit closer together.
 - **Count-in > Clicks**: how many clicks the count-in gives (4 at first),
   from a list in the menu (1 to 8, 12, 16), the one chosen ticked; the
   dialog still takes any number from 1 to 16.
