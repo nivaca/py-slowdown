@@ -319,61 +319,92 @@ def escape(text: str) -> str:
 
 
 def inline(text: str, base: str | None) -> str:
-    """One block's text in HTML: code, links (relative ones made absolute with BASE), bold and italics. Images
-    are left out: Zenodo doesn't take <img>."""
-    parts = re.split(r"(`[^`]+`)", text)
-    out = []
-    for i, part in enumerate(parts):
-        if i % 2:
-            out.append(f"<code>{html.escape(part[1:-1], quote=False)}</code>")
-            continue
-        part = escape(part)
-        part = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", part)
+    """One block's text in HTML: code, links (relative ones made absolute with BASE; <URL> and <EMAIL> too), bold
+    and italics. Images are left out: Zenodo doesn't take <img>."""
+    kept = []
 
-        def link(m: re.Match) -> str:
-            label, url = m.groups()
-            if url.startswith("#"):
-                return label
-            if not re.match(r"[a-z]+:", url) and base:
-                url = base + url.lstrip("./")
-            return f'<a href="{url}">{label}</a>'
+    def keep(fragment: str) -> str:
+        # Lo ya hecho HTML se aparta, para que ni el escape ni los ** lo toquen
+        kept.append(fragment)
+        return f"\x00{len(kept) - 1}\x01"
 
-        part = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", link, part)
-        part = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", part)
-        part = re.sub(r"(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])", r"<em>\1</em>", part)
-        out.append(part)
-    return "".join(out).strip()
+    text = re.sub(r"(`+)(.+?)\1", lambda m: keep(f"<code>{html.escape(m.group(2).strip(), quote=False)}</code>"),
+                  text)
+    text = re.sub(r"<((?:https?|mailto):[^<>\s]+)>",
+                  lambda m: keep(f'<a href="{escape(m.group(1))}">{escape(m.group(1).removeprefix("mailto:"))}</a>'),
+                  text)
+    text = re.sub(r"<([^<>\s@]+@[^<>\s@]+\.[a-z]+)>",
+                  lambda m: keep(f'<a href="mailto:{escape(m.group(1))}">{escape(m.group(1))}</a>'), text)
+    text = escape(text)
+    text = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", text)
+
+    def link(m: re.Match) -> str:
+        label, url = m.groups()
+        if url.startswith("#"):
+            return label
+        if not re.match(r"[a-z]+:", url) and base:
+            url = base + re.sub(r"^(\./)+", "", url)
+        return f'<a href="{url}">{label}</a>'
+
+    text = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", link, text)
+    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    text = re.sub(r"(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])", r"<em>\1</em>", text)
+    while "\x00" in text:
+        text = re.sub(r"\x00(\d+)\x01", lambda m: kept[int(m.group(1))], text)
+    return text.strip()
 
 
 def markdown_html(text: str, base: str | None = None) -> str:
     """A README in Markdown as the HTML Zenodo accepts in a description (p, ul, ol, li, table, pre, code, a,
-    strong, em, blockquote: no headings nor images, so a heading is a paragraph in bold)."""
+    strong, em, blockquote: no headings nor images, so a heading is a paragraph in bold, and a block of HTML is
+    left with its text only)."""
     lines = text.expandtabs(4).splitlines()
     blocks, i = [], 0
     item = re.compile(r"^\s{0,3}([-*+]|\d+[.)])\s+")
     rule = re.compile(r"^(=+|-+)\s*$")
+    fence = re.compile(r"^\s*(```+|~~~+)")
+
+    def code_block(code: list[str]) -> str:
+        while code and not code[-1].strip():
+            code.pop()
+        return f"<pre><code>{html.escape(chr(10).join(code), quote=False)}</code></pre>"
+
+    def fenced(start: int) -> tuple[list[str], int]:
+        # Las líneas de un bloque ``` que empieza en START (sin la sangría de la marca), y la línea que sigue
+        mark = fence.match(lines[start])
+        indent, ticks = len(lines[start]) - len(lines[start].lstrip()), mark.group(1)
+        end = start + 1
+        while end < len(lines) and not lines[end].strip().startswith(ticks):
+            end += 1
+        return [l[indent:] if l[:indent].isspace() else l.lstrip() for l in lines[start + 1:end]], end + 1
 
     def starts_block(n: int) -> bool:
         line = lines[n]
-        return (not line.strip() or bool(item.match(line)) or line.startswith(("#", "|", "```", ">"))
+        return (not line.strip() or bool(item.match(line)) or bool(fence.match(line))
+                or line.startswith(("#", "|", ">", "<"))
                 or (n + 1 < len(lines) and bool(rule.match(lines[n + 1])) and bool(line.strip())))
 
     while i < len(lines):
         line = lines[i]
         if not line.strip():
             i += 1
-        elif line.startswith("```"):
-            end = next((j for j in range(i + 1, len(lines)) if lines[j].startswith("```")), len(lines))
-            blocks.append(f"<pre><code>{html.escape(chr(10).join(lines[i + 1:end]), quote=False)}</code></pre>")
-            i = end + 1
+        elif fence.match(line):
+            code, i = fenced(i)
+            blocks.append(code_block(code))
         elif line.startswith("    "):
             end = i
             while end < len(lines) and (lines[end].startswith("    ") or not lines[end].strip()):
                 end += 1
-            code = [l[4:] for l in lines[i:end]]
-            while code and not code[-1].strip():
-                code.pop()
-            blocks.append(f"<pre><code>{html.escape(chr(10).join(code), quote=False)}</code></pre>")
+            blocks.append(code_block([l[4:] for l in lines[i:end]]))
+            i = end
+        elif re.match(r"^</?[a-zA-Z][^>]*>", line) and not re.match(r"^<(?:https?|mailto):|^<[^<>\s@]+@", line):
+            # Un bloque de HTML (las imágenes centradas de un README): solo su texto, sin las etiquetas
+            end = i
+            while end < len(lines) and lines[end].strip():
+                end += 1
+            text_only = " ".join(re.sub(r"<[^>]*>", " ", " ".join(lines[i:end])).split())
+            if text_only:
+                blocks.append(f"<p>{inline(text_only, base)}</p>")
             i = end
         elif m := re.match(r"^(#{1,6})\s+(.*?)\s*#*\s*$", line):
             blocks.append(f"<p><strong>{inline(m.group(2), base)}</strong></p>")
@@ -384,9 +415,9 @@ def markdown_html(text: str, base: str | None = None) -> str:
         elif line.startswith("|"):
             rows = []
             while i < len(lines) and lines[i].startswith("|"):
-                cells = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+                cells = [c.strip() for c in re.split(r"(?<!\\)\|", lines[i].strip().strip("|"))]
                 if not all(re.fullmatch(r":?-+:?", c) for c in cells):
-                    rows.append(cells)
+                    rows.append([c.replace("\\|", "|") for c in cells])
                 i += 1
             head, *body = rows or [[]]
             blocks.append("<table><thead><tr>" + "".join(f"<th>{inline(c, base)}</th>" for c in head)
@@ -401,19 +432,26 @@ def markdown_html(text: str, base: str | None = None) -> str:
             blocks.append(f"<blockquote><p>{inline(' '.join(quoted), base)}</p></blockquote>")
         elif m := item.match(line):
             tag = "ul" if m.group(1) in "-*+" else "ol"
-            items = []
+            # Cada elemento, en partes: texto (una lista de líneas) o un bloque de código ya en HTML
+            items: list[list] = []
             while i < len(lines):
                 if m := item.match(lines[i]):
-                    items.append([lines[i][m.end():].strip()])
+                    items.append([[lines[i][m.end():].strip()]])
                     i += 1
+                elif lines[i].strip() and lines[i].startswith(" ") and fence.match(lines[i]):
+                    code, i = fenced(i)
+                    items[-1] += [code_block(code), []]
                 elif lines[i].strip() and lines[i].startswith(" "):
-                    items[-1].append(lines[i].strip())
+                    items[-1][-1].append(lines[i].strip())
                     i += 1
-                elif not lines[i].strip() and i + 1 < len(lines) and item.match(lines[i + 1]):
+                elif (not lines[i].strip() and i + 1 < len(lines)
+                      and (item.match(lines[i + 1]) or lines[i + 1].startswith("  "))):
                     i += 1
                 else:
                     break
-            blocks.append(f"<{tag}>" + "".join(f"<li>{inline(' '.join(t), base)}</li>" for t in items) + f"</{tag}>")
+            blocks.append(f"<{tag}>" + "".join(
+                "<li>" + " ".join(part if isinstance(part, str) else inline(" ".join(part), base)
+                                  for part in parts if part) + "</li>" for parts in items) + f"</{tag}>")
         else:
             paragraph = [line.strip()]
             i += 1
@@ -501,6 +539,11 @@ def metadata(version: str) -> tuple[dict, dict]:
 RDM_JSON = "application/vnd.inveniordm.v1+json"
 
 
+def languages(value) -> list[str]:
+    # "programming_language" puede ser uno ("python") o varios (["kotlin", "c++"])
+    return [value] if isinstance(value, str) else list(value or [])
+
+
 def missing_fields(record: dict, extra: dict) -> list[str]:
     """Those of EXTRA's fields that RECORD (as the records API gives it, in RDM_JSON) doesn't have."""
     meta, custom = record.get("metadata") or {}, record.get("custom_fields") or {}
@@ -509,7 +552,7 @@ def missing_fields(record: dict, extra: dict) -> list[str]:
         "copyright": meta.get("copyright") == extra.get("copyright"),
         "repository": custom.get("code:codeRepository") == extra.get("repository"),
         "programming_language": [l.get("id") for l in custom.get("code:programmingLanguage") or []]
-                                == [extra.get("programming_language")],
+                                == languages(extra.get("programming_language")),
         "development_status": (custom.get("code:developmentStatus") or {}).get("id") == extra.get("development_status"),
     }
     return [key for key in extra if not have.get(key, True)]
@@ -528,7 +571,7 @@ def record_fields(record: dict, extra: dict) -> dict:
     if extra.get("repository"):
         custom["code:codeRepository"] = extra["repository"]
     if extra.get("programming_language"):
-        custom["code:programmingLanguage"] = [{"id": extra["programming_language"]}]
+        custom["code:programmingLanguage"] = [{"id": code} for code in languages(extra["programming_language"])]
     if extra.get("development_status"):
         custom["code:developmentStatus"] = {"id": extra["development_status"]}
     # Solo lo que se puede escribir; links, revision_id, etc. son de lectura

@@ -398,6 +398,20 @@ class ZenodoTest(unittest.TestCase):
         self.assertTrue(self.tool.upload(sandbox=True, new_version_of=None, dry_run=False))
         self.assertEqual(self.tool.main(["check-token", "--sandbox"]), 0)
 
+    def test_readme_as_html_other_readmes(self):
+        """What other READMEs have: <URL> and <EMAIL>, code in a link or in bold, a block of HTML with images, a
+        fenced block inside a list item, and several programming languages."""
+        readme = ('<p align="center">\n  <img src="a.png" alt="shot">\n</p>\n\n'
+                  "See [`docs/D.md`](docs/D.md), **`run.py`** and <https://x.org>; Me <me@example.org>.\n\n"
+                  "1. Install:\n\n   ```sh\n   pip install demo\n   ```\n\n   then run it.\n")
+        self.assertEqual(self.tool.markdown_html(readme, "https://github.com/someone/demo/blob/v1.0/"), "\n".join([
+            '<p>See <a href="https://github.com/someone/demo/blob/v1.0/docs/D.md"><code>docs/D.md</code></a>, '
+            '<strong><code>run.py</code></strong> and <a href="https://x.org">https://x.org</a>; Me '
+            '<a href="mailto:me@example.org">me@example.org</a>.</p>',
+            "<ol><li>Install: <pre><code>pip install demo</code></pre> then run it.</li></ol>"]))
+        self.assertEqual(self.tool.languages("python"), ["python"])
+        self.assertEqual(self.tool.languages(["kotlin", "c++"]), ["kotlin", "c++"])
+
     def test_dry_run_sends_nothing(self):
         self.tool.collect(None, packages=False)
         state = self.serve({})
