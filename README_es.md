@@ -101,6 +101,7 @@ Teclado
 | Acercar / alejar / todo           | Ctrl++ / Ctrl+− / Ctrl+0         |
 | Un semitono más agudo / grave     | Ctrl+↑ / Ctrl+↓                  |
 | Altura original                   | Mayús+N                          |
+| Deshacer los cambios del sonido   | Ctrl+Mayús+N                     |
 | Repetir la selección              | L                                |
 | Seleccionar                       | Mayús+arrastrar, o I y O         |
 | Quitar la selección               | Esc                              |

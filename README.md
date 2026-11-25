@@ -94,6 +94,7 @@ Keyboard
 | Zoom in / out / whole file     | Ctrl++ / Ctrl+− / Ctrl+0         |
 | A semitone higher / lower      | Ctrl+↑ / Ctrl+↓                  |
 | Original pitch                 | Shift+N                          |
+| Reset the sound                | Ctrl+Shift+N                     |
 | Repeat the selection           | L                                |
 | Select                         | Shift+drag, or I and O           |
 | Clear the selection            | Esc                              |

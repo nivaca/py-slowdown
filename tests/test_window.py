@@ -1408,3 +1408,21 @@ def test_play_and_pause_icons(window, app, wav, output):
     assert window.player.playing and still != playing
     window.toggle()
     assert window.b_play.icon().pixmap(24, 24).toImage() == still
+
+
+def test_reset_the_sound(window, app, wav):
+    """Playback > Reset the sound (Ctrl+Shift+N): speed 100%, the recording's pitch, the formants off, both channels
+    without a filter, the equalizer flat; the volume stays."""
+    loaded(window, app, wav)
+    window.set_speed(0.6)
+    window.set_pitch(-2.3)
+    window.a_formants.setChecked(True)
+    window.set_hearing("left", "bass")
+    window.set_eq((3, 0, 0, 0, -3), False)
+    window.volume.setValue(70)
+    assert window.a_reset_sound.shortcut().toString() == "Ctrl+Shift+N"
+    window.a_reset_sound.trigger()
+    player = window.player
+    assert (player.speed, player.pitch, player.formants, player.hearing) == (1.0, 0.0, False, ("both", "none"))
+    assert player.eq == (0, 0, 0, 0, 0) and window.eq_gains == (0, 0, 0, 0, 0) and window.eq_on
+    assert window.volume.value() == 70

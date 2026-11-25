@@ -135,6 +135,7 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Normal speed"), "N"),
         (tr("A semitone higher / lower"), tr("Ctrl+↑ / Ctrl+↓")),
         (tr("Original pitch"), tr("Shift+N")),
+        (tr("Reset the sound"), tr("Ctrl+Shift+N")),
         (tr("Add a bookmark"), "B"),
         (tr("Previous / next bookmark"), tr("Ctrl+← / Ctrl+→   PgUp / PgDn")),
         (tr("Zoom in / out / whole file"), "Ctrl++ / Ctrl+− / Ctrl+0"),
@@ -731,6 +732,7 @@ class Window(QMainWindow):
         self.a_higher = a(tr("A se&mitone higher"), lambda: self.change_pitch(1.0), ["Ctrl+Up"])
         self.a_lower = a(tr("A semitone lo&wer"), lambda: self.change_pitch(-1.0), ["Ctrl+Down"])
         self.a_original_pitch = a(tr("Ori&ginal pitch"), lambda: self.set_pitch(0.0), ["Shift+N"])
+        self.a_reset_sound = a(tr("Reset the so&und"), self.reset_sound, ["Ctrl+Shift+N"])
         self.a_formants = a(tr("&Keep the formants"), self.set_formants, checkable=True)
         self.a_formants.setStatusTip(tr("Keep the formants: when the pitch moves, voices and instruments keep their "
                                         "natural timbre"))
@@ -787,7 +789,7 @@ class Window(QMainWindow):
         for action in (self.a_play, self.a_continue, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
                        self.a_forward_1, self.a_forward, self.a_end, None,
                        self.a_slower, self.a_faster, self.a_normal, self.speed_menu, None,
-                       self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, None,
+                       self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, self.a_reset_sound, None,
                        self.a_repeat, self.a_sel_start, self.a_sel_end, self.a_sel_clear, self.a_save_loop):
             if action is None:
                 play.addSeparator()
@@ -1728,6 +1730,17 @@ class Window(QMainWindow):
                             QEvent.Type.StyleChange):
             self._draw_icons()
         super().changeEvent(event)
+
+    def reset_sound(self) -> None:
+        """The recording as it is: speed 100%, its own pitch (the formants off), both channels without a filter,
+        the equalizer flat; the volume, which is how loud one listens, stays."""
+        if self.stretching:
+            self.set_speed(1.0)
+            self.set_pitch(0.0)
+            self.a_formants.setChecked(False)
+        self.set_hearing("both", "none")
+        self.set_eq(equalizer.FLAT, True)
+        self.statusBar().showMessage(tr("The sound as it is in the recording"), 3000)
 
     def show_equalizer(self) -> None:
         """Open the equalizer (or bring it to the front); the button stays as the equalizer is, on or off."""

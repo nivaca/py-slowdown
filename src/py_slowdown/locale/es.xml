@@ -1181,4 +1181,20 @@
     <en>{band}: up or down, in decibels; a double click goes back to 0</en>
     <tr>{band}: arriba o abajo, en decibeles; un doble clic lo devuelve a 0</tr>
   </text>
+  <text>
+    <en>Reset the so&amp;und</en>
+    <tr>Des&amp;hacer los cambios del sonido</tr>
+  </text>
+  <text>
+    <en>The sound as it is in the recording</en>
+    <tr>El sonido como está en la grabación</tr>
+  </text>
+  <text>
+    <en>Reset the sound</en>
+    <tr>Deshacer los cambios del sonido</tr>
+  </text>
+  <text>
+    <en>Ctrl+Shift+N</en>
+    <tr>Ctrl+Mayús+N</tr>
+  </text>
 </interface>

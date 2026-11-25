@@ -7,6 +7,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Deshacer los cambios del sonido** (Reproducción, Ctrl+Mayús+N): a la
+  vez, velocidad 100 %, la altura de la grabación, sin los formantes, los
+  dos canales sin filtro y el ecualizador plano; el volumen se queda.
 - **Íconos propios en todos los botones**: Marcador, Velocidades y EQ, que
   tenían texto (una cinta con un +, un velocímetro y tres deslizadores), y
   los botones de la reproducción, el de repetir y el parlante del volumen,

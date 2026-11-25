@@ -7,6 +7,9 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Reset the sound** (Playback, Ctrl+Shift+N): speed 100%, the recording's
+  pitch, the formants off, both channels without a filter and the equalizer
+  flat, at once; the volume stays.
 - **Icons of the program's own for every button**: Bookmark, Speeds and
   EQ, which had text (a ribbon with a +, a speedometer and three faders),
   and the buttons of playing, repeat and the speaker of the volume, which
