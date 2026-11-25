@@ -13,7 +13,7 @@ from py_slowdown.sidecar import FileState
 
 def state() -> FileState:
     return FileState(83.25, {"speed": 0.75, "pitch": -2.0, "formants": True, "hearing": ["left", "bass"],
-                             "selection": [95.0, 103.5], "repeat": True, "countin": {"bpm": 96, "offset": 0.25, "on": True}},
+                             "selection": [95.0, 103.5], "repeat": True, "countin": {"bpm": 96, "offset": 0.25, "on": True}, "volume": 120},
                      [Bookmark(21.5, "Second verse"), Bookmark(3.0, ""), Bookmark(0.8, "Downbeat", first_beat=True)],
                      [Loop(95.0, 103.5, "Bridge")])
 
@@ -143,6 +143,7 @@ def test_the_window_keeps_it(tmp_path, monkeypatch, output):
 
     w = window("one.json")
     assert w.a_sidecar["beside"].isChecked()
+    w.a_ask_save.setChecked(False)  # (cada cambio al .slx en el momento)
     w.open_file(song)
     w.audio.wait(10)
     w.set_speed(0.7)

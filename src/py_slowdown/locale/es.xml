@@ -48,6 +48,22 @@
     <tr>Ir al primer pulso, {time} (Inicio): la cuenta previa está encendida</tr>
   </text>
   <text>
+    <en>As&amp;k to save before closing a file</en>
+    <tr>Pre&amp;guntar si guardar antes de cerrar un archivo</tr>
+  </text>
+  <text>
+    <en>{name} has changes (bookmarks, loops or how it is played). Save them?</en>
+    <tr>{name} tiene cambios (marcadores, bucles o cómo se toca). ¿Guardarlos?</tr>
+  </text>
+  <text>
+    <en>Close the file (the program stays open)</en>
+    <tr>Cerrar el archivo (el programa sigue abierto)</tr>
+  </text>
+  <text>
+    <en>Quit</en>
+    <tr>Salir</tr>
+  </text>
+  <text>
     <en>&amp;Close</en>
     <tr>&amp;Cerrar</tr>
   </text>

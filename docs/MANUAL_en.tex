@@ -428,7 +428,8 @@ it. Up to 100\,\% it lowers the sound of the program; from there to
 recorded quietly, and the slider and the number turn red. What would go
 above the loudest sound the card can play is cut off there, so a loud
 recording may then distort. The volume only changes what is heard, not
-the audio exported.
+the audio exported. It is kept with each file, and a file opened for the
+first time starts at 100\,\%.
 
 \section{The speed}
 
@@ -482,7 +483,8 @@ The pitch can be moved up or down, in semitones, without changing the
 speed: to play along with a recording in another key, to bring a song
 within reach of a voice, or to hear a fast passage slower and an octave
 higher, where its notes stand out. Beside the speed, \menu{Pitch} has two
-knobs, with 0 at the top, each with its value beside it. A knob is turned
+knobs, with 0 at the top, and their values on their left, in the same
+order (+2\,st $-15$\,¢). A knob is turned
 by dragging it around, or with the mouse wheel over it, one step for each
 notch; a double click takes it back to 0. The first moves the pitch in semitones, from
 12 down to 12 up (an octave each way); \key{Ctrl+↑} and \key{Ctrl+↓} move
@@ -773,6 +775,19 @@ and \menu{Help\then Keyboard shortcuts} (\key{F1}) shows them as they
 are.
 
 \index{reopening the last file}%
+\index{saving}\index{changes, unsaved}%
+With \menu{Settings\then Ask to save before closing a file} ticked (as it
+is at first), what is done to a file (its bookmarks and loops, and how it
+is played: speed, pitch, selection, count-in) is saved only when asked:
+with \menu{File\then Save the .slx} (\key{Ctrl+S}), or when the file is
+closed, another is opened, or the program quits, when the program asks
+whether to save the changes: \menu{Save}, \menu{Discard} (the point where
+the file was left is kept all the same) or \menu{Cancel}, which leaves the
+file open. While there are changes not saved, the title of the window
+begins with •. Moving the position is not a change. Without it ticked,
+everything is saved as it is done, without asking. \key{Ctrl+W} closes the
+file and leaves the program open; \key{Alt+F4} or \key{Ctrl+Q} quits.
+
 With \menu{Settings\then Reopen the last file when starting} ticked (it is
 not at first), the program opens again, when it starts, the file that was
 open last, and goes on from where it was left. A file named on the command
@@ -791,14 +806,13 @@ and its offset. Only what
 is not the usual is kept. When the file is opened again, all that comes
 back (the selection, once the file is read that far); a file with nothing
 kept starts with the usual: normal speed, the recording's pitch, both
-channels, the formants off and the count-in at 100\,BPM, whatever the
-file before had, also when it is dropped on the window. The volume, and
-whether the count-in is on and how many clicks it gives, are not of each
-file, and stay.
+channels, the formants off, the count-in off, at 100\,BPM, and the volume
+at 100\,\%, whatever the file before had, also when it is dropped on the
+window. How many clicks the count-in gives is not of each file, and
+stays.
 
 \index{slx file@\texttt{.slx} file}\index{settings files}%
-All that is also written, when the file is closed and each time a bookmark
-or a loop is added, changed or removed, in a file with the same
+All that is also written, when it is saved (see below), in a file with the same
 name as the recording and the extension \texttt{.slx}: \texttt{song.slx}
 for \texttt{song.mp3}, in the same folder. Besides the position, the speed, the pitch, the formants, the
 way of hearing, the selection, the count-in, the bookmarks and the loops,
@@ -897,7 +911,9 @@ changes.
 \key{T} & tap the tempo, with the beat\\
 \key{Ctrl+O} & open a file\\
 \key{Ctrl+E} & export the audio\\
-\key{Ctrl+W} & close the file\\
+\key{Ctrl+W} & close the file (the program stays open)\\
+\key{Ctrl+S} & save the \texttt{.slx}\\
+\key{Alt+F4}, \key{Ctrl+Q} & quit\\
 \key{F1} & the list of the keys\\
 \bottomrule
 \end{longtable}

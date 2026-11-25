@@ -36,6 +36,7 @@ def loaded(window, app, path):
 
 
 def test_open_play_and_bookmarks(window, app, wav, output):
+    window.a_ask_save.setChecked(False)  # (lo que se hace se guarda en el momento)
     loaded(window, app, wav)
     assert window.time_label.text() == "0:00.0 / 0:06.0"
     window.seek(2.0)
@@ -127,8 +128,8 @@ def test_volume_up_to_150(window, app, wav, output):
     assert window.volume.palette().highlight().color().name() == "#c81e1e"
     assert "c81e1e" in window.volume_label.styleSheet() and "distort" in window.volume.toolTip()
     assert window.settings.value("volume", type=int) == 120
-    window.volume.setValue(150)
     loaded(window, app, wav)
+    window.volume.setValue(150)  # (después de abrir: cada archivo empieza en 100 %)
     window.toggle()
     loudest = 0.0
     for _ in range(300):
@@ -571,8 +572,8 @@ def test_pitch_dials(window, app, wav):
 
 def test_each_file_starts_from_the_defaults(window, app, wav, tmp_path):
     """A file with nothing kept opens with the usual speed, pitch, formants, way of hearing and count-in tempo, not
-    with those of the file before; one with settings kept gets its own; the volume and whether the count-in is
-    on stay, being the user's."""
+    with those of the file before, and the count-in off and the volume at 100%; one with settings kept gets its
+    own (the volume too)."""
     from conftest import tone, write
 
     other = tmp_path / "other.wav"
@@ -592,10 +593,11 @@ def test_each_file_starts_from_the_defaults(window, app, wav, tmp_path):
     assert window.player.speed == 1.0 and window.player.pitch == 0.0 and not window.player.formants
     assert window.player.hearing == ("both", "none") and window.count.bpm == 100
     assert (window.semitone_dial.value(), window.cent_dial.value()) == (0, 0) and window.speed_box.value() == 1.0
-    assert window.volume.value() == 70 and window.count.on  # (del usuario)
+    assert window.volume.value() == 100 and not window.count.on  # (el volumen y la cuenta, como siempre)
     loaded(window, app, wav)  # (el primero, con lo suyo guardado)
     assert window.player.speed == 0.6 and window.player.pitch == pytest.approx(-2.15)
-    assert window.player.hearing == ("left", "bass") and window.count.bpm == 140
+    assert window.player.hearing == ("left", "bass") and window.count.bpm == 140 and window.count.on
+    assert window.volume.value() == 70
 
 
 def test_go_to_the_start(window, app, wav):
@@ -632,6 +634,86 @@ def test_starts_with_the_count_in_on(app, output, tmp_path, monkeypatch):
     assert errors == []
     assert w.a_count.isChecked() and w.count.on and "clicks at" in w.a_count_settings.statusTip()
     w.close()
+
+
+def test_ask_to_save(window, app, wav, tmp_path, monkeypatch):
+    """Settings > Ask to save before closing a file (on at first): changes (bookmarks, loops, how it is played,
+    not the position) are saved only when asked, the title marks them; closing asks: Save, Don't save (the
+    position only), or Cancel (the file stays open, the program too). Off, all is saved as it is done."""
+    from py_slowdown import sidecar
+    from conftest import tone, write
+
+    answers = []
+    monkeypatch.setattr(Window, "_ask_save", lambda self, name: answers.pop(0))
+    assert window.a_ask_save.isChecked()
+    loaded(window, app, wav)
+    assert not window._changed() and not window.windowTitle().startswith("•")
+    window.seek(2.0)
+    window._tick()
+    assert not window._changed()  # (la posición no es un cambio)
+    window.add_bookmark_at(1.0)
+    window.set_speed(0.7)
+    window._tick()
+    assert window._changed() and window.windowTitle().startswith("• ")
+    assert window.store.bookmarks(wav) == [] and sidecar.find(wav) is None  # (nada escrito todavía)
+    # Cancelar: el archivo sigue abierto, también al salir
+    answers.append("cancel")
+    other = tmp_path / "other.wav"
+    write(other, tone(2.0))
+    assert not window.open_file(other) and window.audio.path == wav.resolve()
+    answers.append("cancel")
+    from PySide6.QtGui import QCloseEvent
+
+    event = QCloseEvent()
+    window.closeEvent(event)
+    assert not event.isAccepted() and window.audio is not None
+    # No guardar: la posición sí, lo demás como estaba
+    answers.append("discard")
+    window.close_file()
+    assert window.store.bookmarks(wav) == [] and window.store.settings(wav) == {} and sidecar.find(wav) is None
+    assert window.store.position(wav) == pytest.approx(2.0)
+    # Guardar (Ctrl+S, o al cerrar)
+    loaded(window, app, wav)
+    window.add_bookmark_at(1.5)
+    window.a_save_slx.trigger()
+    assert not window._changed() and [b.time for b in sidecar.read(sidecar.find(wav)).bookmarks] == [1.5]
+    assert [b.time for b in window.store.bookmarks(wav)] == [1.5]
+    window.add_bookmark_at(2.5)
+    answers.append("save")
+    window.close_file()
+    assert [b.time for b in sidecar.read(sidecar.find(wav)).bookmarks] == [1.5, 2.5] and answers == []
+    # Apagado: todo se guarda en el momento, sin preguntar
+    loaded(window, app, wav)
+    window.a_ask_save.setChecked(False)
+    assert window.settings.value("ask_save", type=bool) is False
+    window.add_bookmark_at(3.5)
+    assert [b.time for b in sidecar.read(sidecar.find(wav)).bookmarks] == [1.5, 2.5, 3.5]
+    window.close_file()  # (sin respuestas: no pregunta)
+
+
+def test_close_and_quit_keys(window, app, wav):
+    """Ctrl+W (or Ctrl+F4) closes the file and the program stays open; Alt+F4 (or Ctrl+Q) quits."""
+    assert [k.toString() for k in window.a_close.shortcuts()] == ["Ctrl+W", "Ctrl+F4"]
+    assert [k.toString() for k in window.a_quit.shortcuts()] == ["Ctrl+Q", "Alt+F4"]
+    loaded(window, app, wav)
+    window.a_close.trigger()
+    assert window.audio is None and window.isVisible()
+    window.a_quit.trigger()
+    assert not window.isVisible()
+
+
+def test_pitch_knobs_evenly_spaced(window, app):
+    """The semitone knob, the cents knob and the button 0 are the same distance apart; the two values are on their
+    left, in the same order, and keep their place while the knobs turn."""
+    window.resize(1100, 480)
+    app.processEvents()
+    st, ct, zero = window.semitone_dial.geometry(), window.cent_dial.geometry(), window.b_pitch.geometry()
+    assert ct.x() - (st.x() + st.width()) == zero.x() - (ct.x() + ct.width())
+    assert window.semitone_label.geometry().x() < window.cent_label.geometry().x() < st.x()
+    before = window.cent_label.geometry()
+    window.cent_dial.setValue(-45)
+    app.processEvents()
+    assert window.cent_label.geometry() == before and window.cent_label.text() == "−45 ¢"
 
 
 def test_split_pitch():
@@ -776,6 +858,7 @@ def test_first_beat(window, app, wav, monkeypatch):
     """Count-in > The first beat is here (or the right click on the waveform): a bookmark of its own, one per file,
     kept with the others; the count-in brings the recording in on the nearest beat of its grid, wherever it is
     played from. Removed, the count-in goes back to the offset of its settings."""
+    window.a_ask_save.setChecked(False)  # (lo que se hace se guarda en el momento)
     loaded(window, app, wav)
     menu = {a.text(): a.menu() for a in window.menuBar().actions()}["&Count-in"]
     assert window.a_first_beat in menu.actions() and window.a_no_first_beat in menu.actions()
@@ -914,6 +997,7 @@ def test_export_the_audio(window, app, wav, tmp_path, monkeypatch):
 def test_loops_in_the_window(window, app, wav):
     """Save the selection as a loop, name it, and later repeat it with a double click; it is there when the file is
     opened again."""
+    window.a_ask_save.setChecked(False)  # (lo que se hace se guarda en el momento)
     loaded(window, app, wav)
     assert not window.a_save_loop.isEnabled()
     window.set_selection((1.0, 2.5))

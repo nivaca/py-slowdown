@@ -693,10 +693,26 @@ being made reached for a menu item not made yet. PySide only prints an
 error raised in a slot, and the test goes on, so every test now fails if
 one is printed.
 
+Saving everything at once, silently, has a cost: a bookmark put by mistake,
+or a speed tried for a moment, is kept. So Settings > Ask to save before
+closing a file, on at first, keeps the changes of a file (its bookmarks,
+loops and how it is played, but not the position, which moves all the
+time) until they are saved, with Ctrl+S or when the file is closed, and
+then asks: Save, Discard or Cancel. To know whether there are changes, the
+window compares what would be saved with what was saved when the file was
+opened or last saved, instead of following every action; the title shows
+a dot while they differ. Turned off, it saves as before, as things are
+done. Along with it, the keys of Close and Quit became fixed, Ctrl+W to
+close the file and leave the program open, Alt+F4 or Ctrl+Q to quit,
+since Qt's standard keys change with the desktop and gave Close only
+Ctrl+F4 here. And the count-in and the volume became part of what each
+file starts from: a new file opens with the count-in off and the volume
+at 100%, and the volume is kept with each file, in its `.slx` too.
+
 Testing
 -------
 
-The program has 201 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 204 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the

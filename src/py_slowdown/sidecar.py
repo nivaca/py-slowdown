@@ -14,6 +14,7 @@ fecha:
       <position seconds="83.25"/>
       <playback speed="0.75" pitch="-2.0" formants="true"/>
       <hearing channels="both" filter="bass"/>
+      <volume percent="120"/>
       <selection start="95.0" end="103.5" repeat="true"/>
       <countin on="true" bpm="96" offset="0.0"/>
       <bookmarks>
@@ -152,6 +153,9 @@ def read(path: Path) -> FileState | None:
     settings: dict = {"speed": _number(playback, "speed", 1.0), "pitch": _number(playback, "pitch", 0.0)}
     if _flag(playback, "formants"):
         settings["formants"] = True
+    volume = root.find("volume")
+    if volume is not None and volume.get("percent") is not None:
+        settings["volume"] = int(_number(volume, "percent", 100))
     hearing = root.find("hearing")
     if hearing is not None:
         settings["hearing"] = [hearing.get("channels", "both"), hearing.get("filter", "none")]
@@ -201,6 +205,8 @@ def save(audio: Path, state: FileState, folder: Path | None = None) -> Path:
                   formants="true" if settings.get("formants") else "false")
     channels, filter_ = settings.get("hearing", ("both", "none"))
     ET.SubElement(root, "hearing", channels=str(channels), filter=str(filter_))
+    if settings.get("volume") is not None:
+        ET.SubElement(root, "volume", percent=str(int(settings["volume"])))
     if settings.get("selection"):
         start, end = settings["selection"]
         ET.SubElement(root, "selection", start=_text(start), end=_text(end),

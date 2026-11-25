@@ -12,6 +12,7 @@ otro, o al salir) guarda el punto donde iba, y al volver a abrirlo sigue de all�
 
 from __future__ import annotations
 
+import json
 import math
 from pathlib import Path
 
@@ -51,6 +52,7 @@ from .waveform import WaveformView
 
 APP = "py-slowdown"
 SPEED_STEP = 0.05
+KNOB_GAP = 4  # píxeles entre las perillas de la altura y su botón 0
 MAX_CENTS = 50  # cents, centésimas de semitono, arriba o abajo: más allá, el semitono siguiente
 SPEED_PRESETS = (50, 60, 70, 75, 80, 90, 100, 110, 125, 150)
 COUNT_CHOICES = (1, 2, 3, 4, 5, 6, 7, 8, 12, 16)  # golpes de la cuenta previa, en su menú (el diálogo, de 1 a 16)
@@ -137,6 +139,8 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Tap the tempo (with the beat)"), "T"),
         (tr("The first beat is here (count-in)"), tr("Shift+C")),
         (tr("Open a file"), "Ctrl+O"),
+        (tr("Close the file (the program stays open)"), "Ctrl+W"),
+        (tr("Quit"), "Alt+F4   Ctrl+Q"),
         (tr("Save the .slx"), "Ctrl+S"),
         (tr("Export the audio"), "Ctrl+E"),
         (tr("Change the shortcuts"), tr("Settings > Keyboard shortcuts")),
@@ -176,6 +180,7 @@ class Window(QMainWindow):
         self.player = player or Player()
         self.store = store or Store()
         self.audio: Audio | None = None
+        self._saved = ""  # what was saved of the file open (_snapshot), to tell its changes
         self.bookmarks: list[Bookmark] = []
         self.loops: list[Loop] = []
         self._resume = 0.0  # where to go once the file is decoded that far
@@ -390,11 +395,18 @@ class Window(QMainWindow):
         self.b_pitch.setToolTip(tr("Original pitch (Shift+N)"))
         self.b_pitch.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.b_pitch.setEnabled(False)
-        # (las dos perillas una junto a otra, sus valores por fuera y el 0 al lado: +2 st ◯◯ −15 ¢ 0)
-        self.semitone_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        # Los dos valores a la izquierda, en el orden de las perillas, y las perillas y el 0 a la misma distancia
+        # unas de otras: +2 st −15 ¢ ◯ ◯ 0. (Los valores, de ancho fijo y a la derecha: nada se mueve al girar.)
+        for label in (self.semitone_label, self.cent_label):
+            label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        values = QHBoxLayout()
+        values.setSpacing(4)
+        values.addWidget(self.semitone_label)
+        values.addWidget(self.cent_label)
+        row.addLayout(values)
         knobs = QHBoxLayout()
-        knobs.setSpacing(2)
-        for widget in (self.semitone_label, self.semitone_dial, self.cent_dial, self.cent_label, self.b_pitch):
+        knobs.setSpacing(KNOB_GAP)
+        for widget in (self.semitone_dial, self.cent_dial, self.b_pitch):
             knobs.addWidget(widget)
         row.addLayout(knobs)
         self._show_pitch(0.0)
@@ -429,10 +441,12 @@ class Window(QMainWindow):
     def _build_actions(self) -> None:
         a = self._action
         self.a_open = a(tr("&Open…"), self.open_dialog, [QKeySequence.StandardKey.Open])
-        self.a_close = a(tr("&Close"), self.close_file, [QKeySequence.StandardKey.Close])
+        # (teclas fijas, no las «estándar» de Qt, que cambian con el escritorio: Ctrl+W cierra el archivo y el
+        # programa sigue; Alt+F4, o Ctrl+Q, cierra el programa)
+        self.a_close = a(tr("&Close"), self.close_file, ["Ctrl+W", "Ctrl+F4"])
         self.a_save_slx = a(tr("&Save the .slx"), self.save_sidecar, [QKeySequence.StandardKey.Save])
         self.a_export_audio = a(tr("E&xport the audio…"), self.export_audio, ["Ctrl+E"])
-        self.a_quit = a(tr("&Quit"), self.close, [QKeySequence.StandardKey.Quit])
+        self.a_quit = a(tr("&Quit"), self.close, ["Ctrl+Q", "Alt+F4"])
         self.a_play = a(tr("&Play/Pause"), self.toggle, ["Space"])
         self.a_continue = a(tr("&Continue from the pause"), self.continue_playing, ["Shift+Space"])
         self.a_stop = a(tr("&Stop"), self.stop, ["S"])
@@ -462,6 +476,8 @@ class Window(QMainWindow):
         self.a_tap = a(tr("Tap the tempo"), self.tap_tempo, ["T"])
         self.a_first_beat = a(tr("The &first beat is here"), lambda: self.set_first_beat(None), ["Shift+C"])
         self.a_no_first_beat = a(tr("&Remove the first beat"), self.remove_first_beat)
+        self.a_ask_save = a(tr("As&k to save before closing a file"), self._set_ask_save, checkable=True)
+        self.a_ask_save.setChecked(self.settings.value("ask_save", True, type=bool))
         self.a_reopen = a(tr("&Reopen the last file when starting"), self._set_reopen, checkable=True)
         self.a_reopen.setChecked(self.settings.value("reopen", False, type=bool))
         self.a_mark = a(tr("&Add a bookmark"), self.add_bookmark, ["B", "Ctrl+B"])
@@ -554,6 +570,7 @@ class Window(QMainWindow):
         settings = bar.addMenu(tr("&Settings"))
         settings.addAction(self.a_edit_shortcuts)
         settings.addAction(self.a_reopen)
+        settings.addAction(self.a_ask_save)
         settings.addSeparator()
         files = settings.addMenu(tr("Settings &files of each recording"))
         group = QActionGroup(self)
@@ -661,7 +678,8 @@ class Window(QMainWindow):
                 QMessageBox.warning(self, APP, tr("Cannot find the recording of {name}.", name=path.name))
                 return False
             path = audio_path
-        self.close_file()
+        if not self.close_file():
+            return False  # (cancelado: queda el archivo de antes)
         try:
             audio = Audio(path)
             if not Output.supports(audio.rate):
@@ -693,6 +711,7 @@ class Window(QMainWindow):
         self._apply_file_settings(kept.settings if kept else self.store.settings(path))
         # Sigue donde se dejó, cuando el archivo esté decodificado hasta allí (_tick).
         self._resume = kept.position if kept else self.store.position(path)
+        self._saved = self._snapshot()  # (lo de ahora es lo guardado: los cambios se cuentan desde aquí)
         self.setWindowTitle(f"{path.name} — {APP}")
         self.settings.setValue("folder", str(path.parent))
         self._remember(path)
@@ -712,15 +731,72 @@ class Window(QMainWindow):
         if recent and Path(recent[0]).is_file():
             self.open_file(recent[0])
 
+    def _set_ask_save(self, on: bool) -> None:
+        self.settings.setValue("ask_save", on)
+        if not on and self.audio is not None and self._changed():
+            self._save_all()  # (sin preguntar, todo se guarda como se hace: también lo pendiente)
+        self._show_title()
+
+    def _snapshot(self) -> str:
+        # Lo que se guarda de un archivo, salvo la posición (moverla no es un cambio que haya que preguntar).
+        marks = [(round(b.time, 3), b.label, b.first_beat) for b in self.bookmarks]
+        loops = [(round(x.start, 3), round(x.end, 3), x.label) for x in self.loops]
+        return json.dumps([self._file_settings(), marks, loops], sort_keys=True, default=str)
+
+    def _changed(self) -> bool:
+        """Whether the file open has changes not saved yet (only while Ask to save is on: else all is saved as
+        it is done)."""
+        return self.audio is not None and self.a_ask_save.isChecked() and self._snapshot() != self._saved
+
+    def _show_title(self) -> None:
+        if self.audio is None:
+            self.setWindowTitle(APP)
+            return
+        mark = "• " if self._changed() else ""  # (cambios sin guardar)
+        title = f"{mark}{self.audio.path.name} — {APP}"
+        if self.windowTitle() != title:
+            self.setWindowTitle(title)
+
+    def _save_all(self, asked: bool = False) -> None:
+        """Save what there is of the file open: in bookmarks.json and in its .slx (ASKED: also with Not
+        saved, beside the recording)."""
+        if self.audio is None:
+            return
+        path = self.audio.path
+        self.store.set_bookmarks(path, self.bookmarks)
+        self.store.set_loops(path, self.loops)
+        self.store.set_settings(path, self._file_settings())
+        self.store.set_position(path, self._position_to_keep())
+        self._write_sidecar(asked)
+        self._saved = self._snapshot()
+        self._show_title()
+
+    def _ask_save(self, name: str) -> str:
+        """Ask whether to save the changes of NAME: "save", "discard" or "cancel"."""
+        buttons = QMessageBox.StandardButton
+        answer = QMessageBox.question(
+            self, APP, tr("{name} has changes (bookmarks, loops or how it is played). Save them?", name=name),
+            buttons.Save | buttons.Discard | buttons.Cancel, buttons.Save)
+        return {buttons.Save: "save", buttons.Discard: "discard"}.get(answer, "cancel")
+
     def _set_reopen(self, on: bool) -> None:
         self.settings.setValue("reopen", on)
 
-    def close_file(self) -> None:
+    def close_file(self) -> bool:
+        """Close the file open, saving what there is of it; with Ask to save on and changes, after asking.
+        False if the user cancelled (the file stays open)."""
         if self.audio is None:
-            return
-        self.store.set_position(self.audio.path, self._position_to_keep())
-        self.store.set_settings(self.audio.path, self._file_settings())
-        self._write_sidecar()
+            return True
+        if self._changed():
+            answer = self._ask_save(self.audio.path.name)
+            if answer == "cancel":
+                return False
+            if answer == "save":
+                self._save_all()
+            else:
+                self.store.set_position(self.audio.path, self._position_to_keep())  # (lo demás, como estaba)
+        else:
+            self._save_all()
         audio = self.audio
         self.player.unload()
         audio.close()
@@ -738,6 +814,7 @@ class Window(QMainWindow):
         self.setWindowTitle(APP)
         self.statusBar().clearMessage()
         self._update_enabled()
+        return True
 
     def _file_settings(self) -> dict:
         """How the file is played, to have it so again the next time: only what is not the usual."""
@@ -757,6 +834,8 @@ class Window(QMainWindow):
             repeat = self.a_repeat.isChecked() if self.selection else self._pending_selection[1]
             if repeat:
                 kept["repeat"] = True
+        if self.volume.value() != 100:
+            kept["volume"] = self.volume.value()
         if self.count.on or self.first_beat() is not None:
             # (el tempo y el desfase de la cuenta son de cada pieza; con un primer pulso, aunque esté apagada)
             kept["countin"] = {"bpm": self.count.bpm, "offset": self.count.offset, "on": self.count.on}
@@ -764,8 +843,8 @@ class Window(QMainWindow):
 
     def _reset_file_settings(self) -> None:
         """What belongs to each piece back to the usual: speed 1×, the recording's pitch, the formants off, both
-        channels without a filter, and the count-in's tempo (100 BPM) and offset; what is the user's (the volume,
-        whether the count-in is on, its clicks) stays."""
+        channels without a filter, the count-in off, at 100 BPM, without offset, and the volume at 100%; the
+        count-in's clicks, the user's, stay."""
         if self.stretching:
             self.set_speed(1.0)
             self.set_pitch(0.0)
@@ -776,6 +855,8 @@ class Window(QMainWindow):
         self.a_repeat.setChecked(False)
         default = CountIn()
         self.count.bpm, self.count.offset = default.bpm, default.offset
+        self.a_count.setChecked(False)  # (un archivo con la cuenta guardada encendida la recibe luego)
+        self.volume.setValue(100)
         self.count.save(self.settings)
         self._update_count_tip()
 
@@ -796,6 +877,8 @@ class Window(QMainWindow):
                 start, end = sorted(float(x) for x in selection)
                 # (se elige cuando el archivo esté leído hasta su final: _tick)
                 self._pending_selection = ((start, end), bool(kept.get("repeat", False)))
+            if "volume" in kept:
+                self.volume.setValue(int(min(MAX_VOLUME, max(0, int(kept["volume"])))))
             countin = kept.get("countin")
             if isinstance(countin, dict):
                 self.count.bpm = int(min(MAX_BPM, max(MIN_BPM, int(countin.get("bpm", self.count.bpm)))))
@@ -839,8 +922,11 @@ class Window(QMainWindow):
             return None
 
     def save_sidecar(self) -> None:
-        """File > Save the .slx: write it now, without closing the file."""
-        path = self._write_sidecar(asked=True)
+        """File > Save the .slx: save all now (bookmarks.json and the .slx), without closing the file."""
+        if self.audio is None:
+            return
+        self._save_all(asked=True)
+        path = sidecar.find(self.audio.path, self._sidecar_place()[1])
         if path is not None:
             self.statusBar().showMessage(tr("Saved {path}", path=str(path)), 5000)
 
@@ -1283,6 +1369,7 @@ class Window(QMainWindow):
         audio = self.audio
         if audio is None:
             return
+        self._show_title()
         if self._pending_selection and (audio.done or audio.decoded / audio.rate > self._pending_selection[0][1]):
             selection, repeat = self._pending_selection
             self._pending_selection = None
@@ -1379,10 +1466,12 @@ class Window(QMainWindow):
         self._update_count_tip()
 
     def _save_bookmarks(self) -> None:
-        # En bookmarks.json y, enseguida, en el .slx de la grabación (no solo al cerrarla).
-        if self.audio:
+        # En bookmarks.json y, enseguida, en el .slx de la grabación (no solo al cerrarla); con Preguntar antes
+        # de cerrar, solo cuando se guarde.
+        if self.audio and not self.a_ask_save.isChecked():
             self.store.set_bookmarks(self.audio.path, self.bookmarks)
             self._write_sidecar()
+        self._show_title()
 
     def add_bookmark(self) -> None:
         if self.audio:
@@ -1452,9 +1541,10 @@ class Window(QMainWindow):
         self.loop_panel.save_button.setEnabled(can)
 
     def _save_loops(self) -> None:
-        if self.audio:
+        if self.audio and not self.a_ask_save.isChecked():
             self.store.set_loops(self.audio.path, self.loops)
             self._write_sidecar()
+        self._show_title()
 
     def save_loop(self) -> None:
         """Keep the selection as a loop; its name is written in the list (Loops), which is shown."""
@@ -1592,7 +1682,9 @@ class Window(QMainWindow):
                 break
 
     def closeEvent(self, event) -> None:
-        self.close_file()
+        if not self.close_file():
+            event.ignore()  # (cancelado: el programa sigue)
+            return
         self.settings.setValue("geometry", self.saveGeometry())
         self.settings.setValue("state", self.saveState())
         super().closeEvent(event)

@@ -171,3 +171,10 @@ def no_errors_in_slots(monkeypatch):
         import traceback
 
         pytest.fail("an error in a Qt slot:\n" + "".join(traceback.format_exception(*errors[0])))
+
+
+@pytest.fixture(autouse=True)
+def save_when_asked(monkeypatch):
+    """Ask to save before closing a file is on at first: in the tests the answer is Save (a dialog would wait
+    for a click); the tests of the question itself answer otherwise."""
+    monkeypatch.setattr("py_slowdown.window.Window._ask_save", lambda self, name: "save", raising=False)

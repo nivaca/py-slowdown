@@ -69,6 +69,7 @@ def window(lang: str, audio: Path, folder: Path):
     module.Output = Silent
     settings = QSettings(str(folder / f"{lang}.ini"), QSettings.Format.IniFormat)
     w = module.Window(player=Player(Silent()), store=Store(folder / f"{lang}.json"), settings=settings)
+    w._ask_save = lambda name: "discard"  # (una muestra temporal: al cerrar, nada que guardar ni preguntar)
     w.resize(*SIZE)
     w.show()
     w.open_file(audio)

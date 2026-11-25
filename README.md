@@ -99,6 +99,8 @@ Keyboard
 | Tap the tempo (with the beat)  | T                                |
 | The first beat is here         | Shift+C                          |
 | Open a file                    | Ctrl+O                           |
+| Close the file (stay open)     | Ctrl+W                           |
+| Quit                           | Alt+F4, Ctrl+Q                   |
 | Save the .slx                  | Ctrl+S                           |
 | Export the audio               | Ctrl+E                           |
 

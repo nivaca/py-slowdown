@@ -34,18 +34,28 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   se abre a velocidad normal, con la altura de la grabación, los dos
   canales, los formantes apagados y la cuenta previa a 100 pulsos por
   minuto, no con lo del archivo anterior (también si se suelta en la
-  ventana); uno con ajustes guardados recibe los suyos. El volumen, y si la
-  cuenta previa está encendida y sus golpes, se quedan.
+  ventana); uno con ajustes guardados recibe los suyos; la cuenta previa
+  queda apagada y el volumen en 100 % (el volumen se guarda ahora con cada
+  archivo). Los golpes de la cuenta se quedan.
 - **Sin el botón Formantes**: conservar los formantes queda solo en el
   menú, Reproducción > Conservar los formantes (en gris, como lo estaba el
   botón, mientras la altura es la de la grabación). Las dos perillas de la
-  altura quedan más juntas.
+  altura y el botón 0 quedan a la misma distancia, con los dos valores a
+  su izquierda.
 - **Cuenta previa > Golpes**: cuántos golpes da la cuenta previa (4 al
   principio), de una lista en el menú (de 1 a 8, 12, 16), el elegido
   marcado; el diálogo sigue aceptando cualquier número de 1 a 16.
-- **Los marcadores y los bucles van al `.slx` enseguida**: cada uno que
-  se añade, se renombra o se quita se escribe en el `.slx` de la grabación
-  en ese momento, como en `bookmarks.json`, no solo al cerrar el archivo.
+- **Preguntar si guardar antes de cerrar un archivo** (Configuración,
+  marcado al principio): lo que se hace en un archivo (marcadores, bucles,
+  cómo se toca) se guarda solo con Archivo > Guardar el .slx (Ctrl+S) o al
+  cerrarlo, abrir otro o salir, cuando el programa pregunta: Guardar,
+  Descartar (la posición se guarda) o Cancelar. El título empieza con •
+  mientras hay cambios. Sin marcar, todo se guarda a medida que se hace:
+  cada marcador o bucle que se añade, renombra o quita se escribe en
+  `bookmarks.json` y en el `.slx` en ese momento.
+- **Ctrl+W cierra el archivo y deja abierto el programa; Alt+F4 (o Ctrl+Q)
+  lo cierra**, igual en todos los escritorios (no las teclas estándar de
+  Qt, que cambiaban con él).
 - **Archivo > Guardar el .slx** (Ctrl+S) escribe el `.slx` de la grabación
   enseguida, sin cerrarla; con Archivos de ajustes en No se guardan, lo
   escribe igual junto a la grabación.

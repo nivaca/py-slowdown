@@ -34,16 +34,25 @@ Debian package, the RPM, the wheel and the source, are on
   opens at normal speed, the recording's pitch, both channels, the
   formants off and the count-in at 100 BPM, not with those of the file
   before (also when dropped on the window); a file with settings kept gets
-  its own. The volume, and whether the count-in is on and its clicks, stay.
+  its own; the count-in is off for it and the volume at 100% (the volume
+  is now kept with each file). The count-in's clicks stay.
 - **No Formants button**: keeping the formants is only in the menu,
   Playback > Keep the formants (greyed out, as the button was, while the
-  pitch is the recording's). The two pitch knobs sit closer together.
+  pitch is the recording's). The two pitch knobs and the button 0 are
+  evenly spaced, with the two values on their left.
 - **Count-in > Clicks**: how many clicks the count-in gives (4 at first),
   from a list in the menu (1 to 8, 12, 16), the one chosen ticked; the
   dialog still takes any number from 1 to 16.
-- **Bookmarks and loops go to the `.slx` at once**: each one added,
-  renamed or removed is written in the recording's `.slx` right away, as
-  in `bookmarks.json`, not only when the file is closed.
+- **Ask to save before closing a file** (Settings, on at first): what is
+  done to a file (bookmarks, loops, how it is played) is saved only with
+  File > Save the .slx (Ctrl+S) or when closing it, opening another or
+  quitting, when the program asks: Save, Discard (the position is kept) or
+  Cancel. The title begins with • while there are changes. Off, all is
+  saved as it is done: each bookmark or loop added, renamed or removed is
+  written in `bookmarks.json` and the `.slx` right away.
+- **Ctrl+W closes the file and leaves the program open; Alt+F4 (or Ctrl+Q)
+  quits**, the same on every desktop (not Qt's standard keys, which
+  changed with it).
 - **File > Save the .slx** (Ctrl+S) writes the recording's `.slx` at once,
   without closing it; with Settings files set to Not saved, beside the
   recording all the same.

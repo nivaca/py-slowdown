@@ -105,6 +105,8 @@ Teclado
 | Marcar el tempo (con el pulso)    | T                                |
 | El primer pulso está aquí         | Mayús+C                          |
 | Abrir un archivo                  | Ctrl+O                           |
+| Cerrar el archivo (sigue abierto) | Ctrl+W                           |
+| Salir                             | Alt+F4, Ctrl+Q                   |
 | Guardar el .slx                   | Ctrl+S                           |
 | Exportar el audio                 | Ctrl+E                           |
 
