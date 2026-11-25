@@ -118,6 +118,8 @@ for icon in "$APPDIR"/usr/share/icons/hicolor/*/apps/$NAME.*; do
     size=$(basename "$(dirname "$(dirname "$icon")")")
     put "$icon" "$SHARE/icons/hicolor/$size/apps/$(basename "$icon")"
 done
+mime="$APPDIR/usr/share/mime/packages/$NAME.xml"
+[ -f "$mime" ] && put "$mime" "$SHARE/mime/packages/$NAME.xml"
 for page in "$APPDIR"/man/*.1 "$APPDIR"/man/*/*.1; do
     [ -f "$page" ] || continue
     lang=$(basename "$(dirname "$page")")
@@ -126,6 +128,7 @@ for page in "$APPDIR"/man/*.1 "$APPDIR"/man/*/*.1; do
 done
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$SHARE/applications" 2>/dev/null || true
 command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -q -t "$SHARE/icons/hicolor" 2>/dev/null || true
+command -v update-mime-database >/dev/null 2>&1 && update-mime-database "$SHARE/mime" >/dev/null 2>&1 || true
 
 cat > "$APPDIR/uninstall.sh" <<UNINSTALL
 #!/bin/sh
@@ -142,6 +145,7 @@ while IFS= read -r file; do rm -f "\$file"; done < "$made"
 rm -rf "$APPDIR"
 [ -z "$PARENT" ] || rmdir "$PARENT" 2>/dev/null || true
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$SHARE/applications" 2>/dev/null || true
+command -v update-mime-database >/dev/null 2>&1 && update-mime-database "$SHARE/mime" >/dev/null 2>&1 || true
 [ "\$quiet" = 1 ] || echo "py-slowdown was removed (its settings and bookmarks were kept)."
 UNINSTALL
 chmod 755 "$APPDIR/uninstall.sh"

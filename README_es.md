@@ -55,17 +55,22 @@ Lo que hace
   nuevo con un doble clic.
 - Cuenta antes de tocar, como un metrónomo (C): se eligen cuántos golpes
   y el tempo, que puede seguir la velocidad; el tempo se puede medir
-  marcando el pulso (T).
+  marcando el pulso (T). Con el primer pulso de la grabación marcado
+  (Cuenta previa > El primer pulso está aquí, Mayús+C), un marcador propio
+  que se guarda con los demás, la grabación entra en el pulso más cercano,
+  empiece donde empiece.
 - Exporta la grabación, o la selección, como suena (a la velocidad y la
   altura elegidas, y como se oye, si se pide): WAV, FLAC, MP3 u Opus
   (Archivo > Exportar el audio, Ctrl+E).
 - Recuerda, por archivo, sus marcadores, sus bucles, el punto donde se dejó
   y cómo se tocó (velocidad, altura, manera de oír, selección, cuenta
   previa), y la vez siguiente sigue desde allí, con toda su forma de onda
-  enseguida. Todo eso se escribe además en un archivo XML con el nombre de la
-  grabación (`canción.xml` para `canción.mp3`), junto a ella o en una carpeta
-  elegida, de modo que viaja con la grabación; también puede reabrir el último archivo al empezar
-  (Configuración > Reabrir el último archivo al empezar).
+  enseguida. Todo eso se escribe además en un archivo con el nombre de la
+  grabación y la extensión `.slx` (`canción.slx` para `canción.mp3`), junto
+  a ella o en una carpeta elegida, de modo que viaja con la grabación;
+  abrir el `.slx` abre la grabación. También puede reabrir el último
+  archivo al empezar (Configuración > Reabrir el último archivo al
+  empezar).
 - Los atajos de teclado se pueden cambiar (Configuración > Atajos de
   teclado), también para un pedal de pie que mande teclas.
 - Interfaz en inglés y en español (Configuración > Idioma).
@@ -93,6 +98,7 @@ Teclado
 | Guardar la selección como bucle   | Mayús+L                          |
 | Contar antes de tocar             | C                                |
 | Marcar el tempo (con el pulso)    | T                                |
+| El primer pulso está aquí         | Mayús+C                          |
 | Abrir un archivo                  | Ctrl+O                           |
 | Exportar el audio                 | Ctrl+E                           |
 
@@ -109,7 +115,7 @@ Qt, FFmpeg y Rubber Band), así que no hay que instalar nada más:
 - **Windows** 10 o posterior: `py-slowdown-VERSIÓN-windows-x64-setup.exe`.
   Lo instala solo para usted, sin permisos de administrador (o para todos,
   si así lo elige), con su entrada en el menú Inicio y «Abrir con» para los
-  archivos de audio. El instalador no está firmado por Microsoft: si
+  archivos de audio; abre también los `.slx`. El instalador no está firmado por Microsoft: si
   SmartScreen lo detiene, elija *Más información > Ejecutar de todas
   formas*.
 - **macOS** 13 o posterior: `py-slowdown-VERSIÓN-macos-arm64.dmg` (Apple
@@ -164,8 +170,10 @@ Dónde se guarda todo
 --------------------
 
 - Cómo se tocó cada grabación, con sus marcadores y bucles, en un archivo
-  XML con su nombre (`canción.xml`), junto a ella, o en la carpeta elegida
-  en Configuración > Archivos de ajustes de cada grabación (o en ninguna).
+  con su nombre (`canción.slx`, en XML), junto a ella, o en la carpeta
+  elegida en Configuración > Archivos de ajustes de cada grabación (o en
+  ninguna). Los de la versión 1.2.0 (`canción.xml`) se leen todavía, y se
+  reemplazan.
 - Marcadores, bucles, posiciones y cómo se tocó cada archivo:
   `bookmarks.json`, por la ruta completa de cada
   archivo de audio, en `~/.local/share/py-slowdown/` en Linux

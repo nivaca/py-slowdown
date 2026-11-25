@@ -5,6 +5,33 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+- **Los archivos de ajustes terminan en `.slx`**: `canción.slx` para
+  `canción.mp3` (y `canción.flac.slx`, si `canción.slx` es de otro
+  archivo), con XML dentro, como antes. Los `canción.xml` de 1.2.0 se leen
+  todavía, y se borran cuando está escrito su `.slx`. Abrir un `.slx`
+  (Archivo > Abrir, el administrador de archivos, o soltándolo en la
+  ventana) abre su grabación, donde dice o, si se movió con él, a su lado.
+  Los instaladores hacen de py-slowdown el programa de los `.slx`: en Linux,
+  un tipo propio, `application/x-py-slowdown`, en el RPM, el paquete de
+  Debian, el instalador de la AppImage e `install/install.sh`; en Windows,
+  en el registro, como programa de los `.slx` solo si no había otro (los
+  modelos de Simulink también terminan en `.slx`); en macOS, un tipo que la
+  aplicación declara.
+- **El primer pulso, un marcador propio**: Cuenta previa > El primer pulso
+  está aquí (Mayús+C), o el clic derecho sobre la forma de onda, marca el
+  primer pulso de la grabación con un marcador verde con un 1, en negrita
+  en el panel, guardado con los demás marcadores (en `bookmarks.json` y en
+  el `.slx`); así no se pierde cuando la posición se mueve o el archivo se
+  cierra. Hay uno por archivo; Cuenta previa > Quitar el primer pulso lo
+  quita. Con él, la grabación entra tras la cuenta en el pulso más cercano
+  de la rejilla que forman el primer pulso y el tempo, empiece donde
+  empiece; el desfase de la cuenta previa sobra entonces, y su diálogo lo
+  muestra en gris. Si hay un primer pulso, el tempo de la cuenta se guarda
+  con el archivo aunque esté apagada. Cuenta previa: el primer pulso en la
+  posición sale del clic derecho (lo hace la entrada del menú).
+
 ## 1.2.0 — 2026-11-24
 
 Los ajustes de cada grabación viajan con ella, en un archivo XML de su

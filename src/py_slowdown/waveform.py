@@ -79,7 +79,7 @@ class Waveform(QWidget):
     removeBookmarkRequested = Signal(int)
     renameBookmarkRequested = Signal(int)
     selectionChanged = Signal(object)  # (start, end) in seconds, or None
-    firstBeatRequested = Signal(object)  # seconds: the recording's first beat, for the count-in; None: at the position
+    firstBeatRequested = Signal(object)  # seconds: the recording's first beat, for the count-in
     viewChanged = Signal()
 
     def __init__(self, parent=None):
@@ -93,7 +93,7 @@ class Waveform(QWidget):
         self.selection: tuple[float, float] | None = None  # seconds
         self.repeating = False  # whether the selection is repeated (it is drawn stronger)
         self.count: int | None = None  # the beat of a count-in, drawn big
-        self.first_beat: float | None = None  # where the count-in expects the recording's first beat
+        self.first_beat: float | None = None  # the beat on which the recording comes in after the count
         self._dragging = False
         self._selecting: float | None = None  # where a Shift+drag began
         self._cache_key = None
@@ -295,7 +295,7 @@ class Waveform(QWidget):
             self.update()
 
     def _paint_first_beat(self, painter: QPainter, colors, h: int) -> None:
-        # El primer pulso que la cuenta previa espera de la grabación: una línea de trazos y un «1» en la regla.
+        # El pulso en que entra la grabación tras la cuenta (sin sonar): una línea de trazos y un «1» en la regla.
         if self.first_beat is None:
             return
         x = self.x_of(self.first_beat)
@@ -417,14 +417,19 @@ class Waveform(QWidget):
 
     def _paint_marks(self, painter: QPainter, colors, h: int) -> None:
         metrics = QFontMetrics(painter.font())
-        color = colors["mark"]
         for i, mark in enumerate(self.bookmarks):
             x = self.x_of(mark.time)
             if x < -200 or x > self.width() + 2:
                 continue
-            painter.setPen(QPen(color, 1, Qt.PenStyle.DashLine))
+            # El primer pulso, del color de la selección y con línea entera; los otros, del de los marcadores.
+            color = colors["select"] if mark.first_beat else colors["mark"]
+            style = Qt.PenStyle.SolidLine if mark.first_beat else Qt.PenStyle.DashLine
+            painter.setPen(QPen(color, 1, style))
             painter.drawLine(QPointF(x, RULER), QPointF(x, h))
-            label = mark.label or str(i + 1)
+            if mark.first_beat:
+                label = f"1 · {mark.label}" if mark.label else "1"
+            else:
+                label = mark.label or str(i + 1)
             text_w = min(metrics.horizontalAdvance(label) + 8, 220)
             box = QRectF(x, RULER + 1, text_w, FLAG - 2)
             painter.fillRect(box, color)
@@ -499,9 +504,6 @@ class Waveform(QWidget):
             menu.addAction(tr("Clear the selection"), lambda: self.selectionChanged.emit(None))
         menu.addSeparator()
         menu.addAction(tr("Count-in: the first beat is here"), lambda: self.firstBeatRequested.emit(here))
-        if self.first_beat is not None:
-            menu.addAction(tr("Count-in: the first beat at the position"),
-                           lambda: self.firstBeatRequested.emit(None))
         menu.exec(event.globalPos())
 
     def wheelEvent(self, event) -> None:

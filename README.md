@@ -51,17 +51,21 @@ What it does
   loops with a name (Shift+L), to repeat them again with a double click.
 - Counts in before playing, as a metronome (C): the number of clicks and
   the tempo are chosen, and the tempo can follow the speed; the tempo can
-  be measured by tapping with the beat (T).
+  be measured by tapping with the beat (T). With the recording's first
+  beat marked (Count-in > The first beat is here, Shift+C), a bookmark of
+  its own that is kept with the others, the recording comes in on the
+  nearest beat wherever playing starts.
 - Exports the recording, or the selection, as it sounds (at the speed and
   pitch chosen, and as it is heard, if asked): WAV, FLAC, MP3 or Opus
   (File > Export the audio, Ctrl+E).
 - Remembers, for each file, its bookmarks, its loops, the point where it
   was left and how it was played (speed, pitch, way of hearing, selection,
   count-in), and goes on from there the next time, with its whole waveform
-  at once. All that is also written in an XML file with the recording's name
-  (`song.xml` for `song.mp3`), beside it or in a folder chosen, so that it
-  travels with the recording; it can also reopen the last file when it starts (Settings >
-  Reopen the last file when starting).
+  at once. All that is also written in a file with the recording's name and
+  the extension `.slx` (`song.slx` for `song.mp3`), beside it or in a
+  folder chosen, so that it travels with the recording; opening the `.slx`
+  opens the recording. It can also reopen the last file when it starts
+  (Settings > Reopen the last file when starting).
 - The keyboard shortcuts can be changed (Settings > Keyboard shortcuts),
   also for a foot pedal that sends keys.
 - Interface in English and in Spanish (Settings > Language).
@@ -89,6 +93,7 @@ Keyboard
 | Save the selection as a loop   | Shift+L                          |
 | Count in before playing        | C                                |
 | Tap the tempo (with the beat)  | T                                |
+| The first beat is here         | Shift+C                          |
 | Open a file                    | Ctrl+O                           |
 | Export the audio               | Ctrl+E                           |
 
@@ -105,7 +110,7 @@ and Rubber Band), so nothing else has to be installed:
 - **Windows** 10 or later: `py-slowdown-VERSION-windows-x64-setup.exe`. It
   installs for you alone, without administrator's rights (or for everyone,
   if you choose so), with a Start-menu entry and "Open with" for audio
-  files. The installer is not signed by Microsoft: if SmartScreen stops it,
+  files; it opens the `.slx` files too. The installer is not signed by Microsoft: if SmartScreen stops it,
   choose *More info > Run anyway*.
 - **macOS** 13 or later: `py-slowdown-VERSION-macos-arm64.dmg` (Apple
   Silicon) or `-macos-x86_64.dmg` (Intel). Drag py-slowdown to
@@ -156,9 +161,10 @@ Documentation
 Where things are kept
 ---------------------
 
-- How each recording was played, with its bookmarks and loops, in an XML
-  file of its name (`song.xml`), beside it, or in the folder chosen in
-  Settings > Settings files of each recording (or not at all).
+- How each recording was played, with its bookmarks and loops, in a file
+  of its name (`song.slx`, in XML), beside it, or in the folder chosen in
+  Settings > Settings files of each recording (or not at all). Those of
+  version 1.2.0 (`song.xml`) are still read, and replaced.
 - Bookmarks, loops, positions and how each file was played:
   `bookmarks.json`, by the full path of each audio
   file, in `~/.local/share/py-slowdown/` on Linux (`$XDG_DATA_HOME`),

@@ -1,10 +1,11 @@
-"""Cómo se tocó cada archivo, en un archivo XML con su mismo nombre (canción.mp3: canción.xml).
+"""Cómo se tocó cada archivo, en un archivo .slx con su mismo nombre (canción.mp3: canción.slx).
 
-El XML va junto al archivo de audio, o en una carpeta elegida en la configuración,
-y viaja con él: si se mueven los dos, la posición, la velocidad, la altura, la
-manera de oír, la selección, la cuenta previa, los marcadores y los bucles siguen
-con el archivo. Dice además dónde estaba el archivo de audio (su ruta completa),
-su tamaño y su fecha:
+El .slx (un XML de py-slowdown) va junto al archivo de audio, o en una carpeta
+elegida en la configuración, y viaja con él: si se mueven los dos, la posición,
+la velocidad, la altura, la manera de oír, la selección, la cuenta previa, los
+marcadores (entre ellos el primer pulso) y los bucles siguen con el archivo.
+Dice además dónde estaba el archivo de audio (su ruta completa), su tamaño y su
+fecha:
 
     <?xml version="1.0" encoding="UTF-8"?>
     <py-slowdown version="1.2.0" format="1">
@@ -15,15 +16,19 @@ su tamaño y su fecha:
       <hearing channels="both" filter="bass"/>
       <selection start="95.0" end="103.5" repeat="true"/>
       <countin on="true" bpm="96" offset="0.0"/>
-      <bookmarks><bookmark time="21.5">La segunda estrofa</bookmark></bookmarks>
+      <bookmarks>
+        <bookmark time="0.82" first-beat="true">Primer pulso</bookmark>
+        <bookmark time="21.5">La segunda estrofa</bookmark>
+      </bookmarks>
       <loops><loop start="95.0" end="103.5">El puente</loop></loops>
     </py-slowdown>
 
-Si canción.xml ya es de otro archivo (canción.flac, en la misma carpeta), el XML
-de este se llama canción.mp3.xml; y si también ese es de otro (en una carpeta
+Si canción.slx ya es de otro archivo (canción.flac, en la misma carpeta), el de
+este se llama canción.mp3.slx; y si también ese es de otro (en una carpeta
 elegida, dos canción.mp3 de carpetas distintas), lleva además unas letras de su
-ruta. Al leer, vale el XML que nombra este archivo: por su ruta, o por su nombre
-si se movió con él.
+ruta. Al leer, vale el que nombra este archivo: por su ruta, o por su nombre si
+se movió con él. Los de la versión 1.2.0 terminaban en .xml (canción.xml): se
+leen todavía, y se borran cuando ya está escrito su .slx.
 """
 
 from __future__ import annotations
@@ -39,11 +44,13 @@ from . import __version__
 from .bookmarks import Bookmark, Loop
 
 FORMAT = "1"
+EXTENSION = ".slx"
+OLD_EXTENSION = ".xml"  # (la de py-slowdown 1.2.0)
 
 
 @dataclass
 class FileState:
-    """How a file was played: what the XML keeps."""
+    """How a file was played: what the .slx keeps."""
 
     position: float = 0.0
     settings: dict = field(default_factory=dict)  # como Window._file_settings: speed, pitch, hearing...
@@ -51,15 +58,17 @@ class FileState:
     loops: list[Loop] = field(default_factory=list)
 
 
-def candidates(audio: Path, folder: Path | None = None) -> list[Path]:
-    """The names its XML can have, in order: canción.xml, canción.mp3.xml, canción.mp3.LETTERS.xml."""
+def candidates(audio: Path, folder: Path | None = None, extension: str = EXTENSION) -> list[Path]:
+    """The names its file can have, in order: canción.slx, canción.mp3.slx, canción.mp3.LETTERS.slx (with
+    EXTENSION .xml, those of py-slowdown 1.2.0)."""
     where = folder if folder is not None else audio.parent
     letters = hashlib.sha256(str(audio).encode()).hexdigest()[:8]
-    return [where / f"{audio.stem}.xml", where / f"{audio.name}.xml", where / f"{audio.name}.{letters}.xml"]
+    return [where / f"{audio.stem}{extension}", where / f"{audio.name}{extension}",
+            where / f"{audio.name}.{letters}{extension}"]
 
 
 def _owner(path: Path) -> tuple[str, str] | None:
-    # (ruta, nombre) del archivo de audio que un XML nombra; None si no es un XML de py-slowdown.
+    # (ruta, nombre) del archivo de audio que un .slx (o un .xml de 1.2.0) nombra; None si no es de py-slowdown.
     try:
         root = ET.parse(path).getroot()
     except (OSError, ET.ParseError):
@@ -70,23 +79,36 @@ def _owner(path: Path) -> tuple[str, str] | None:
     return element.get("path", ""), element.get("name", "")
 
 
-def find(audio: Path, folder: Path | None = None) -> Path | None:
-    """The XML of AUDIO, if there is one: the one with its path, or else one with its name (moved with it)."""
+def owner(path: Path) -> Path | None:
+    """The audio file that the .slx at PATH is of (where it is, or, if it was moved with it, beside the .slx);
+    None if PATH is not a file of py-slowdown, or its audio file is in neither place."""
+    found = _owner(path)
+    if found is None:
+        return None
+    where, name = found
+    for audio in (Path(where), path.parent / name):
+        if str(audio) not in ("", ".") and audio.name and audio.is_file():
+            return audio
+    return None
+
+
+def find(audio: Path, folder: Path | None = None, extension: str = EXTENSION) -> Path | None:
+    """The file of AUDIO, if there is one: the one with its path, or else one with its name (moved with it)."""
     audio = audio.resolve()
     by_name = None
-    for path in candidates(audio, folder):
+    for path in candidates(audio, folder, extension):
         owner = _owner(path) if path.is_file() else None
         if owner is None:
             continue
         if owner[0] == str(audio):
             return path
         if owner[1] == audio.name and by_name is None and not Path(owner[0]).is_file():
-            by_name = path  # (su archivo ya no está donde estaba: es este, que se movió con su XML)
+            by_name = path  # (su archivo ya no está donde estaba: es este, que se movió con su .slx)
     return by_name
 
 
 def target(audio: Path, folder: Path | None = None) -> Path:
-    """Where to write the XML of AUDIO: its own, or the first name that is free or not another file's."""
+    """Where to write the .slx of AUDIO: its own, or the first name that is free or not another file's."""
     audio = audio.resolve()
     found = find(audio, folder)
     if found is not None:
@@ -112,13 +134,18 @@ def _flag(element: ET.Element | None, name: str) -> bool:
 
 
 def load(audio: Path, folder: Path | None = None) -> FileState | None:
-    """What the XML of AUDIO keeps, or None if it has none (or it cannot be read)."""
-    path = find(audio, folder)
-    if path is None:
-        return None
+    """What the .slx of AUDIO keeps (or its .xml, from 1.2.0), or None if it has none (or it cannot be read)."""
+    path = find(audio, folder) or find(audio, folder, OLD_EXTENSION)
+    return read(path) if path is not None else None
+
+
+def read(path: Path) -> FileState | None:
+    """What the file at PATH keeps, or None if it cannot be read (or is not one of py-slowdown)."""
     try:
         root = ET.parse(path).getroot()
     except (OSError, ET.ParseError):
+        return None
+    if root.tag != "py-slowdown":
         return None
     state = FileState(position=max(0.0, _number(root.find("position"), "seconds", 0.0)))
     playback = root.find("playback")
@@ -136,13 +163,15 @@ def load(audio: Path, folder: Path | None = None) -> FileState | None:
             if _flag(selection, "repeat"):
                 settings["repeat"] = True
     countin = root.find("countin")
-    if _flag(countin, "on"):
-        settings["countin"] = {"bpm": int(_number(countin, "bpm", 100)), "offset": _number(countin, "offset", 0.0)}
+    if countin is not None:
+        # (apagada, se guarda igual si hay un primer pulso: su tempo es el de la pieza)
+        settings["countin"] = {"bpm": int(_number(countin, "bpm", 100)), "offset": _number(countin, "offset", 0.0),
+                               "on": _flag(countin, "on")}
     state.settings = settings
     for mark in root.iterfind("bookmarks/bookmark"):
         time = _number(mark, "time", -1.0)
         if time >= 0:
-            state.bookmarks.append(Bookmark(time, (mark.text or "").strip()))
+            state.bookmarks.append(Bookmark(time, (mark.text or "").strip(), _flag(mark, "first-beat")))
     for loop in root.iterfind("loops/loop"):
         start, end = _number(loop, "start", -1.0), _number(loop, "end", -1.0)
         if 0.0 <= start < end:
@@ -155,7 +184,7 @@ def _text(value: float) -> str:
 
 
 def save(audio: Path, state: FileState, folder: Path | None = None) -> Path:
-    """Write the XML of AUDIO (raises OSError if it cannot); its path."""
+    """Write the .slx of AUDIO (raises OSError if it cannot), and remove its .xml of 1.2.0; its path."""
     audio = audio.resolve()
     path = target(audio, folder)
     root = ET.Element("py-slowdown", version=__version__, format=FORMAT)
@@ -178,11 +207,14 @@ def save(audio: Path, state: FileState, folder: Path | None = None) -> Path:
                       repeat="true" if settings.get("repeat") else "false")
     countin = settings.get("countin")
     if countin:
-        ET.SubElement(root, "countin", on="true", bpm=str(int(countin.get("bpm", 100))),
-                      offset=_text(countin.get("offset", 0.0)))
+        ET.SubElement(root, "countin", on="true" if countin.get("on", True) else "false",
+                      bpm=str(int(countin.get("bpm", 100))), offset=_text(countin.get("offset", 0.0)))
     marks = ET.SubElement(root, "bookmarks")
     for mark in sorted(state.bookmarks, key=lambda b: b.time):
-        ET.SubElement(marks, "bookmark", time=_text(mark.time)).text = mark.label
+        element = ET.SubElement(marks, "bookmark", time=_text(mark.time))
+        if mark.first_beat:
+            element.set("first-beat", "true")
+        element.text = mark.label
     loops = ET.SubElement(root, "loops")
     for loop in sorted(state.loops, key=lambda x: (x.start, x.end)):
         ET.SubElement(loops, "loop", start=_text(loop.start), end=_text(loop.end)).text = loop.label
@@ -191,4 +223,10 @@ def save(audio: Path, state: FileState, folder: Path | None = None) -> Path:
     temporary = path.with_name(path.name + ".tmp")
     ET.ElementTree(root).write(temporary, encoding="UTF-8", xml_declaration=True)
     os.replace(temporary, path)  # (entero o nada, aunque el programa muera mientras escribe)
+    old = find(audio, folder, OLD_EXTENSION)
+    if old is not None and _owner(old) is not None and _owner(old)[0] == str(audio):
+        try:
+            old.unlink()  # (su .xml de 1.2.0, que el .slx reemplaza; solo si nombra este mismo archivo)
+        except OSError:
+            pass
     return path

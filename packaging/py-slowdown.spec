@@ -71,6 +71,7 @@ sed -i -e '/"pyside6-essentials/d' -e '/"av>=/d' pyproject.toml
 desktop-file-install --dir=%{buildroot}%{_datadir}/applications packaging/py-slowdown.desktop
 install -d %{buildroot}%{_datadir}/icons
 cp -pr src/py_slowdown/icons/linux/hicolor %{buildroot}%{_datadir}/icons/
+install -Dpm 0644 packaging/py-slowdown-mime.xml %{buildroot}%{_datadir}/mime/packages/py-slowdown.xml
 install -Dpm 0644 packaging/io.github.nivaca.py-slowdown.metainfo.xml \
     %{buildroot}%{_metainfodir}/io.github.nivaca.py-slowdown.metainfo.xml
 install -Dpm 0644 packaging/man/py-slowdown.1 %{buildroot}%{_mandir}/man1/py-slowdown.1
@@ -92,6 +93,7 @@ export HOME="$PWD/check-home"
 %{_bindir}/py-slowdown
 %{_datadir}/applications/py-slowdown.desktop
 %{_datadir}/icons/hicolor/*/apps/py-slowdown.*
+%{_datadir}/mime/packages/py-slowdown.xml
 %{_metainfodir}/io.github.nivaca.py-slowdown.metainfo.xml
 %{_mandir}/man1/py-slowdown.1*
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*

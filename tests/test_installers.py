@@ -93,6 +93,10 @@ def test_windows_installer_script():
     assert "PrivilegesRequired=lowest" in iss and "MinVersion=10.0" in iss
     assert '"compiler:Languages\\Spanish.isl"' in iss
     assert '"-s -m py_slowdown"' in iss and "uninsdeletekey" in iss
+    # Los .slx: su tipo, «Abrir con», y su programa solo si no tenía otro (y se quita solo si es este)
+    assert '#define SettingsProgId "py-slowdown.settings"' in iss
+    assert "Software\\Classes\\.slx\\OpenWithProgids" in iss
+    assert "RegQueryStringValue(HKEY_CLASSES_ROOT, '.slx'" in iss and "(Current = '{#SettingsProgId}')" in iss
     for define in ("AppVersion", "FileVersion", "SourceDir", "OutputDir", "OutputName", "Audio"):
         assert f"/D{define}=" in (ROOT / "tools" / "bundle-installer.py").read_text(), define
 
@@ -107,6 +111,10 @@ def test_installer_tool():
     plist = bundle.info_plist()
     assert plist["LSMinimumSystemVersion"] == "13.0" and plist["CFBundleExecutable"] == "py-slowdown"
     assert "mp3" in plist["CFBundleDocumentTypes"][0]["CFBundleTypeExtensions"]
+    settings = plist["UTExportedTypeDeclarations"][0]
+    assert settings["UTTypeTagSpecification"]["public.filename-extension"] == ["slx"]
+    assert plist["CFBundleDocumentTypes"][1]["LSItemContentTypes"] == [settings["UTTypeIdentifier"]]
+    assert plist["CFBundleDocumentTypes"][1]["LSHandlerRank"] == "Owner"
     plistlib.dumps(plist)  # (se escribe sin errores)
     assert "-m py_slowdown" in bundle.MACOS_LAUNCHER
     compile((INSTALLER / "check.py").read_text(), "check.py", "exec")

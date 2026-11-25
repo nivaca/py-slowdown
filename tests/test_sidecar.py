@@ -1,4 +1,4 @@
-"""El XML de cada archivo: con su mismo nombre, junto a él o en una carpeta, y viaja con él."""
+"""El .slx de cada archivo: con su mismo nombre, junto a él o en una carpeta, y viaja con él."""
 
 import os
 import xml.etree.ElementTree as ET
@@ -13,77 +13,116 @@ from py_slowdown.sidecar import FileState
 
 def state() -> FileState:
     return FileState(83.25, {"speed": 0.75, "pitch": -2.0, "formants": True, "hearing": ["left", "bass"],
-                             "selection": [95.0, 103.5], "repeat": True, "countin": {"bpm": 96, "offset": 0.25}},
-                     [Bookmark(21.5, "Second verse"), Bookmark(3.0, "")], [Loop(95.0, 103.5, "Bridge")])
+                             "selection": [95.0, 103.5], "repeat": True, "countin": {"bpm": 96, "offset": 0.25, "on": True}},
+                     [Bookmark(21.5, "Second verse"), Bookmark(3.0, ""), Bookmark(0.8, "Downbeat", first_beat=True)],
+                     [Loop(95.0, 103.5, "Bridge")])
 
 
 def test_round_trip(tmp_path):
     audio = tmp_path / "song.mp3"
     audio.write_bytes(b"x" * 10)
     path = sidecar.save(audio, state())
-    assert path == tmp_path / "song.xml"
+    assert path == tmp_path / "song.slx"
     root = ET.parse(path).getroot()
     assert root.find("file").get("path") == str(audio.resolve()) and root.find("file").get("size") == "10"
     again = sidecar.load(audio)
     assert again.position == 83.25 and again.settings == state().settings
-    assert [(b.time, b.label) for b in again.bookmarks] == [(3.0, ""), (21.5, "Second verse")]
+    assert [(b.time, b.label, b.first_beat) for b in again.bookmarks] == [
+        (0.8, "Downbeat", True), (3.0, "", False), (21.5, "Second verse", False)]
+    assert root.find("bookmarks/bookmark").get("first-beat") == "true"
     assert again.loops == [Loop(95.0, 103.5, "Bridge")]
     assert sidecar.load(tmp_path / "other.mp3") is None
 
 
 def test_two_files_of_the_same_name(tmp_path):
-    """song.mp3 and song.flac in one folder: the first is song.xml, the second song.flac.xml; each reads its own."""
+    """song.mp3 and song.flac in one folder: the first is song.slx, the second song.flac.slx; each reads its own."""
     mp3, flac = tmp_path / "song.mp3", tmp_path / "song.flac"
     mp3.write_bytes(b"1")
     flac.write_bytes(b"2")
-    assert sidecar.save(mp3, FileState(1.0)) == tmp_path / "song.xml"
-    assert sidecar.save(flac, FileState(2.0)) == tmp_path / "song.flac.xml"
+    assert sidecar.save(mp3, FileState(1.0)) == tmp_path / "song.slx"
+    assert sidecar.save(flac, FileState(2.0)) == tmp_path / "song.flac.slx"
     assert sidecar.load(mp3).position == 1.0 and sidecar.load(flac).position == 2.0
-    assert sidecar.save(mp3, FileState(5.0)) == tmp_path / "song.xml"  # (el suyo, otra vez)
+    assert sidecar.save(mp3, FileState(5.0)) == tmp_path / "song.slx"  # (el suyo, otra vez)
 
 
 def test_moved_with_its_file(tmp_path):
-    """Moved to another folder with its XML, the file finds its settings by its name."""
+    """Moved to another folder with its .slx, the file finds its settings by its name."""
     old, new = tmp_path / "a", tmp_path / "b"
     old.mkdir()
     new.mkdir()
     (old / "song.mp3").write_bytes(b"x")
     sidecar.save(old / "song.mp3", state())
-    for name in ("song.mp3", "song.xml"):
+    for name in ("song.mp3", "song.slx"):
         os.replace(old / name, new / name)
     assert sidecar.load(new / "song.mp3").position == 83.25
-    assert sidecar.save(new / "song.mp3", FileState(9.0)) == new / "song.xml"  # (y ahora nombra la ruta nueva)
-    assert ET.parse(new / "song.xml").getroot().find("file").get("path") == str((new / "song.mp3").resolve())
+    assert sidecar.save(new / "song.mp3", FileState(9.0)) == new / "song.slx"  # (y ahora nombra la ruta nueva)
+    assert ET.parse(new / "song.slx").getroot().find("file").get("path") == str((new / "song.mp3").resolve())
 
 
 def test_in_a_folder(tmp_path):
-    """In a folder of their own: two song.mp3 of different folders do not take each other's XML."""
+    """In a folder of their own: two song.mp3 of different folders do not take each other's .slx."""
     keep = tmp_path / "settings"
     one, two = tmp_path / "one", tmp_path / "two"
     one.mkdir()
     two.mkdir()
     (one / "song.mp3").write_bytes(b"1")
     (two / "song.mp3").write_bytes(b"2")
-    assert sidecar.save(one / "song.mp3", FileState(1.0), keep) == keep / "song.xml"
+    assert sidecar.save(one / "song.mp3", FileState(1.0), keep) == keep / "song.slx"
     second = sidecar.save(two / "song.mp3", FileState(2.0), keep)
-    assert second == keep / "song.mp3.xml"
+    assert second == keep / "song.mp3.slx"
     assert sidecar.load(one / "song.mp3", keep).position == 1.0 and sidecar.load(two / "song.mp3", keep).position == 2.0
-    assert not (one / "song.xml").exists()
+    assert not (one / "song.slx").exists()
 
 
 def test_damaged_or_foreign_xml(tmp_path):
-    """An XML of the same name that is not ours (or is damaged) is left alone, and ours gets another name."""
+    """A file of the same name that is not ours (or is damaged) is left alone, and ours gets another name."""
     audio = tmp_path / "song.mp3"
     audio.write_bytes(b"x")
-    (tmp_path / "song.xml").write_text("<score><part/></score>")
+    (tmp_path / "song.slx").write_text("<score><part/></score>")
+    (tmp_path / "song.xml").write_text("<score><part/></score>")  # (un XML de otro programa, de 1.2.0 o no)
     assert sidecar.load(audio) is None
-    assert sidecar.save(audio, FileState(4.0)) == tmp_path / "song.mp3.xml"
+    assert sidecar.save(audio, FileState(4.0)) == tmp_path / "song.mp3.slx"
+    assert (tmp_path / "song.slx").read_text() == "<score><part/></score>"
     assert (tmp_path / "song.xml").read_text() == "<score><part/></score>"
 
 
+def test_the_xml_of_1_2_0(tmp_path):
+    """The .xml files of py-slowdown 1.2.0 are still read; once a file's .slx is written, its .xml goes, and not
+    another file's."""
+    mp3, flac = tmp_path / "song.mp3", tmp_path / "song.flac"
+    mp3.write_bytes(b"x")
+    flac.write_bytes(b"y")
+    # Como los dejó 1.2.0: song.xml de song.flac, song.mp3.xml de song.mp3.
+    os.replace(sidecar.save(flac, FileState(7.0)), tmp_path / "song.xml")
+    os.replace(sidecar.save(mp3, state()), tmp_path / "song.mp3.xml")
+    assert sidecar.load(mp3).position == 83.25 and sidecar.load(flac).position == 7.0
+    assert sidecar.save(mp3, FileState(9.0)) == tmp_path / "song.slx"
+    assert not (tmp_path / "song.mp3.xml").exists() and (tmp_path / "song.xml").is_file()
+    assert sidecar.load(mp3).position == 9.0 and sidecar.load(flac).position == 7.0
+    assert sidecar.save(flac, FileState(8.0)) == tmp_path / "song.flac.slx"
+    assert not (tmp_path / "song.xml").exists() and sidecar.load(flac).position == 8.0
+
+
+def test_owner(tmp_path):
+    """The recording a .slx is of: where it says, or beside it if moved with it; None if neither, or not ours."""
+    folder, moved = tmp_path / "a", tmp_path / "b"
+    folder.mkdir()
+    moved.mkdir()
+    (folder / "song.mp3").write_bytes(b"x")
+    slx = sidecar.save(folder / "song.mp3", state())
+    assert sidecar.owner(slx) == (folder / "song.mp3").resolve()
+    for name in ("song.mp3", "song.slx"):
+        os.replace(folder / name, moved / name)
+    assert sidecar.owner(moved / "song.slx") == moved / "song.mp3"
+    (moved / "song.mp3").unlink()
+    assert sidecar.owner(moved / "song.slx") is None
+    (moved / "other.slx").write_text("<score/>")
+    assert sidecar.owner(moved / "other.slx") is None and sidecar.read(moved / "other.slx") is None
+
+
 def test_the_window_keeps_it(tmp_path, monkeypatch, output):
-    """Closing a file writes its XML beside it; opened again, even with bookmarks.json gone, all comes back; in a
-    folder chosen, the XML goes there; Not saved writes none."""
+    """Closing a file writes its .slx beside it; opened again, even with bookmarks.json gone, all comes back; in a
+    folder chosen, the .slx goes there; Not saved writes none. Opening the .slx opens its recording."""
     from PySide6.QtCore import QSettings
     from PySide6.QtWidgets import QApplication
 
@@ -113,35 +152,48 @@ def test_the_window_keeps_it(tmp_path, monkeypatch, output):
     w._loop_renamed(0, "Lick")
     w.seek(2.5)
     w.close_file()
-    xml = music / "song.xml"
+    xml = music / "song.slx"
     assert xml.is_file() and ET.parse(xml).getroot().find("playback").get("speed") == "0.7"
     w.close()
 
-    w = window("two.json")  # (otro bookmarks.json, vacío: lo que vuelve es del XML)
+    w = window("two.json")  # (otro bookmarks.json, vacío: lo que vuelve es del .slx)
     w.open_file(song)
     w.audio.wait(10)
     w._tick()
     app.processEvents()
     assert w.player.speed == 0.7 and [b.time for b in w.bookmarks] == [1.5] and [x.label for x in w.loops] == ["Lick"]
     assert abs(w.player.position - 2.5) < 0.05 and w.selection == (1.0, 2.0)
+    w.close_file()
+    w.close()
+
+    w = window("three.json")  # (abrir el .slx abre su grabación, como el .slx dice)
+    assert w.open_file(xml) and w.audio.path == song.resolve()
+    w.audio.wait(10)
+    w._tick()
+    app.processEvents()
+    assert w.player.speed == 0.7 and [b.time for b in w.bookmarks] == [1.5]
+    (music / "lost.slx").write_text("<score/>")
+    warnings = []
+    monkeypatch.setattr("py_slowdown.window.QMessageBox.warning", lambda *args: warnings.append(args[2]))
+    assert not w.open_file(music / "lost.slx") and "lost.slx" in warnings[0] and w.audio is not None
     keep = tmp_path / "kept"
     monkeypatch.setattr("py_slowdown.window.QFileDialog.getExistingDirectory", lambda *args: str(keep))
     w.a_sidecar["folder"].trigger()
     assert w.a_sidecar["folder"].isChecked() and str(keep) in w.a_sidecar["folder"].text()
     w.close_file()
-    assert (keep / "song.xml").is_file()
+    assert (keep / "song.slx").is_file()
     w.a_sidecar["off"].trigger()
     xml.unlink()
-    (keep / "song.xml").unlink()
+    (keep / "song.slx").unlink()
     w.open_file(song)
     w.close_file()
-    assert not xml.exists() and not (keep / "song.xml").exists()
+    assert not xml.exists() and not (keep / "song.slx").exists()
     w.close()
 
 
 @pytest.mark.skipif(os.name == "nt" or os.geteuid() == 0, reason="permissions of POSIX, not as root")
 def test_a_folder_that_cannot_be_written(tmp_path, monkeypatch, output):
-    """Where the XML cannot be written, the status bar says so, and the rest goes on (bookmarks.json keeps it)."""
+    """Where the .slx cannot be written, the status bar says so, and the rest goes on (bookmarks.json keeps it)."""
     from PySide6.QtCore import QSettings
     from PySide6.QtWidgets import QApplication
 
@@ -165,7 +217,7 @@ def test_a_folder_that_cannot_be_written(tmp_path, monkeypatch, output):
         messages = []
         monkeypatch.setattr(w.statusBar(), "showMessage", lambda text, *args: messages.append(text))
         w.close_file()
-        assert not (locked / "song.xml").exists() and any("song.wav" in m for m in messages)
+        assert not (locked / "song.slx").exists() and any("song.wav" in m for m in messages)
         assert w.store.settings(song)["speed"] == 0.6
         w.close()
     finally:

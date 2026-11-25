@@ -120,6 +120,9 @@ def lay_out(appdir: Path, tree: Path):
     (share / "applications").mkdir(parents=True)
     shutil.copy2(ROOT / "packaging" / f"{APP}.desktop", share / "applications" / f"{APP}.desktop")
     shutil.copytree(ROOT / "src" / "py_slowdown" / "icons" / "linux" / "hicolor", share / "icons" / "hicolor")
+    # (el tipo de los .slx: el disparador de shared-mime-info rehace la base al instalar)
+    (share / "mime" / "packages").mkdir(parents=True)
+    shutil.copy2(ROOT / "packaging" / f"{APP}-mime.xml", share / "mime" / "packages" / f"{APP}.xml")
     (share / "metainfo").mkdir()
     for meta in (ROOT / "packaging").glob("*.metainfo.xml"):
         shutil.copy2(meta, share / "metainfo" / meta.name)

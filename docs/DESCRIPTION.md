@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty stages.
+in twenty-one stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -588,10 +588,47 @@ style of the desktop only sinks it a little. A short style sheet for the
 controls fills it with the theme's selection colour, and with grey when it
 is on but greyed out.
 
+21. A type of its own, and a first beat that stays
+--------------------------------------------------
+
+A file called `song.xml` says nothing of what it is, and a file manager
+offers to open it with an editor of text. So the settings files took an
+extension of their own, `.slx` (`song.slx`), still XML inside, and the
+program became their program: opening one opens its recording, found by
+the path it names or, if the two were moved together, beside it. On Linux
+this is a type of shared-mime-info, `application/x-py-slowdown`, recognised
+by the extension and by the root element of the XML, which the desktop
+file, the RPM, the Debian package, the installer of the AppImage and
+`install.sh` all install; on macOS the application declares the type in
+its `Info.plist`; on Windows the installer writes it in the registry.
+There I found that Simulink, of MATLAB, uses `.slx` for its models, so
+on Windows py-slowdown becomes the program of `.slx` only where no other
+program had it, and the uninstaller gives it back only if it is still
+py-slowdown's. The `song.xml` files of 1.2.0 are read as before, and each
+one is removed when the `.slx` that replaces it has been written, but only
+if it names that same recording.
+
+The first beat of the count-in was the other problem. It was kept as an
+offset from the position, so that moving the position moved it too: after
+one seek, the green line no longer was on the beat, and there was no way
+back to where it had been. Now the first beat is a bookmark of its own,
+with a green flag marked 1, kept with the others in `bookmarks.json` and
+in the `.slx`, one in each file; Count-in > The first beat is here
+(Shift+C) puts it at the position, also while the music plays. A fixed
+beat raised the question of what to do far from it, and the answer was
+the grid that the first beat and the tempo make: the program takes the
+nearest beat of that grid, before or after the position, and the recording
+comes in on it after the count, wherever playing starts. When the nearest
+beat asks the recording to come in earlier than the last click allows,
+which happens at slow speeds, the beat before is taken. In recordings
+whose tempo moves the grid is less exact far from the first beat, but it
+never misses by more than half a beat. With a first beat the offset of the
+dialog is not needed, so the dialog greys it out.
+
 Testing
 -------
 
-The program has 189 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 193 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -609,8 +646,9 @@ filters of Hear against a convolution, and that a change makes no click;
 the formants, by the resonance of a vowel; each quality, by its engine,
 its length, its pitch and its clicks; the export, its lengths, the
 places of its clicks and its formats; and the loops, the settings kept for
-each file, the XML file of each recording (moved with it, two of the same
-name, a folder chosen, a folder that cannot be written), the keyboard
+each file, the `.slx` file of each recording (moved with it, two of the
+same name, a folder chosen, a folder that cannot be written, the `.xml`
+files of 1.2.0, opening it), the first beat and its grid, the keyboard
 shortcuts and the waveform kept for the next time. The player is
 tested with a sound card that the tests drive themselves, and the window
 offscreen: opening a file, the controls, the speed, the bookmarks, the
@@ -618,7 +656,8 @@ point where it was left, a file that is not audio, the window without
 Rubber Band, and the Spanish interface, whose file must have every text of
 the program and no other. Other tests check the packaging and the
 documentation: the versions
-agree, the licence, the desktop file, the metainfo, the spec, the manual
+agree, the licence, the desktop file, the type of the `.slx` files
+(through `update-mime-database`), the metainfo, the spec, the manual
 pages, the icons, the signing key and the signing of a release (with a key
 made for the test), and that the manuals have the version of the program,
 the same pictures in both languages, and their PDFs; and the installers:
@@ -629,4 +668,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 75 files and about 15,100 lines (9,800 of them in Python).
+The program has 76 files and about 17,300 lines (10,900 of them in Python).

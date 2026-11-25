@@ -5,6 +5,32 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Unreleased
+
+- **The settings files end in `.slx`**: `song.slx` for `song.mp3` (and
+  `song.flac.slx`, if `song.slx` is another file's), still XML inside. The
+  `song.xml` files of 1.2.0 are still read, and removed once their `.slx`
+  is written. Opening a `.slx` (File > Open, the file manager, or dropped
+  on the window) opens its recording, where it says or, moved with it,
+  beside it. The installers make py-slowdown the program of the `.slx`
+  files: on Linux a type of its own, `application/x-py-slowdown`, in the
+  RPM, the Debian package, the installer of the AppImage and
+  `install/install.sh`; on Windows in the registry, as the program of
+  `.slx` only if no other was (Simulink's models end in `.slx` too); on
+  macOS, a type declared by the application.
+- **The first beat, a bookmark of its own**: Count-in > The first beat is
+  here (Shift+C), or the right click on the waveform, marks the
+  recording's first beat with a green bookmark marked 1, in bold in the
+  panel, kept with the other bookmarks (in `bookmarks.json` and in the
+  `.slx`), so that it is not lost when the position moves or the file is
+  closed. There is one per file; Count-in > Remove the first beat removes
+  it. With it, the recording comes in after the count on the nearest beat
+  of the grid that the first beat and the tempo make, wherever playing
+  starts; the count-in's offset is then not used, and its dialog greys it
+  out. The tempo of the count-in is kept with the file even when the
+  count-in is off, if there is a first beat. Count-in: the first beat at
+  the position goes from the right click (the menu entry does it).
+
 ## 1.2.0 — 2026-11-24
 
 The settings of each recording travel with it, in an XML file of its name;

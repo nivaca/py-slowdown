@@ -628,24 +628,43 @@ each time playing starts (with \key{Space} or the button), not when the position
 While it counts, the waveform shows the beat in large figures
 (figure~\ref{fig:repeat_en}), and the position does not move.
 
-\index{count-in!offset}\index{offset of the recording}%
-The recording comes in on the beat after the last click if its first beat
-is exactly at the position. When it is not (a bookmark placed a little
-before the first beat, say), \menu{Recording offset}, in the same dialog,
-moves it: a negative value brings it in earlier, a positive one later, by
-that many seconds of the recording (from 2 earlier to 2 later, by
-hundredths). If the first beat is 0.2 seconds after the position, $-0.2$
-puts it on the beat, at any speed. It can come in earlier only up to the
-last click, which is never cut: the dialog says when more is asked for.
+\shot{menu_countin_en}{0.4}{The menu Count-in}
 
-The offset is easier to set on the waveform: with the position where
-playing will start, a right click on the recording's first beat, and
-\menu{Count-in: the first beat is here}. The program sets the offset from
-the position to that point, turns the count-in on, and says what it did; a
-green dashed line marked 1 then shows, while it does not play, where the
-count-in expects the first beat (figure~\ref{fig:zoom_en}), to check it or
-to set it again closer in. \menu{Count-in: the first beat at the position}
-takes the offset back to nothing.
+\index{count-in!first beat}\index{first beat}%
+To come in on a beat, the count-in has to know where the beats of the
+recording are, and for that one of them is enough: the first beat. With
+the position on the first beat of the music, \menu{Count-in\then The first
+beat is here} (\key{Shift+C}; figure~\ref{fig:menu_countin_en}) puts it
+there; a right click on the waveform, and \menu{Count-in: the first beat is
+here}, puts it where the click was. The key can be pressed while the
+recording plays, on the beat. The first beat is a bookmark of its own, with
+a green flag marked 1 (figure~\ref{fig:zoom_en}) and in bold in the panel.
+It is kept with the other bookmarks, also in the recording's \texttt{.slx}
+file (section~\ref{sec:each-file}), so that it is not lost when the
+position moves or the file is closed. There is one in each file: setting it
+again moves it, and over a bookmark that is already there, that bookmark
+becomes the first beat, with its label. It is renamed and removed as any
+other bookmark, or with \menu{Count-in\then Remove the first beat}.
+
+From the first beat and the tempo of the count-in, the program knows where
+every beat is, before and after it, and the recording comes in on the
+nearest beat after the clicks, wherever playing starts: from a bookmark a
+little before the first beat, or from the middle of a bar. While it does
+not play, a green dashed line marked 1 shows that beat, if it is not right
+at the position. The tempo has to be the recording's for this (it can be
+tapped, below). In a recording whose tempo moves, the beats are less exact
+the farther they are from the first beat; the first beat can then be set
+again closer in. The recording can come in earlier only up to the last
+click, which is never cut: when the nearest beat asks for more (at a slow
+speed), the beat before it is taken.
+
+\index{count-in!offset}\index{offset of the recording}%
+Without a first beat, the recording comes in on the beat after the last
+click, from the position. \menu{Recording offset}, in the dialog of the
+count-in, then moves it: a negative value brings it in earlier, a positive
+one later, by that many seconds of the recording (from 2 earlier to 2
+later, by hundredths). With a first beat the offset is not needed, and the
+dialog greys it out.
 
 \index{tap tempo}\index{tempo!tapped}%
 The tempo of a recording can be measured by tapping: while it plays,
@@ -739,28 +758,40 @@ program starts without a file.
 When a file is closed, the program keeps, besides its bookmarks, its loops
 and the point where it was left, how it was played: the speed, the pitch,
 the formants, the way of hearing, the selection and whether it was
-repeated, and, if the count-in was on, its tempo and its offset. Only what
+repeated, and, if the count-in was on or there is a first beat, its tempo
+and its offset. Only what
 is not the usual is kept. When the file is opened again, all that comes
 back (the selection, once the file is read that far); a file with nothing
 kept is played as the one before it was.
 
-\index{XML file}\index{settings files}%
-All that is also written, when the file is closed, in an XML file with the
-same name as the recording: \texttt{song.xml} for \texttt{song.mp3}, in the
-same folder. Besides the position, the speed, the pitch, the formants, the
+\index{slx file@\texttt{.slx} file}\index{settings files}%
+All that is also written, when the file is closed, in a file with the same
+name as the recording and the extension \texttt{.slx}: \texttt{song.slx}
+for \texttt{song.mp3}, in the same folder. Besides the position, the speed, the pitch, the formants, the
 way of hearing, the selection, the count-in, the bookmarks and the loops,
 it says where the recording is (its full path), its size and date, and
-when it was saved. It is plain text that other programs can read, and it
+when it was saved. It is plain text (XML) that other programs can read, and it
 travels with the recording: if both are moved or copied together, the
 next time the program finds everything there. When the recording is
-opened, its XML file comes first; if it has none, what the program keeps
-itself (section~\ref{sec:files-kept}). If \texttt{song.xml} already
-belongs to another file (\texttt{song.flac}, in the same folder), the XML
-file is \texttt{song.flac.xml}.
+opened, its \texttt{.slx} comes first; if it has none, what the program
+keeps itself (section~\ref{sec:files-kept}). If \texttt{song.slx} already
+belongs to another file (\texttt{song.flac}, in the same folder), the file
+is \texttt{song.flac.slx}. Version 1.2.0 wrote these files as
+\texttt{song.xml}: they are still read, and removed once the
+\texttt{song.slx} that replaces them is written.
+
+\index{slx file@\texttt{.slx} file!opening}%
+Opening a \texttt{.slx} file (with \menu{File\then Open}, from the file
+manager, or dropped on the window) opens its recording, as it was left:
+the one in the path it names, or, if both were moved together, the one of
+its name beside it. The installers make py-slowdown the program of the
+\texttt{.slx} files, on Linux, Windows and macOS; on Windows, only if no
+other program had them already (Simulink's models end in \texttt{.slx}
+too).
 
 \menu{Settings\then Settings files of each recording} chooses where they
 go: \menu{Beside the audio file} (at first), \menu{In a folder} (one asks
-which), or \menu{Not saved}. Where an XML file cannot be written (a
+which), or \menu{Not saved}. Where a \texttt{.slx} file cannot be written (a
 folder that cannot be written in), the status bar says so, and nothing else
 changes.
 
@@ -790,7 +821,7 @@ changes.
   cache} on Windows, and \texttt{\textasciitilde/Library/Caches/py-slowdown/}
   on macOS. While a long file is read in parts, each part has one more
   there until it is added.
-\item[The settings file of each recording], \texttt{NAME.xml}, beside it or
+\item[The settings file of each recording], \texttt{NAME.slx}, beside it or
   in the folder chosen (section~\ref{sec:each-file}).
 \item[The waveforms] of the last 200 files read, in the folder
   \texttt{peaks} of that same cache folder (about 4\,MB for an hour and a

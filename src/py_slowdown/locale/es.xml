@@ -388,8 +388,8 @@
     <tr>ARCHIVO</tr>
   </text>
   <text>
-    <en>an audio or video file to open</en>
-    <tr>un archivo de audio o de video para abrir</tr>
+    <en>an audio or video file to open, or its .slx</en>
+    <tr>un archivo de audio o de video para abrir, o su .slx</tr>
   </text>
   <text>
     <en>show this help and quit</en>
@@ -628,36 +628,52 @@
     <tr>; la grabación, {offset} s fuera del pulso</tr>
   </text>
   <text>
+    <en>The first beat is here (count-in)</en>
+    <tr>El primer pulso está aquí (cuenta previa)</tr>
+  </text>
+  <text>
+    <en>Shift+C</en>
+    <tr>Mayús+C</tr>
+  </text>
+  <text>
+    <en>The &amp;first beat is here</en>
+    <tr>El &amp;primer pulso está aquí</tr>
+  </text>
+  <text>
+    <en>&amp;Remove the first beat</en>
+    <tr>&amp;Quitar el primer pulso</tr>
+  </text>
+  <text>
+    <en>Settings of a recording</en>
+    <tr>Ajustes de una grabación</tr>
+  </text>
+  <text>
+    <en>Cannot find the recording of {name}.</en>
+    <tr>No se encuentra la grabación de {name}.</tr>
+  </text>
+  <text>
+    <en>First beat</en>
+    <tr>Primer pulso</tr>
+  </text>
+  <text>
+    <en>Count-in: the first beat at {time}; the recording comes in on its beats, at {bpm} BPM.</en>
+    <tr>Cuenta previa: el primer pulso en {time}; la grabación entra en sus pulsos, a {bpm} BPM.</tr>
+  </text>
+  <text>
+    <en>; on the beats of the first beat ({time})</en>
+    <tr>; en los pulsos del primer pulso ({time})</tr>
+  </text>
+  <text>
+    <en>The recording comes in on the beats of its first beat ({time}) at this tempo.</en>
+    <tr>A este tempo, la grabación entra en los pulsos de su primer pulso ({time}).</tr>
+  </text>
+  <text>
+    <en>The recording's first beat: the count-in brings it in on its beats</en>
+    <tr>El primer pulso de la grabación: tras la cuenta previa, la grabación entra en sus pulsos</tr>
+  </text>
+  <text>
     <en>Count-in: the first beat is here</en>
     <tr>Cuenta previa: el primer pulso está aquí</tr>
-  </text>
-  <text>
-    <en>Count-in: the first beat at the position</en>
-    <tr>Cuenta previa: el primer pulso en la posición</tr>
-  </text>
-  <text>
-    <en>The first beat must be within {limit} s of the position (this is {seconds} s away).</en>
-    <tr>El primer pulso debe estar a menos de {limit} s de la posición (este está a {seconds} s).</tr>
-  </text>
-  <text>
-    <en>Count-in: the recording comes in on the beat, from the position.</en>
-    <tr>Cuenta previa: la grabación entra en el pulso, desde la posición.</tr>
-  </text>
-  <text>
-    <en>Count-in: the first beat at {time}; the recording comes in {seconds} s {when} the beat.</en>
-    <tr>Cuenta previa: el primer pulso en {time}; la grabación entra {seconds} s {when} del pulso.</tr>
-  </text>
-  <text>
-    <en>before</en>
-    <tr>antes</tr>
-  </text>
-  <text>
-    <en>after</en>
-    <tr>después</tr>
-  </text>
-  <text>
-    <en>At this tempo it can come in at most {seconds} s earlier.</en>
-    <tr>A este tempo puede entrar a lo sumo {seconds} s antes.</tr>
   </text>
   <text>
     <en>&amp;Reopen the last file when starting</en>

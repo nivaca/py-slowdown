@@ -82,8 +82,16 @@ class BookmarkPanel(QWidget):
             when.setFlags(when.flags() & ~Qt.ItemFlag.ItemIsEditable)
             when.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             when.setToolTip(tr("Double-click to go there"))
+            label = QTableWidgetItem(mark.label)
+            if mark.first_beat:
+                # (el primer pulso de la cuenta previa, en negrita)
+                for item in (when, label):
+                    font = item.font()
+                    font.setBold(True)
+                    item.setFont(font)
+                label.setToolTip(tr("The recording's first beat: the count-in brings it in on its beats"))
             self.table.setItem(row, 0, when)
-            self.table.setItem(row, 1, QTableWidgetItem(mark.label))
+            self.table.setItem(row, 1, label)
         self._filling = False
         if select is not None and 0 <= select < len(bookmarks):
             self.table.selectRow(select)

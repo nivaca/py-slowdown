@@ -45,6 +45,9 @@
     </ul>
   </description>
   <launchable type="desktop-id">py-slowdown.desktop</launchable>
+  <provides>
+    <mediatype>application/x-py-slowdown</mediatype>
+  </provides>
   <icon type="stock">py-slowdown</icon>
   <categories>
     <category>AudioVideo</category>

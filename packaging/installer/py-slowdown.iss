@@ -39,6 +39,8 @@
 #endif
 
 #define ProgId "py-slowdown.audio"
+; Los .slx, los ajustes de cada grabación: un tipo de py-slowdown, que los abre
+#define SettingsProgId "py-slowdown.settings"
 
 [Setup]
 ; (no cambiar nunca: así Windows reconoce las versiones como un programa)
@@ -91,6 +93,8 @@ english.GroupOther=Other tasks:
 spanish.GroupOther=Otras tareas:
 english.AudioFile=Audio file
 spanish.AudioFile=Archivo de audio
+english.SettingsFile=py-slowdown settings of a recording
+spanish.SettingsFile=Ajustes de py-slowdown de una grabación
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -115,6 +119,13 @@ Root: HKA; Subkey: "Software\Classes\{#ProgId}"; ValueType: string; ValueData: "
 Root: HKA; Subkey: "Software\Classes\{#ProgId}\DefaultIcon"; ValueType: string; ValueData: "{app}\py-slowdown.ico"; Tasks: openwith
 Root: HKA; Subkey: "Software\Classes\{#ProgId}\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "py-slowdown"; Tasks: openwith
 Root: HKA; Subkey: "Software\Classes\{#ProgId}\shell\open\command"; ValueType: string; ValueData: """{app}\python\pythonw.exe"" -s -m py_slowdown ""%1"""; Tasks: openwith
+; Los .slx, siempre: su tipo, y py-slowdown en su «Abrir con» (y como su programa,
+; si ninguno lo era ya: [Code])
+Root: HKA; Subkey: "Software\Classes\{#SettingsProgId}"; ValueType: string; ValueData: "{cm:SettingsFile}"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\{#SettingsProgId}\DefaultIcon"; ValueType: string; ValueData: "{app}\py-slowdown.ico"
+Root: HKA; Subkey: "Software\Classes\{#SettingsProgId}\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "py-slowdown"
+Root: HKA; Subkey: "Software\Classes\{#SettingsProgId}\shell\open\command"; ValueType: string; ValueData: """{app}\python\pythonw.exe"" -s -m py_slowdown ""%1"""
+Root: HKA; Subkey: "Software\Classes\.slx\OpenWithProgids"; ValueType: string; ValueName: "{#SettingsProgId}"; ValueData: ""; Flags: uninsdeletevalue
 
 [Run]
 Filename: "{app}\python\pythonw.exe"; Parameters: "-s -m py_slowdown"; WorkingDir: "{%USERPROFILE}"; Description: "{cm:LaunchProgram,py-slowdown}"; Flags: postinstall nowait skipifsilent
@@ -160,7 +171,13 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   Names: TArrayOfString;
   I: Integer;
+  Current: String;
 begin
+  { .slx: py-slowdown es su programa, a menos que otro ya lo fuera (los modelos
+    de Simulink también terminan en .slx) }
+  if CurStep = ssPostInstall then
+    if not RegQueryStringValue(HKEY_CLASSES_ROOT, '.slx', '', Current) or (Current = '') then
+      RegWriteStringValue(ClassesRoot, 'Software\Classes\.slx', '', '{#SettingsProgId}');
   if (CurStep = ssPostInstall) and WizardIsTaskSelected('openwith') then
   begin
     Names := Extensions;
@@ -173,9 +190,13 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Names: TArrayOfString;
   I: Integer;
+  Current: String;
 begin
   if CurUninstallStep = usPostUninstall then
   begin
+    { (el programa de los .slx se quita solo si es py-slowdown) }
+    if RegQueryStringValue(ClassesRoot, 'Software\Classes\.slx', '', Current) and (Current = '{#SettingsProgId}') then
+      RegDeleteValue(ClassesRoot, 'Software\Classes\.slx', '');
     Names := Extensions;
     for I := 0 to GetArrayLength(Names) - 1 do
       RegDeleteValue(ClassesRoot, 'Software\Classes\.' + Names[I] + '\OpenWithProgids', '{#ProgId}');

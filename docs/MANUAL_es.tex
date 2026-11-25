@@ -645,25 +645,44 @@ cuenta cada vez que empieza a tocar (con \key{Espacio} o con el botón), no cuan
 suena. Mientras cuenta, la forma de onda muestra el pulso en grande
 (figura~\ref{fig:repeat_es}), y la posición no se mueve.
 
-\index{cuenta previa!desfase}\index{desfase de la grabación}%
-La grabación entra en el pulso que sigue al último golpe si su primer pulso
-está justo en la posición. Si no lo está (un marcador puesto un poco antes
-del primer pulso, por ejemplo), \menu{Desfase de la grabación}, en el
-mismo diálogo, la mueve: un valor negativo la hace entrar antes, uno
-positivo después, tantos segundos de la grabación (de 2 antes a 2 después,
-en centésimas). Si el primer pulso está 0,2 segundos después de la
-posición, $-0{,}2$ lo pone en el pulso, a cualquier velocidad. Solo puede
-entrar antes hasta el último golpe, que nunca se corta: el diálogo avisa
-cuando se pide más.
+\shot{menu_countin_es}{0.4}{El menú Cuenta previa}
 
-El desfase es más fácil de fijar sobre la forma de onda: con la posición
-donde empezará a tocar, un clic derecho sobre el primer pulso de la
-grabación, y \menu{Cuenta previa: el primer pulso está aquí}. El programa
-fija el desfase de la posición a ese punto, activa la cuenta previa y dice
-lo que hizo; una línea verde de trazos con un 1 muestra entonces, mientras
-no suena, dónde espera la cuenta el primer pulso (figura~\ref{fig:zoom_es}),
-para comprobarlo o para volver a fijarlo más de cerca. \menu{Cuenta previa:
-el primer pulso en la posición} quita el desfase.
+\index{cuenta previa!primer pulso}\index{primer pulso}%
+Para entrar en un pulso, la cuenta previa tiene que saber dónde están los
+pulsos de la grabación, y para eso le basta uno: el primero. Con la
+posición en el primer pulso de la música, \menu{Cuenta previa\then El
+primer pulso está aquí} (\key{Mayús+C}; figura~\ref{fig:menu_countin_es})
+lo pone allí; un clic derecho sobre la forma de onda, y \menu{Cuenta
+previa: el primer pulso está aquí}, lo pone donde fue el clic. La tecla
+puede pulsarse mientras suena la grabación, con el pulso. El primer pulso
+es un marcador propio, con una bandera verde con un 1
+(figura~\ref{fig:zoom_es}), en negrita en el panel. Se guarda con los demás
+marcadores, también en el archivo \texttt{.slx} de la grabación
+(sección~\ref{sec:cada-archivo}); así no se pierde cuando la posición se
+mueve o el archivo se cierra. Hay uno por archivo: fijarlo otra vez lo
+mueve, y sobre un marcador que ya está allí, ese marcador se vuelve el
+primer pulso, con su nombre. Se renombra y se quita como cualquier otro
+marcador, o con \menu{Cuenta previa\then Quitar el primer pulso}.
+
+Con el primer pulso y el tempo de la cuenta, el programa sabe dónde está
+cada pulso, antes y después de él, y la grabación entra en el pulso más
+cercano tras los golpes, empiece donde empiece: desde un marcador un poco
+antes del primer pulso, o desde la mitad de un compás. Mientras no suena,
+una línea verde de trazos con un 1 muestra ese pulso, si no está justo en
+la posición. Para eso el tempo tiene que ser el de la grabación (se puede
+marcar; véase más abajo). En una grabación cuyo tempo se mueve, los pulsos
+son menos exactos cuanto más lejos están del primero; entonces conviene
+fijar el primer pulso otra vez, más cerca. La grabación solo puede entrar
+antes hasta el último golpe, que nunca se corta: si el pulso más cercano
+pide más (a una velocidad lenta), se toma el anterior.
+
+\index{cuenta previa!desfase}\index{desfase de la grabación}%
+Sin primer pulso, la grabación entra en el pulso que sigue al último golpe,
+desde la posición. \menu{Desfase de la grabación}, en el diálogo de la
+cuenta previa, la mueve entonces: un valor negativo la hace entrar antes,
+uno positivo después, tantos segundos de la grabación (de 2 antes a 2
+después, en centésimas). Con un primer pulso el desfase sobra, y el diálogo
+lo muestra en gris.
 
 \index{marcar el tempo}\index{tempo!marcado}%
 El tempo de una grabación se puede medir marcándolo: mientras suena, se
@@ -758,28 +777,39 @@ borró, el programa empieza sin archivo.
 Al cerrar un archivo, el programa guarda, además de sus marcadores, sus
 bucles y el punto donde se dejó, cómo se tocó: la velocidad, la altura, los
 formantes, la manera de oír, la selección y si se repetía, y, si la cuenta
-previa estaba encendida, su tempo y su desfase. Solo se guarda lo que no es
+previa estaba encendida o hay un primer pulso, su tempo y su desfase. Solo se guarda lo que no es
 lo de siempre. Al abrir de nuevo el archivo, todo eso vuelve (la selección,
 cuando el archivo está leído hasta allí); un archivo sin nada guardado se
 toca como el anterior.
 
-\index{archivo XML}\index{archivos de ajustes}%
-Todo eso se escribe además, al cerrar el archivo, en un archivo XML con el
-mismo nombre que la grabación: \texttt{canción.xml} para
-\texttt{canción.mp3}, en la misma carpeta. Además de la posición, la
+\index{archivo slx@archivo \texttt{.slx}}\index{archivos de ajustes}%
+Todo eso se escribe además, al cerrar el archivo, en un archivo con el
+mismo nombre que la grabación y la extensión \texttt{.slx}:
+\texttt{canción.slx} para \texttt{canción.mp3}, en la misma carpeta. Además de la posición, la
 velocidad, la altura, los formantes, la manera de oír, la selección, la
 cuenta previa, los marcadores y los bucles, dice dónde está la grabación (su
-ruta completa), su tamaño y su fecha, y cuándo se guardó. Es texto simple,
+ruta completa), su tamaño y su fecha, y cuándo se guardó. Es texto simple (XML),
 que otros programas pueden leer, y viaja con la grabación: si se mueven o
 se copian juntos, la vez siguiente el programa encuentra todo allí. Al abrir
-la grabación, manda su archivo XML; si no tiene, lo que el programa guarda
-por su cuenta (sección~\ref{sec:archivos}). Si \texttt{canción.xml} ya es
-de otro archivo (\texttt{canción.flac}, en la misma carpeta), el XML se
-llama \texttt{canción.flac.xml}.
+la grabación, manda su \texttt{.slx}; si no tiene, lo que el programa
+guarda por su cuenta (sección~\ref{sec:archivos}). Si \texttt{canción.slx}
+ya es de otro archivo (\texttt{canción.flac}, en la misma carpeta), el
+archivo se llama \texttt{canción.flac.slx}. La versión 1.2.0 los escribía
+como \texttt{canción.xml}: se leen todavía, y se borran en cuanto está
+escrito el \texttt{canción.slx} que los reemplaza.
+
+\index{archivo slx@archivo \texttt{.slx}!abrir}%
+Abrir un archivo \texttt{.slx} (con \menu{Archivo\then Abrir}, desde el
+administrador de archivos, o soltándolo en la ventana) abre su grabación,
+como se dejó: la de la ruta que nombra o, si se movieron juntos, la de su
+nombre que está a su lado. Los instaladores hacen de py-slowdown el
+programa de los archivos \texttt{.slx}, en Linux, Windows y macOS; en
+Windows, solo si ningún otro programa los tenía ya (los modelos de Simulink
+también terminan en \texttt{.slx}).
 
 \menu{Configuración\then Archivos de ajustes de cada grabación} elige dónde
 van: \menu{Junto al archivo de audio} (al principio), \menu{En una carpeta}
-(se pregunta cuál) o \menu{No se guardan}. Donde un archivo XML no se puede
+(se pregunta cuál) o \menu{No se guardan}. Donde un archivo \texttt{.slx} no se puede
 escribir (una carpeta en la que no se puede escribir), la barra de estado lo
 dice, y nada más cambia.
 
@@ -809,7 +839,7 @@ dice, y nada más cambia.
   cache} en Windows y \texttt{\textasciitilde/Library/Caches/py-slowdown/} en
   macOS. Mientras un archivo largo se lee por partes, cada parte tiene otro
   allí hasta que se añade.
-\item[El archivo de ajustes de cada grabación], \texttt{NOMBRE.xml}, junto a
+\item[El archivo de ajustes de cada grabación], \texttt{NOMBRE.slx}, junto a
   ella o en la carpeta elegida (sección~\ref{sec:cada-archivo}).
 \item[Las formas de onda] de los últimos 200 archivos leídos, en la carpeta
   \texttt{peaks} de esa misma carpeta de caché (unos 4\,MB por hora y

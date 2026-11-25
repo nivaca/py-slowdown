@@ -47,6 +47,7 @@ ICONS = ROOT / "src" / "py_slowdown" / "icons"
 VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
 APP = "py-slowdown"
 BUNDLE_ID = "io.github.nivaca.py-slowdown"
+SETTINGS_UTI = f"{BUNDLE_ID}.settings"  # el tipo de los .slx
 MACOS_MINIMUM = "13.0"  # (PySide6 and PyAV need macOS 13)
 
 # El Python de los instaladores: una versión fija de python-build-standalone, sin símbolos de depuración, con la
@@ -346,6 +347,19 @@ def info_plist() -> dict:
             "LSHandlerRank": "Alternate",
             "LSItemContentTypes": ["public.audio", "public.movie"],
             "CFBundleTypeExtensions": list(AUDIO),
+        }, {
+            # Los .slx, los ajustes de cada grabación: son de py-slowdown, que los abre (abre su grabación).
+            "CFBundleTypeName": "py-slowdown settings of a recording",
+            "CFBundleTypeRole": "Editor",
+            "LSHandlerRank": "Owner",
+            "LSItemContentTypes": [SETTINGS_UTI],
+        }],
+        "UTExportedTypeDeclarations": [{
+            "UTTypeIdentifier": SETTINGS_UTI,
+            "UTTypeDescription": "py-slowdown settings of a recording",
+            "UTTypeConformsTo": ["public.xml"],
+            "UTTypeTagSpecification": {"public.filename-extension": ["slx"],
+                                       "public.mime-type": ["application/x-py-slowdown"]},
         }],
     }
 

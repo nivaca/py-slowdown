@@ -98,10 +98,10 @@ def shoot(lang: str, audio: Path, folder: Path):
     # De cerca: unos diez segundos alrededor del primer marcador.
     w.wave.zoom(9.0, w.wave.x_of(21.5))
     w.seek(23.0)
-    w.set_first_beat(23.4)  # (la línea verde del primer pulso de la cuenta previa)
+    w.set_first_beat(23.4)  # (la bandera verde del primer pulso, y la línea del pulso en que entra la grabación)
     settle(app)
     save(w.view, "zoom", lang)
-    w.set_first_beat(None)
+    w.remove_first_beat()
     w.a_count.setChecked(False)
     w.wave.fit()
 
@@ -137,13 +137,14 @@ def shoot(lang: str, audio: Path, folder: Path):
     menu.addAction(tr("Select from here to the next bookmark"))
     menu.addSeparator()
     menu.addAction(tr("Count-in: the first beat is here"))
-    menu.addAction(tr("Count-in: the first beat at the position"))
     menu_shot(app, menu, "context", lang)
 
-    for title, name in ((tr("&Playback"), "menu_playback"), (tr("&Bookmarks"), "menu_bookmarks"),
-                        (tr("&Settings"), "menu_settings")):
+    w.set_first_beat(23.4)  # (con un primer pulso, Quitar el primer pulso no está en gris)
+    for title, name in ((tr("&Playback"), "menu_playback"), (tr("&Count-in"), "menu_countin"),
+                        (tr("&Bookmarks"), "menu_bookmarks"), (tr("&Settings"), "menu_settings")):
         action = next(a for a in w.menuBar().actions() if a.text() == title)
         menu_shot(app, action.menu(), name, lang)
+    w.remove_first_beat()
 
     # Las velocidades elegidas, con 75 % marcada.
     w._fill_speed_menu()

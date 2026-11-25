@@ -7,7 +7,8 @@ macOS), por la ruta completa del archivo de audio:
 
     {"version": 1,
      "files": {"/home/.../clase.mp3": {
-         "bookmarks": [{"time": 83.25, "label": "La segunda estrofa"}],
+         "bookmarks": [{"time": 0.82, "label": "Primer pulso", "first_beat": true},
+                       {"time": 83.25, "label": "La segunda estrofa"}],
          "loops": [{"start": 95.0, "end": 103.5, "label": "El puente"}],
          "position": 412.8,
          "settings": {"speed": 0.75, "pitch": -2.0, "selection": [95.0, 103.5], "repeat": true}}}}
@@ -33,6 +34,7 @@ from pathlib import Path
 class Bookmark:
     time: float  # segundos desde el principio
     label: str = ""
+    first_beat: bool = False  # el primer pulso de la grabación, para la cuenta previa (uno solo por archivo)
 
 
 @dataclass
@@ -76,7 +78,8 @@ class Store:
         out = []
         for item in entry.get("bookmarks", []):
             try:
-                out.append(Bookmark(float(item["time"]), str(item.get("label", ""))))
+                beat = item.get("first_beat") is True
+                out.append(Bookmark(float(item["time"]), str(item.get("label", "")), beat))
             except (KeyError, TypeError, ValueError):
                 continue
         return sorted(out, key=lambda b: b.time)
@@ -84,7 +87,8 @@ class Store:
     def set_bookmarks(self, audio_path, bookmarks: list[Bookmark]) -> None:
         entry = self._files.setdefault(self.key(audio_path), {})
         entry["bookmarks"] = [
-            {"time": round(b.time, 3), "label": b.label} for b in sorted(bookmarks, key=lambda b: b.time)
+            {"time": round(b.time, 3), "label": b.label} | ({"first_beat": True} if b.first_beat else {})
+            for b in sorted(bookmarks, key=lambda b: b.time)
         ]
         self._tidy(audio_path)
         self.save()

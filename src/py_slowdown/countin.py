@@ -2,7 +2,9 @@
 
 CountIn guarda lo que el usuario eligió (si se cuenta, cuántos golpes, a qué
 tempo, y si el tempo sigue la velocidad) en la configuración, y dice cuántos
-golpes y a qué tempo hay que dar ahora. CountInDialog es el diálogo donde se
+golpes y a qué tempo hay que dar ahora. grid_offset dice dónde entra la
+grabación cuando el archivo tiene un primer pulso: en el pulso más cercano de
+la rejilla que forman ese pulso y el tempo. CountInDialog es el diálogo donde se
 eligen. TapTempo mide el tempo de unos golpes del usuario, que marca el pulso
 de la música (el botón Marcar, o la tecla T).
 """
@@ -29,6 +31,7 @@ from .engine import MAX_BEATS, MAX_BPM, MIN_BPM, max_earlier
 
 MAX_OFFSET = 2.0  # segundos que la grabación puede entrar antes o después del pulso
 from .interface import tr
+from .timefmt import clock
 
 
 @dataclass
@@ -99,6 +102,19 @@ class TapTempo:
         return len(self.times)
 
 
+def grid_offset(position: float, first_beat: float, bpm: float, speed: float, earliest: float) -> float:
+    """The count-in's offset (seconds of the recording) playing from POSITION, with the recording's first beat
+    at FIRST_BEAT and its tempo BPM: the recording comes in on the nearest beat of FIRST_BEAT, FIRST_BEAT ± one
+    beat, ± two..., before or after POSITION. It can come in at most EARLIEST seconds (heard, at SPEED) before
+    the beat; if the nearest beat asks for more, the one before it is taken."""
+    period = 60.0 / min(MAX_BPM, max(MIN_BPM, bpm))
+    beat = first_beat + round((position - first_beat) / period) * period
+    offset = position - beat  # + entra después del pulso, - antes
+    if offset < 0 and -offset / speed > earliest + 1e-9:
+        offset += period
+    return round(offset, 3)
+
+
 def recording_tempo(heard: float, speed: float, follow: bool) -> int:
     """The tempo of the recording, from the tempo HEARD at SPEED: with the count-in following the speed, what
     was tapped at 0.75× is the recording's tempo times 0.75."""
@@ -109,8 +125,9 @@ def recording_tempo(heard: float, speed: float, follow: bool) -> int:
 class CountInDialog(QDialog):
     """Count in before playing: how many clicks, and at what tempo."""
 
-    def __init__(self, count: CountIn, speed: float, parent=None):
+    def __init__(self, count: CountIn, speed: float, parent=None, first_beat: float | None = None):
         super().__init__(parent)
+        self._first_beat = first_beat  # (si el archivo tiene uno, el desfase lo da él: la casilla no se usa)
         self.setWindowTitle(tr("Count-in"))
         self.on = QCheckBox(tr("&Count in before playing"), self)
         self.on.setChecked(count.on)
@@ -177,11 +194,17 @@ class CountInDialog(QDialog):
         count = self.value()
         for widget in (self.beats, self.bpm, self.follow, self.offset, self.tap_button):
             widget.setEnabled(count.on)
+        self.offset.setEnabled(count.on and self._first_beat is None)
         if not count.on:
             self.note.setText(tr("Playing starts at once."))
             return
         text = tr("At the speed now ({speed}×): {beats} clicks at {bpm} BPM, then the recording.",
                   speed=number(self._speed), beats=count.beats, bpm=number(count.tempo(self._speed)))
+        if self._first_beat is not None:
+            text += " " + tr("The recording comes in on the beats of its first beat ({time}) at this tempo.",
+                             time=clock(self._first_beat, tenths=True))
+            self.note.setText(text)
+            return
         heard = count.offset / self._speed
         if heard < 0:
             # Antes del pulso, a lo sumo hasta el último golpe: si se pide más, se dice.

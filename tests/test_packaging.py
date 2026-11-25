@@ -6,6 +6,7 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -49,6 +50,31 @@ def test_desktop_file():
     r = subprocess.run(["desktop-file-validate", str(ROOT / "packaging/py-slowdown.desktop")],
                        capture_output=True, text=True)
     assert r.stdout + r.stderr == ""
+
+
+def test_slx_type():
+    """The .slx files are a type of their own (shared-mime-info), which the menu entry opens and every package
+    installs: the RPM, the Debian package, the AppImage (for its installer) and install.sh."""
+    import xml.etree.ElementTree as ET
+
+    ns = {"m": "http://www.freedesktop.org/standards/shared-mime-info"}
+    kind = ET.parse(ROOT / "packaging/py-slowdown-mime.xml").getroot().find("m:mime-type", ns)
+    assert kind.get("type") == "application/x-py-slowdown"
+    assert kind.find("m:glob", ns).get("pattern") == "*.slx"
+    assert "application/x-py-slowdown;" in (ROOT / "packaging/py-slowdown.desktop").read_text()
+    spec = (ROOT / "packaging/py-slowdown.spec").read_text()
+    assert "%{buildroot}%{_datadir}/mime/packages/py-slowdown.xml" in spec
+    assert "\n%{_datadir}/mime/packages/py-slowdown.xml\n" in spec
+    for tool in ("bundle-deb.py", "bundle-appimage.py"):
+        assert '-mime.xml"' in (ROOT / "tools" / tool).read_text(), tool
+    assert 'packaging/$NAME-mime.xml' in (ROOT / "install/install.sh").read_text()
+    assert '"$SHARE/mime/packages/$NAME.xml"' in (ROOT / "packaging/installer/install-run.sh").read_text()
+    if shutil.which("update-mime-database"):
+        with tempfile.TemporaryDirectory() as folder:
+            (Path(folder) / "packages").mkdir()
+            shutil.copy(ROOT / "packaging/py-slowdown-mime.xml", Path(folder) / "packages" / "py-slowdown.xml")
+            subprocess.run(["update-mime-database", folder], check=True, capture_output=True)
+            assert "application/x-py-slowdown:*.slx" in (Path(folder) / "globs2").read_text()
 
 
 def test_scripts_parse():

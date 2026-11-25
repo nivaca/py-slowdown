@@ -186,6 +186,10 @@ def make_appdir(appdir: Path, whl: Path, libs: Path):
     shutil.copy2(icons / "256x256" / "apps" / f"{APP_ID}.png", appdir / f"{APP_ID}.png")
     os.symlink(f"{APP_ID}.png", appdir / ".DirIcon")
     shutil.copytree(icons, appdir / "usr" / "share" / "icons" / "hicolor", dirs_exist_ok=True)
+    # El tipo de los .slx, para el instalador (.run), que lo copia en share/mime/packages
+    mime = appdir / "usr" / "share" / "mime" / "packages"
+    mime.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / "packaging" / f"{APP_ID}-mime.xml", mime / f"{APP_ID}.xml")
 
 
 def clean_env(**extra) -> dict:

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The type of py-slowdown's own files: the settings of a recording (song.slx, beside
+     song.mp3), which open the recording in py-slowdown. Installed as
+     share/mime/packages/py-slowdown.xml (shared-mime-info). -->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-py-slowdown">
+    <comment>py-slowdown settings of a recording</comment>
+    <comment xml:lang="es">Ajustes de py-slowdown de una grabación</comment>
+    <sub-class-of type="application/xml"/>
+    <icon name="py-slowdown"/>
+    <glob pattern="*.slx"/>
+    <root-XML namespaceURI="" localName="py-slowdown"/>
+  </mime-type>
+</mime-info>

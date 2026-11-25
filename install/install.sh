@@ -57,6 +57,7 @@ else
     DATA="${XDG_DATA_HOME:-$HOME/.local/share}/$NAME"
     APPLICATIONS="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
     HICOLOR="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor"
+    MIME="${XDG_DATA_HOME:-$HOME/.local/share}/mime"
 fi
 VENV="$DATA/venv"
 if [[ -d "$HOME/bin" ]]; then
@@ -151,6 +152,11 @@ menu_linux() {
         && update-desktop-database -q "$APPLICATIONS" 2>/dev/null || true
     command -v gtk-update-icon-cache >/dev/null 2>&1 \
         && gtk-update-icon-cache -q -t "$HICOLOR" 2>/dev/null || true
+    # (the type of the .slx files, the settings of each recording: they open in py-slowdown)
+    mkdir -p -- "$MIME/packages"
+    cp -- "$ROOT/packaging/$NAME-mime.xml" "$MIME/packages/$NAME.xml"
+    command -v update-mime-database >/dev/null 2>&1 \
+        && update-mime-database "$MIME" >/dev/null 2>&1 || true
     echo "  the menu entry: $APPLICATIONS/$NAME.desktop"
 }
 
@@ -187,6 +193,25 @@ EOF
             <key>CFBundleTypeRole</key><string>Viewer</string>
             <key>LSHandlerRank</key><string>Alternate</string>
             <key>CFBundleTypeExtensions</key><array><string>mp3</string><string>m4a</string><string>mp4</string><string>flac</string><string>wav</string><string>aiff</string><string>ogg</string><string>opus</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key><string>py-slowdown settings of a recording</string>
+            <key>CFBundleTypeRole</key><string>Editor</string>
+            <key>LSHandlerRank</key><string>Owner</string>
+            <key>LSItemContentTypes</key><array><string>io.github.nivaca.py-slowdown.settings</string></array>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key><string>io.github.nivaca.py-slowdown.settings</string>
+            <key>UTTypeDescription</key><string>py-slowdown settings of a recording</string>
+            <key>UTTypeConformsTo</key><array><string>public.xml</string></array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key><array><string>slx</string></array>
+                <key>public.mime-type</key><array><string>application/x-py-slowdown</string></array>
+            </dict>
         </dict>
     </array>
 </dict>
@@ -279,6 +304,11 @@ uninstall() {
         if [[ -f "$APPLICATIONS/$NAME.desktop" ]] && grep -qF "$VENV/bin/$NAME\"" "$APPLICATIONS/$NAME.desktop"; then
             rm -f -- "$APPLICATIONS/$NAME.desktop" && echo "  $APPLICATIONS/$NAME.desktop"
             rm -f -- "$HICOLOR"/*/apps/$NAME.png "$HICOLOR"/*/apps/$NAME.svg && echo "  its icons"
+            if [[ -f "$MIME/packages/$NAME.xml" ]]; then
+                rm -f -- "$MIME/packages/$NAME.xml" && echo "  the type of the .slx files"
+                command -v update-mime-database >/dev/null 2>&1 \
+                    && update-mime-database "$MIME" >/dev/null 2>&1 || true
+            fi
             command -v update-desktop-database >/dev/null 2>&1 \
                 && update-desktop-database -q "$APPLICATIONS" 2>/dev/null || true
         fi

@@ -38,7 +38,7 @@ from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Loop, Store, export_text
 from . import export, shortcuts, sidecar
-from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, number, recording_tempo
+from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, grid_offset, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
 from .hearing import CHANNELS, FILTERS
@@ -119,6 +119,7 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Save the selection as a loop"), tr("Shift+L")),
         (tr("Count in before playing"), "C"),
         (tr("Tap the tempo (with the beat)"), "T"),
+        (tr("The first beat is here (count-in)"), tr("Shift+C")),
         (tr("Open a file"), "Ctrl+O"),
         (tr("Export the audio"), "Ctrl+E"),
         (tr("Change the shortcuts"), tr("Settings > Keyboard shortcuts")),
@@ -395,6 +396,8 @@ class Window(QMainWindow):
         self.a_count.setChecked(self.count.on)
         self.a_count_settings = a(tr("Co&unt-in settings…"), self.count_settings)
         self.a_tap = a(tr("Tap the tempo"), self.tap_tempo, ["T"])
+        self.a_first_beat = a(tr("The &first beat is here"), lambda: self.set_first_beat(None), ["Shift+C"])
+        self.a_no_first_beat = a(tr("&Remove the first beat"), self.remove_first_beat)
         self.a_reopen = a(tr("&Reopen the last file when starting"), self._set_reopen, checkable=True)
         self.a_reopen.setChecked(self.settings.value("reopen", False, type=bool))
         self.a_mark = a(tr("&Add a bookmark"), self.add_bookmark, ["B", "Ctrl+B"])
@@ -462,7 +465,8 @@ class Window(QMainWindow):
         self.set_hearing(channels if channels in CHANNELS else "both", filter_ if filter_ in FILTERS else "none")
 
         count = bar.addMenu(tr("&Count-in"))
-        for action in (self.a_count, self.a_tap, None, self.a_count_settings):
+        for action in (self.a_count, self.a_tap, None, self.a_first_beat, self.a_no_first_beat, None,
+                       self.a_count_settings):
             count.addSeparator() if action is None else count.addAction(action)
 
         marks = bar.addMenu(tr("&Bookmarks"))
@@ -567,15 +571,26 @@ class Window(QMainWindow):
 
     def open_dialog(self) -> None:
         patterns = " ".join(f"*.{e}" for e in EXTENSIONS)
+        own = f"*{sidecar.EXTENSION}"
         start = self.settings.value("folder", str(Path.home()))
         path, _ = QFileDialog.getOpenFileName(
             self, tr("Open an audio file"), start,
-            f"{tr('Audio and video files')} ({patterns});;{tr('All files')} (*)")
+            f"{tr('Audio and video files')} ({patterns} {own});;{tr('Settings of a recording')} ({own});;"
+            f"{tr('All files')} (*)")
         if path:
             self.open_file(path)
 
     def open_file(self, path: str | Path) -> bool:
+        """Open the audio or video file at PATH; or, if PATH is a .slx, the recording it is of, as it says."""
         path = Path(path)
+        given = None
+        if path.suffix.lower() == sidecar.EXTENSION:
+            audio_path = sidecar.owner(path)
+            given = sidecar.read(path) if audio_path is not None else None
+            if given is None:
+                QMessageBox.warning(self, APP, tr("Cannot find the recording of {name}.", name=path.name))
+                return False
+            path = audio_path
         self.close_file()
         try:
             audio = Audio(path)
@@ -598,7 +613,7 @@ class Window(QMainWindow):
         self.wave.set_selection(None)
         # Lo que se guardó de este archivo: su XML, si lo hay (va con el archivo, aunque se mueva); si no, lo de
         # bookmarks.json.
-        kept = self._read_sidecar(path)
+        kept = given or self._read_sidecar(path)
         self.bookmarks = kept.bookmarks if kept else self.store.bookmarks(path)
         self._show_bookmarks()
         self.loops = kept.loops if kept else self.store.loops(path)
@@ -671,9 +686,9 @@ class Window(QMainWindow):
             repeat = self.a_repeat.isChecked() if self.selection else self._pending_selection[1]
             if repeat:
                 kept["repeat"] = True
-        if self.count.on:
-            # (el tempo y el desfase de la cuenta son de cada pieza)
-            kept["countin"] = {"bpm": self.count.bpm, "offset": self.count.offset}
+        if self.count.on or self.first_beat() is not None:
+            # (el tempo y el desfase de la cuenta son de cada pieza; con un primer pulso, aunque esté apagada)
+            kept["countin"] = {"bpm": self.count.bpm, "offset": self.count.offset, "on": self.count.on}
         return kept
 
     def _apply_file_settings(self, kept: dict) -> None:
@@ -697,7 +712,7 @@ class Window(QMainWindow):
             if isinstance(countin, dict):
                 self.count.bpm = int(min(MAX_BPM, max(MIN_BPM, int(countin.get("bpm", self.count.bpm)))))
                 self.count.offset = min(MAX_OFFSET, max(-MAX_OFFSET, float(countin.get("offset", 0.0))))
-                self.a_count.setChecked(True)
+                self.a_count.setChecked(bool(countin.get("on", True)))
                 self.count.save(self.settings)
                 self._update_count_tip()
         except (TypeError, ValueError):
@@ -782,7 +797,7 @@ class Window(QMainWindow):
         if self.player.playing:
             self.player.pause()
         elif self.count.on:
-            self.player.play(self.count.beats, self.count.tempo(self.player.speed), self.count.offset)
+            self.player.play(self.count.beats, self.count.tempo(self.player.speed), self.count_offset())
         else:
             self.player.play()
         self._update_play_button()
@@ -794,7 +809,8 @@ class Window(QMainWindow):
         self.count.save(self.settings)
 
     def count_settings(self) -> None:
-        dialog = CountInDialog(self.count, self.player.speed, self)
+        beat = self.first_beat()
+        dialog = CountInDialog(self.count, self.player.speed, self, beat.time if beat else None)
         if dialog.exec():
             self.count = dialog.value()
             self.count.save(self.settings)
@@ -820,33 +836,57 @@ class Window(QMainWindow):
             message = tr("Tempo: {bpm} BPM ({taps} taps)", bpm=self.count.bpm, taps=taps)
         self.statusBar().showMessage(message, 4000)
 
+    def first_beat(self) -> Bookmark | None:
+        """The bookmark of the recording's first beat, if the file has one."""
+        return next((mark for mark in self.bookmarks if mark.first_beat), None)
+
+    def count_offset(self) -> float:
+        """How far (seconds of the recording) the recording comes in after the beat that follows the count,
+        playing from the position: with a first beat, on the nearest beat of its grid (grid_offset); without
+        one, the offset of the count-in's settings."""
+        beat = self.first_beat()
+        if beat is None or self.audio is None:
+            return self.count.offset
+        earliest = max_earlier(self.audio.rate, self.count.tempo(self.player.speed))
+        return grid_offset(self.player.position, beat.time, self.count.bpm, self.player.speed, earliest)
+
     def set_first_beat(self, seconds: float | None) -> None:
-        """The count-in's offset from the recording's first beat, at SECONDS (None: at the position): the
-        recording then comes in on the beat after the count, from the position. The count-in is turned on."""
+        """The recording's first beat at SECONDS (None: at the position), a bookmark of its own that is kept
+        with the others: the count-in then brings the recording in on the beats from there, at its tempo,
+        wherever it is played from. There is one: the one there was moves. The count-in is turned on."""
         if not self.audio:
             return
-        offset = 0.0 if seconds is None else round(self.player.position - seconds, 2)
-        if abs(offset) > MAX_OFFSET:
-            self.statusBar().showMessage(tr("The first beat must be within {limit} s of the position (this is "
-                                            "{seconds} s away).", limit=number(MAX_OFFSET),
-                                            seconds=number(abs(offset))), 6000)
-            return
-        self.count.offset = offset
+        here = self.player.position if seconds is None else seconds
+        here = round(min(max(0.0, here), self.audio.duration), 3)
+        old = self.first_beat()
+        near = next((m for m in self.bookmarks if not m.first_beat and abs(m.time - here) < 0.05), None)
+        if near is not None:
+            # (un marcador que ya está allí se vuelve el primer pulso, con su nombre)
+            if old is not None:
+                self.bookmarks.remove(old)
+            near.first_beat = True
+            near.label = near.label or (old.label if old else tr("First beat"))
+            mark = near
+        elif old is not None:
+            old.time = here
+            mark = old
+        else:
+            mark = Bookmark(here, tr("First beat"), first_beat=True)
+            self.bookmarks.append(mark)
+        self.bookmarks.sort(key=lambda b: b.time)
+        self._save_bookmarks()
+        self._show_bookmarks(self.bookmarks.index(mark))
         self.a_count.setChecked(True)
         self.count.save(self.settings)
         self._update_count_tip()
-        if offset == 0.0:
-            message = tr("Count-in: the recording comes in on the beat, from the position.")
-        else:
-            message = tr("Count-in: the first beat at {time}; the recording comes in {seconds} s {when} the beat.",
-                         time=clock(seconds, tenths=True), seconds=number(abs(offset)),
-                         when=tr("before") if offset < 0 else tr("after"))
-            heard = -offset / self.player.speed
-            limit = max_earlier(self.audio.rate, self.count.tempo(self.player.speed))
-            if heard > limit:
-                message += " " + tr("At this tempo it can come in at most {seconds} s earlier.",
-                                    seconds=number(limit * self.player.speed))
-        self.statusBar().showMessage(message, 8000)
+        self.statusBar().showMessage(tr("Count-in: the first beat at {time}; the recording comes in on its beats, "
+                                        "at {bpm} BPM.", time=clock(here, tenths=True), bpm=self.count.bpm), 8000)
+
+    def remove_first_beat(self) -> None:
+        """Remove the bookmark of the first beat: the count-in goes back to the offset of its settings."""
+        mark = self.first_beat()
+        if mark is not None:
+            self.remove_bookmark(self.bookmarks.index(mark))
 
     def _update_count_tip(self) -> None:
         # Lo que la cuenta hace ahora: la barra de estado lo dice al pasar sobre sus acciones, en el menú.
@@ -855,7 +895,10 @@ class Window(QMainWindow):
             what = tr("{beats} clicks at {bpm} BPM, following the speed", beats=count.beats, bpm=count.bpm)
         else:
             what = tr("{beats} clicks at {bpm} BPM", beats=count.beats, bpm=count.bpm)
-        if count.offset:
+        beat = self.first_beat()
+        if beat is not None:
+            what += tr("; on the beats of the first beat ({time})", time=clock(beat.time, tenths=True))
+        elif count.offset:
             signed = ("+" if count.offset > 0 else "−") + number(abs(count.offset))
             what += tr("; the recording {offset} s off the beat", offset=signed)
         tip = tr("Count in before playing (C): {what}.", what=what)
@@ -1044,8 +1087,8 @@ class Window(QMainWindow):
         counting = self.player.counting()
         self.wave.set_count(counting[0] if counting and counting[0] else None)
         # Con la cuenta previa, y sin sonar, dónde espera el primer pulso de la grabación.
-        offset = self.count.offset
-        beat = position - offset if self.count.on and offset and not self.player.playing else None
+        offset = self.count_offset() if self.count.on and not self.player.playing else 0.0
+        beat = position - offset if offset else None
         self.wave.set_first_beat(beat if beat is None or beat >= 0 else None)
         self.time_label.setText(f"{clock(position, tenths=True)} / {clock(audio.duration, tenths=True)}")
         if self.b_play.property("playing") != self.player.playing:
@@ -1084,6 +1127,8 @@ class Window(QMainWindow):
                        self.a_sel_start, self.a_sel_end, self.a_sel_clear):
             action.setEnabled(loaded)
         self.a_export.setEnabled(loaded and bool(self.bookmarks))
+        self.a_first_beat.setEnabled(loaded)
+        self.a_no_first_beat.setEnabled(loaded and self.first_beat() is not None)
         self._update_loop_saving()
         self._update_hearing_choices()
         self._update_play_button()
@@ -1108,6 +1153,8 @@ class Window(QMainWindow):
         self.wave.set_bookmarks(self.bookmarks)
         self.panel.show_bookmarks(self.bookmarks, select)
         self.a_export.setEnabled(self.audio is not None and bool(self.bookmarks))
+        self.a_no_first_beat.setEnabled(self.audio is not None and self.first_beat() is not None)
+        self._update_count_tip()
 
     def _save_bookmarks(self) -> None:
         if self.audio:

@@ -534,33 +534,70 @@ def test_count_in_offset_setting(window, app, wav, monkeypatch):
     assert calls == [(4, 120.0, 0.15)]
 
 
-def test_first_beat_on_the_waveform(window, app, wav, monkeypatch):
-    """Right click > Count-in: the first beat is here: the offset from the position to that point."""
-    from py_slowdown.countin import CountIn
+def test_grid_offset():
+    """With a first beat, the recording comes in on the nearest beat of its grid; earlier than the count allows, on
+    the beat before."""
+    from py_slowdown.countin import grid_offset
 
+    # 100 BPM: un pulso cada 0,6 s; el primero en 2,3: ... 1,1  1,7  2,3  2,9  3,5 ...
+    assert grid_offset(2.0, 2.3, 100, 1.0, 0.5) == pytest.approx(-0.3)  # (entra 0,3 s antes del pulso 2,3)
+    assert grid_offset(3.0, 2.3, 100, 1.0, 0.5) == pytest.approx(0.1)  # (0,1 s después del pulso 2,9)
+    assert grid_offset(0.1, 2.3, 100, 1.0, 0.5) == pytest.approx(0.2)  # (antes del primero: la rejilla sigue, -0,1)
+    assert grid_offset(2.3, 2.3, 100, 1.0, 0.5) == 0.0
+    # A 0,5× la grabación se oye el doble: 0,3 s son 0,6 oídos, más de lo que cabe; entra 0,3 s después del 1,7
+    assert grid_offset(2.0, 2.3, 100, 0.5, 0.5) == pytest.approx(0.3)
+
+
+def test_first_beat(window, app, wav, monkeypatch):
+    """Count-in > The first beat is here (or the right click on the waveform): a bookmark of its own, one per file,
+    kept with the others; the count-in brings the recording in on the nearest beat of its grid, wherever it is
+    played from. Removed, the count-in goes back to the offset of its settings."""
     loaded(window, app, wav)
+    menu = {a.text(): a.menu() for a in window.menuBar().actions()}["&Count-in"]
+    assert window.a_first_beat in menu.actions() and window.a_no_first_beat in menu.actions()
+    assert window.a_first_beat.isEnabled() and not window.a_no_first_beat.isEnabled()
+    window.count.bpm = 100  # (un pulso cada 0,6 s)
     window.seek(2.0)
-    window.wave.firstBeatRequested.emit(2.3)  # (el menú del clic derecho, sobre 2.3 s)
-    assert window.count.on and window.a_count.isChecked()
-    assert window.count.offset == pytest.approx(-0.3)  # (la grabación entra 0,3 s antes del pulso)
-    assert "0.3 s before the beat" in window.statusBar().currentMessage()
-    assert CountIn.load(window.settings).offset == pytest.approx(-0.3)
+    window.wave.firstBeatRequested.emit(2.3)  # (el menú del clic derecho, sobre 2,3 s)
+    assert [(b.time, b.label, b.first_beat) for b in window.bookmarks] == [(2.3, "First beat", True)]
+    assert window.count.on and window.a_count.isChecked() and window.a_no_first_beat.isEnabled()
+    assert "first beat at 0:02.3" in window.statusBar().currentMessage()
+    assert "on the beats of the first beat (0:02.3)" in window.a_count.statusTip()
+    assert window.store.bookmarks(wav)[0].first_beat  # (guardado, con los marcadores)
+    assert window.count_offset() == pytest.approx(-0.3)
     window._tick()
-    assert window.wave.first_beat == pytest.approx(2.3)  # (la línea verde, donde la espera)
+    assert window.wave.first_beat == pytest.approx(2.3)  # (la línea, donde entra la grabación)
     window.grab()
-    # Antes de la posición: entra después
-    window.wave.firstBeatRequested.emit(1.9)
-    assert window.count.offset == pytest.approx(0.1) and "after" in window.statusBar().currentMessage()
-    # Demasiado lejos: no cambia
-    window.wave.firstBeatRequested.emit(5.0)
-    assert window.count.offset == pytest.approx(0.1) and "within" in window.statusBar().currentMessage()
-    # Más antes de lo que cabe a este tempo (100 BPM: unas 0,53 s): lo dice
-    window.wave.firstBeatRequested.emit(3.5)
-    assert window.count.offset == pytest.approx(-1.5) and "at most" in window.statusBar().currentMessage()
-    # En la posición: sin desfase, y sin línea
-    window.wave.firstBeatRequested.emit(None)
+    calls = []
+    monkeypatch.setattr(window.player, "play", lambda *args: calls.append(args))
+    window.toggle()
+    assert calls == [(4, 100.0, pytest.approx(-0.3))]
+    # Lejos del primer pulso, en el más cercano de la rejilla: 2,9
+    window.seek(3.0)
+    assert window.count_offset() == pytest.approx(0.1)
+    window.count.offset = 0.7  # (el desfase de los ajustes no cuenta mientras haya un primer pulso)
+    window.seek(4.1)
+    assert window.count_offset() == pytest.approx(0.0)
     window._tick()
-    assert window.count.offset == 0.0 and window.wave.first_beat is None
+    assert window.wave.first_beat is None  # (en el pulso: sin línea aparte)
+    # En la posición, con el menú: se mueve (hay uno solo)
+    window.seek(1.0)
+    window.a_first_beat.trigger()
+    assert [(b.time, b.first_beat) for b in window.bookmarks] == [(1.0, True)]
+    # Sobre un marcador que ya estaba: se vuelve el primer pulso, con su nombre
+    window.add_bookmark_at(4.0)
+    window._renamed(1, "Chorus")
+    window.wave.firstBeatRequested.emit(4.02)
+    assert [(b.time, b.label, b.first_beat) for b in window.bookmarks] == [(4.0, "Chorus", True)]
+    # Al cerrar y abrir, sigue allí (y la cuenta, aunque esté apagada, guarda su tempo)
+    window.a_count.setChecked(False)
+    window.close_file()
+    window.count.bpm = 80
+    loaded(window, app, wav)
+    assert window.first_beat().time == 4.0 and window.count.bpm == 100 and not window.count.on
+    window.a_no_first_beat.trigger()
+    assert window.first_beat() is None and window.bookmarks == [] and not window.a_no_first_beat.isEnabled()
+    assert window.count_offset() == pytest.approx(0.7)
 
 
 def test_reopen_the_last_file(app, output, tmp_path, monkeypatch, wav):
