@@ -1,6 +1,6 @@
 [project]
 name = "py-slowdown"
-version = "1.4.0"
+version = "1.5.0"
 description = "Play audio slower or faster without changing its pitch, with a waveform and bookmarks"
 readme = "README.md"
 license = "GPL-3.0-or-later"

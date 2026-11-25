@@ -5,7 +5,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Sin publicar
+## 1.5.0 — 2026-11-25
+
+Seleccionar el archivo entero con Ctrl+A, y un depósito en Zenodo para cada
+versión.
 
 - **Seleccionar el archivo entero** (Reproducción, Ctrl+A): el archivo
   entero pasa a ser la selección.
@@ -17,7 +20,6 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   admite. El token puede guardarse en el llavero del escritorio
   (`secret-tool store --label="Zenodo token" service zenodo`) en vez de en
   `$ZENODO_TOKEN`; `tools/zenodo.py check-token` dice si hay uno.
-
 - `tools/zenodo.py` prepara el depósito de una versión en Zenodo. `collect`
   deja en `dist/zenodo/` el árbol de la etiqueta como
   `py-slowdown-VERSIÓN-source.tar.gz`, con su firma, un `SHA256SUMS` del

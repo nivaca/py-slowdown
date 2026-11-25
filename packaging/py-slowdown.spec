@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-slowdown
-Version:        1.4.0
+Version:        1.5.0
 Release:        1%{?dist}
 Summary:        Play audio slower or faster without changing its pitch
 
@@ -99,6 +99,9 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*
 
 %changelog
+* Wed Nov 25 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.5.0-1
+- Select the whole file (Ctrl+A); a Zenodo deposit for each release
+
 * Wed Nov 25 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.4.0-1
 - The knobs for speed and volume, with menus, keys and detents; a five-band
   equalizer with its curve and presets, in a panel Sound with Hear; volume

@@ -5,7 +5,9 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 1.5.0 — 2026-11-25
+
+Select the whole file with Ctrl+A, and a Zenodo deposit for each release.
 
 - **Select the whole file** (Playback, Ctrl+A): the whole file becomes the
   selection.

@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty-five stages.
+in twenty-six stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -827,10 +827,24 @@ test can read without opening it. And a Spanish letter of Alt, chosen
 without looking, fell twice on one already taken; the test of every menu's
 letters found both.
 
+26. The whole file, selected or repeated
+----------------------------------------
+
+Version 1.5.0 adds Ctrl+A (Playback > Select the whole file), which makes
+the whole file the selection. Repeat without a selection already repeated
+the whole file since 1.4.0, but once it seemed not to. It could not be made
+to fail: the window's tests passed, and the real sound card, recorded
+through a null sink of PipeWire, went from the end to the start without a
+gap. The only failure was in the tests themselves: on one of the two
+machines where I work, `uv run pytest` took the system's pytest, which
+imported the installed RPM, then still 1.3.1, without that repeating. A
+test now plays past the end of a file with Repeat on and no selection, and
+checks that the playing goes on from its start.
+
 Testing
 -------
 
-The program has 234 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 252 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -874,4 +888,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 79 files and about 20,700 lines (13,100 of them in Python).
+The program has 84 text files and about 23,500 lines (14,900 of them in Python).
