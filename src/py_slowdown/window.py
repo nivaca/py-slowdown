@@ -16,7 +16,7 @@ import json
 import math
 from pathlib import Path
 
-from PySide6.QtCore import QPointF, QSettings, QSize, Qt, QTimer
+from PySide6.QtCore import QEvent, QPointF, QSettings, QSize, Qt, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QKeySequence, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -41,7 +41,7 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError
 from .bookmarks import Bookmark, Loop, Store, export_text
-from . import equalizer, export, shortcuts, sidecar
+from . import equalizer, export, glyphs, shortcuts, sidecar
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, grid_offset, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_BEATS, MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
@@ -504,6 +504,7 @@ class Window(QMainWindow):
         self.a_boosts[self.boost_factor].setChecked(True)
         self.boost.setChecked(self.settings.value("volume_boost", False, type=bool))
         self._show_eq()
+        self._draw_icons()
         self.volume.setValue(int(self.settings.value("volume", NORMAL_VOLUME, type=int)))
         self._update_enabled()
         self._check_rubberband()
@@ -570,8 +571,11 @@ class Window(QMainWindow):
         self.b_forward = self._tool(sp.SP_MediaSeekForward, "", repeat=True)
         self.b_end = self._tool(sp.SP_MediaSkipForward, tr("Go to the end (End)"))
         self.b_mark = QToolButton(self)
-        self.b_mark.setText(tr("Bookmark"))
+        self.b_mark.setText(tr("Bookmark"))  # (solo el ícono se ve: el texto es para los lectores de pantalla)
         self.b_mark.setToolTip(tr("Add a bookmark at the current position (B)"))
+        self.b_mark.setIconSize(QSize(24, 24))
+        self.b_mark.setAutoRaise(True)
+        self.b_mark.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.b_mark.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         for b in (self.b_start, self.b_back, self.b_play, self.b_stop, self.b_forward, self.b_end):
             row.addWidget(b)
@@ -621,6 +625,9 @@ class Window(QMainWindow):
         self.b_normal.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.b_speeds = QToolButton(self)
         self.b_speeds.setText(tr("Speeds"))
+        self.b_speeds.setIconSize(QSize(24, 24))
+        self.b_speeds.setAutoRaise(True)
+        self.b_speeds.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.b_speeds.setToolTip(tr("Speeds chosen beforehand (50%, 75%, 100%…), which can be changed"))
         self.b_speeds.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.b_speeds.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -672,6 +679,8 @@ class Window(QMainWindow):
         # El ecualizador: el botón abre su diálogo, y se ve encendido mientras cambia el sonido.
         self.b_eq = QToolButton(self)
         self.b_eq.setText(tr("EQ"))
+        self.b_eq.setIconSize(QSize(24, 24))
+        self.b_eq.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.b_eq.setCheckable(True)
         self.b_eq.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         row.addWidget(self.b_eq)
@@ -1697,6 +1706,21 @@ class Window(QMainWindow):
         self.volume.warn = math.ceil(100 / math.sqrt(self.boost_factor)) - 1 if self.boost.isChecked() else None
         self.volume.setToolTip(tip + "; " + tr("a double click goes back to 100%"))
         self.volume.update()
+
+    def _draw_icons(self) -> None:
+        """The program's own icons (glyphs.py), in the colours of the theme now."""
+        if not hasattr(self, "b_eq"):
+            return  # (un cambio de tema mientras se arma la ventana: luego se dibujan)
+        # (los colores de cada botón, que son los que él dibuja: los del tema, salvo que tenga los suyos)
+        for button, name in ((self.b_eq, "equalizer"), (self.b_mark, "bookmark"), (self.b_speeds, "speed")):
+            button.setIcon(glyphs.icon(name, button.palette()))
+
+    def changeEvent(self, event) -> None:
+        # Otro tema (claro u oscuro): los íconos propios, otra vez en sus colores.
+        if event.type() in (QEvent.Type.PaletteChange, QEvent.Type.ApplicationPaletteChange,
+                            QEvent.Type.StyleChange):
+            self._draw_icons()
+        super().changeEvent(event)
 
     def show_equalizer(self) -> None:
         """Open the equalizer (or bring it to the front); the button stays as the equalizer is, on or off."""

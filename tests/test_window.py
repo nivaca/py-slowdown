@@ -1369,3 +1369,25 @@ def test_the_equalizer(window, app, wav):
     menu = next(a.menu() for a in window.menuBar().actions() if a.text() == "H&ear")
     assert window.a_equalizer in menu.actions()
     dialog.close()
+
+
+def test_the_drawn_icons(window, app):
+    """The buttons Bookmark, Speeds and EQ show icons of the program's own (glyphs.py), drawn in the theme's
+    button text, also a dark one, and in the text on the selection when a button is on."""
+    from PySide6.QtGui import QColor, QIcon, QPalette
+
+    from py_slowdown import glyphs
+
+    for button in (window.b_mark, window.b_speeds, window.b_eq):
+        assert not button.icon().isNull() and button.toolButtonStyle() == button.toolButtonStyle().ToolButtonIconOnly
+    palette = QPalette()
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor(236, 239, 244))
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor(255, 0, 0))
+    icon = glyphs.icon("equalizer", palette)
+
+    def colours(state):
+        image = icon.pixmap(48, 48, QIcon.Mode.Normal, state).toImage()
+        return {image.pixelColor(x, y).name() for x in range(48) for y in range(48) if image.pixelColor(x, y).alpha() == 255}
+
+    assert colours(QIcon.State.Off) == {"#eceff4"} and colours(QIcon.State.On) == {"#ff0000"}
+    assert set(glyphs.SHAPES) == {"equalizer", "bookmark", "speed"}

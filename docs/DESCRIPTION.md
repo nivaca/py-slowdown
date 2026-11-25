@@ -780,10 +780,18 @@ length and its notes in their place. A knob turned while it plays goes
 from the old curve to the new one in a fade over a block. The bands are
 kept with each file, as the way of hearing is.
 
+Then the three buttons that still had words, Bookmark, Speeds and EQ, got
+icons: a ribbon with a +, a speedometer and three faders. The icon themes
+exist only on Linux, and each desktop's has another style, so they are
+the program's own, small SVGs written in the code and drawn in the colour
+of the theme's button text; for a button that is on, in the colour of the
+text on the selection, since such a button is filled with it. They are
+drawn again when the theme changes, from each button's own colours.
+
 Testing
 -------
 
-The program has 219 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 220 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -824,4 +832,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 78 files and about 18,900 lines (11,900 of them in Python).
+The program has 79 files and about 19,100 lines (12,000 of them in Python).

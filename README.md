@@ -34,7 +34,7 @@ What it does
   with its R3 ("finer") engine, its highest quality, called through a small
   binding of py-slowdown's own. At 1× the file is
   played as it is, sample for sample, without going through Rubber Band.
-  The button Speeds has a list of speeds of one's own (50%, 75%, 100%,
+  The button with a speedometer has a list of speeds of one's own (50%, 75%, 100%,
   125%…). A lighter quality (half the processor) or the older R2 engine (crisp
   attacks) can be chosen (Settings > Playback quality).
 - Bookmarks at the playing position (B), or anywhere with a right click on
@@ -45,7 +45,8 @@ What it does
   (hundredths of a semitone, from −50 to +50, to tune a recording to an
   instrument), each with a knob, without changing the speed, also
   while it plays; with Playback > Keep the formants, a voice or an instrument keeps its timbre.
-- A five-band equalizer, with knobs (the button EQ, or Hear > Equalizer).
+- A five-band equalizer, with knobs (the button with three faders, or Hear >
+  Equalizer).
 - Hears one part of the mix (Hear): one channel, the two in one, the mix
   without its centre (where the voice and the solo usually are), only the
   bass, or everything but the bass.

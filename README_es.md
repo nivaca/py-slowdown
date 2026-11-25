@@ -34,7 +34,7 @@ Lo que hace
   altura. El estiramiento lo hace la [biblioteca Rubber Band](https://breakfastquay.com/rubberband/),
   con su motor R3 («finer»), el de más calidad, por medio de un enlace
   pequeño, propio de py-slowdown. A 1× el archivo suena tal
-  cual, muestra por muestra, sin pasar por Rubber Band. El botón Velocidades
+  cual, muestra por muestra, sin pasar por Rubber Band. El botón del velocímetro
   tiene una lista de velocidades propia (50 %, 75 %, 100 %, 125 %…). Se
   puede elegir una calidad más liviana (la mitad del procesador) o el motor anterior, R2, de
   ataques nítidos (Configuración > Calidad de la reproducción).
@@ -48,7 +48,8 @@ Lo que hace
   instrumento), cada uno con su perilla, sin cambiar la velocidad,
   también mientras suena; con Reproducción > Conservar los formantes, una voz o un instrumento conserva
   su timbre.
-- Un ecualizador de cinco bandas, con perillas (el botón EQ, u Oír >
+- Un ecualizador de cinco bandas, con perillas (el botón de los tres
+  deslizadores, u Oír >
   Ecualizador).
 - Oye una parte de la mezcla (Oír): un canal, los dos en uno, la mezcla sin
   su centro (donde suelen estar la voz y el solo), solo los graves, o todo

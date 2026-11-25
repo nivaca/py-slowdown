@@ -7,6 +7,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Íconos para los botones Marcador, Velocidades y EQ**, que tenían texto:
+  una cinta con un +, un velocímetro y tres deslizadores, propios del
+  programa, dibujados en los colores del tema (claro u oscuro, en cualquier
+  sistema), blancos sobre EQ cuando está encendido.
 - **Un ecualizador de cinco bandas**: el botón EQ, a la derecha de los
   mandos, u Oír > Ecualizador, abre cinco perillas (60 Hz, 250 Hz, 1 kHz,
   4 kHz y 12 kHz, cada una de −12 a +12 dB), con Encendido, para comparar,
