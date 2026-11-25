@@ -1584,3 +1584,26 @@ def test_the_overview_strip(window, app, wav):
     window.wave.fit()
     window.view._update_bar()
     assert overview.isHidden()
+
+
+def test_the_clock_switches(window, app, wav):
+    """A click on the time switches it: elapsed, remaining, and, with a first beat, bars and beats (from the
+    count-in's tempo and clicks); remembered."""
+    from py_slowdown.window import bar_and_beat
+
+    assert bar_and_beat(1.0, 1.0, 120, 4) == (1, 1) and bar_and_beat(3.0, 1.0, 120, 4) == (2, 1)
+    assert bar_and_beat(3.6, 1.0, 120, 4) == (2, 2) and bar_and_beat(0.5, 1.0, 120, 4) is None
+    loaded(window, app, wav)
+    window.seek(2.0)
+    assert window.time_label.text() == "0:02.0 / 0:06.0"
+    window.time_label.clicked.emit()
+    assert window.time_label.text() == "−0:04.0 / 0:06.0" and window.settings.value("clock") == "remaining"
+    window.time_label.clicked.emit()
+    assert window.settings.value("clock") == "elapsed"  # (sin primer pulso, no hay compases)
+    window.count.bpm, window.count.beats = 120, 4
+    window.set_first_beat(1.0)
+    window.time_label.clicked.emit()
+    window.time_label.clicked.emit()
+    assert window.settings.value("clock") == "bars"
+    window._tick()
+    assert window.time_label.text() == "Bar 1 · beat 3"  # (2 s, un segundo después del primer pulso, a 120)

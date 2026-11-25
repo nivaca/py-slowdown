@@ -16,7 +16,7 @@ import json
 import math
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QPointF, QSettings, QSize, Qt, QTimer
+from PySide6.QtCore import QEvent, QPointF, QSettings, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QKeySequence, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -390,6 +390,26 @@ class PitchDial(Knob):
         else:
             steps = (3, 6, 9, 12)
         self.choices = tuple(sorted({0, *steps, *(-s for s in steps)}))
+
+
+class Clock(QLabel):
+    """The time, which a click switches: elapsed, remaining, or bars and beats."""
+
+    clicked = Signal()
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(event)
+
+
+def bar_and_beat(position: float, first_beat: float, bpm: float, per_bar: int) -> tuple[int, int] | None:
+    """(bar, beat), from 1, of POSITION (seconds) in a piece whose first beat is at FIRST_BEAT, at BPM, with
+    PER_BAR beats in a bar; None before the first beat."""
+    if position < first_beat - 0.02 or bpm <= 0 or per_bar < 1:
+        return None
+    beats = int(max(0.0, position - first_beat) * bpm / 60.0 + 1e-6)
+    return beats // per_bar + 1, beats % per_bar + 1
 
 
 class SaveDialog(QDialog):
@@ -792,13 +812,15 @@ class Window(QMainWindow):
         row.addWidget(self.b_tap)
         row.addSpacing(12)
 
-        self.time_label = QLabel("0:00.0 / 0:00.0", self)
+        self.time_label = Clock("0:00.0 / 0:00.0", self)
+        self.time_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.time_label.clicked.connect(self.switch_clock)
         font = self.time_label.font()
         font.setFamily("monospace")
         font.setStyleHint(font.StyleHint.Monospace)
         font.setPointSizeF(font.pointSizeF() * 1.15)
         self.time_label.setFont(font)
-        self.time_label.setToolTip(tr("Position / length"))
+        self.time_label.setToolTip(tr("Position / length; a click shows the time left, then bars and beats"))
         row.addWidget(self.time_label)
         row.addStretch()
         row = QHBoxLayout()
@@ -1935,6 +1957,29 @@ class Window(QMainWindow):
             self._draw_icons()
         super().changeEvent(event)
 
+    CLOCKS = ("elapsed", "remaining", "bars")
+
+    def clock_text(self, position: float, length: float) -> str:
+        """The time as the clock shows it now: elapsed, remaining, or bars and beats (with a first beat)."""
+        mode = self.settings.value("clock", "elapsed")
+        first = self.first_beat()
+        if mode == "bars" and first is not None:
+            bpm = self.count.bpm if self.count.follow else self.count.bpm / max(self.player.speed, 0.01)
+            where = bar_and_beat(position, first.time, bpm, self.count.beats)
+            return tr("Bar {bar} · beat {beat}", bar=where[0], beat=where[1]) if where else tr("Bar — · before the first beat")
+        if mode == "remaining":
+            return f"−{clock(max(0.0, length - position), tenths=True)} / {clock(length, tenths=True)}"
+        return f"{clock(position, tenths=True)} / {clock(length, tenths=True)}"
+
+    def switch_clock(self) -> None:
+        """Elapsed, remaining, bars and beats (only with a first beat), and again."""
+        modes = list(self.CLOCKS) if self.first_beat() is not None else ["elapsed", "remaining"]
+        now = self.settings.value("clock", "elapsed")
+        following = modes[(modes.index(now) + 1) % len(modes)] if now in modes else modes[0]
+        self.settings.setValue("clock", following)
+        if self.audio is not None:
+            self.time_label.setText(self.clock_text(self.player.position, self.audio.duration))
+
     def reset_sound(self) -> None:
         """The recording as it is: speed 100%, its own pitch (the formants off), both channels without a filter,
         the equalizer flat; the volume, which is how loud one listens, stays."""
@@ -2025,7 +2070,7 @@ class Window(QMainWindow):
         # La última pausa, mientras no suena: desde allí sigue Mayús+Espacio.
         paused = self._paused_at if not self.player.playing else None
         self.wave.set_pause_mark(paused if paused is not None and abs(paused - position) > 0.01 else None)
-        self.time_label.setText(f"{clock(position, tenths=True)} / {clock(audio.duration, tenths=True)}")
+        self.time_label.setText(self.clock_text(position, audio.duration))
         if self.b_play.property("playing") != self.player.playing:
             self._update_play_button()
         if audio.done and self._announced is not audio:

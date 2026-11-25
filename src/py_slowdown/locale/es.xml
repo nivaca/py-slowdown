@@ -280,10 +280,6 @@
     <tr>Marcador</tr>
   </text>
   <text>
-    <en>Position / length</en>
-    <tr>Posición / duración</tr>
-  </text>
-  <text>
     <en>Speed</en>
     <tr>Velocidad</tr>
   </text>
@@ -1256,5 +1252,17 @@
   <text>
     <en>The whole file: a click or a drag shows that part</en>
     <tr>El archivo entero: un clic o un arrastre muestra esa parte</tr>
+  </text>
+  <text>
+    <en>Position / length; a click shows the time left, then bars and beats</en>
+    <tr>Posición / duración; un clic muestra el tiempo que falta, y luego compases y pulsos</tr>
+  </text>
+  <text>
+    <en>Bar {bar} · beat {beat}</en>
+    <tr>Compás {bar} · pulso {beat}</tr>
+  </text>
+  <text>
+    <en>Bar — · before the first beat</en>
+    <tr>Compás — · antes del primer pulso</tr>
   </text>
 </interface>

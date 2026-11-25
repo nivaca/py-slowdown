@@ -7,6 +7,9 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **A clock that switches**: a click on the time shows the time left, and,
+  with a first beat, the bar and the beat (at the count-in's tempo, as
+  many beats in a bar as it has clicks); remembered.
 - **The whole file above a closer view**: zoomed in, a strip above the
   waveform shows the whole file, the part in view shaded and the position
   in red; a click or a drag there shows that part.

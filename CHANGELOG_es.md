@@ -7,6 +7,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- **Un reloj que cambia**: un clic en el tiempo muestra el que falta, y,
+  con un primer pulso, el compás y el pulso (al tempo de la cuenta previa,
+  tantos pulsos por compás como golpes tiene); se recuerda.
 - **El archivo entero encima de una vista de cerca**: con la vista
   acercada, una franja encima de la forma de onda muestra el archivo
   entero, la parte a la vista sombreada y la posición en rojo; un clic o un
