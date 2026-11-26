@@ -5,6 +5,14 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+- `tools/release.py` publica ahora cada versión en Zenodo
+  (`tools/zenodo.py upload --publish`), en vez de dejar un borrador;
+  `--zenodo-draft` todavía lo deja. `tools/zenodo.py publish` publica un
+  borrador que ya está allí (por omisión, el que espera con el título del
+  proyecto).
+
 ## 1.7.0 — 2026-11-26
 
 Desde dónde sigue Tocar/Pausa, y qué grabación abre un `.slx`.
