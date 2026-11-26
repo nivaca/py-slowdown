@@ -7,6 +7,9 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- Opening a `.slx` whose recording is both beside it (by name) and at the
+  path it names, two different files, asks which one to open. Before, the
+  one at the path was opened without asking.
 - Playback > Stay at the pause (a checkbox, off by default): Play/Pause
   then pauses where it is and goes on from there, as a usual player does,
   instead of going back to where playing started; there is no dotted line

@@ -7,6 +7,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- Al abrir un `.slx` cuya grabación está a la vez a su lado (por el nombre)
+  y en la ruta que nombra, dos archivos distintos, el programa pregunta cuál
+  abrir. Antes abría, sin preguntar, la de la ruta.
 - Reproducción > Dejar la posición en la pausa (una casilla, apagada al
   principio): Tocar/Pausa pausa entonces donde está y sigue desde allí, como
   un reproductor corriente, en lugar de volver adonde empezó a tocar; no hay

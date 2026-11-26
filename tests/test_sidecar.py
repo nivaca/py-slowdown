@@ -120,6 +120,48 @@ def test_owner(tmp_path):
     assert sidecar.owner(moved / "other.slx") is None and sidecar.read(moved / "other.slx") is None
 
 
+
+def test_owners_both_places(tmp_path, monkeypatch, output):
+    """A .slx copied to another folder with a recording of the same name, while the one it names is still where it
+    says: both are offered, and the window asks which to open (Cancel opens nothing); the same file by two paths,
+    a link or the same folder, is offered once and opened without asking."""
+    from PySide6.QtCore import QSettings
+    from PySide6.QtWidgets import QApplication
+
+    from py_slowdown.bookmarks import Store
+    from py_slowdown.engine import Player
+    from py_slowdown.window import Window
+
+    folder, copy = tmp_path / "a", tmp_path / "b"
+    folder.mkdir()
+    copy.mkdir()
+    write(folder / "song.wav", tone(2.0))
+    slx = sidecar.save(folder / "song.wav", state())
+    assert sidecar.owners(slx) == [folder / "song.wav"]
+    (copy / "song.slx").write_bytes(slx.read_bytes())
+    write(copy / "song.wav", tone(2.0))
+    assert sidecar.owners(copy / "song.slx") == [copy / "song.wav", (folder / "song.wav").resolve()]
+    assert sidecar.owner(copy / "song.slx") == (folder / "song.wav").resolve()  # (sin preguntar: la de la ruta)
+    link = tmp_path / "link"
+    link.symlink_to(folder)
+    assert sidecar.owners(link / "song.slx") == [link / "song.wav"]
+
+    QApplication.instance() or QApplication([])
+    monkeypatch.setattr("py_slowdown.window.Output", type(output))
+    w = Window(player=Player(output), store=Store(tmp_path / "b.json"),
+               settings=QSettings(str(tmp_path / "s.ini"), QSettings.Format.IniFormat))
+    w.a_ask_save.setChecked(False)
+    asked = []
+    answers = [None, copy / "song.wav", (folder / "song.wav").resolve()]
+    monkeypatch.setattr(Window, "_choose_recording", lambda self, slx, choices: asked.append(choices) or answers.pop(0))
+    assert not w.open_file(copy / "song.slx") and w.audio is None
+    assert w.open_file(copy / "song.slx") and w.audio.path == (copy / "song.wav").resolve()
+    assert w.open_file(copy / "song.slx") and w.audio.path == (folder / "song.wav").resolve()
+    assert len(asked) == 3 and asked[0] == sidecar.owners(copy / "song.slx")
+    assert w.open_file(link / "song.slx") and len(asked) == 3  # (un solo archivo: no pregunta)
+    w.close_file()
+    w.close()
+
 def test_the_window_keeps_it(tmp_path, monkeypatch, output):
     """Closing a file writes its .slx beside it; opened again, even with bookmarks.json gone, all comes back; in a
     folder chosen, the .slx goes there; Not saved writes none. Opening the .slx opens its recording."""

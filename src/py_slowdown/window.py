@@ -1282,7 +1282,11 @@ class Window(QMainWindow):
                 QMessageBox.warning(self, APP, tr("Cannot import {name}: {error}", name=path.name, error=error))
                 return False
         elif path.suffix.lower() == sidecar.EXTENSION:
-            audio_path = sidecar.owner(path)
+            choices = sidecar.owners(path)
+            # Una grabación con su nombre junto al .slx y otra en la ruta que dice: que elija el usuario.
+            audio_path = self._choose_recording(path, choices) if len(choices) > 1 else next(iter(choices), None)
+            if len(choices) > 1 and audio_path is None:
+                return False  # (cancelado)
             given = sidecar.read(path) if audio_path is not None else None
             if given is None:
                 QMessageBox.warning(self, APP, tr("Cannot find the recording of {name}.", name=path.name))
@@ -1398,6 +1402,23 @@ class Window(QMainWindow):
         self._write_sidecar(asked)
         self._saved = self._snapshot()
         self._show_title()
+
+    def _choose_recording(self, slx: Path, choices: list[Path]) -> Path | None:
+        """Ask which of CHOICES (beside SLX, and where SLX says) to open; None if cancelled."""
+        box = QMessageBox(QMessageBox.Icon.Question, APP,
+                          tr("There are two recordings for {name}. Which one should be opened?", name=slx.name),
+                          parent=self)
+        box.setInformativeText(tr("Beside the .slx: {path}", path=choices[0]) + "\n"
+                               + tr("Where the .slx says: {path}", path=choices[1]))
+        buttons = [box.addButton(tr("Beside the .slx"), QMessageBox.ButtonRole.AcceptRole),
+                   box.addButton(tr("Where the .slx says"), QMessageBox.ButtonRole.AcceptRole)]
+        buttons[0].setToolTip(str(choices[0]))
+        buttons[1].setToolTip(str(choices[1]))
+        box.addButton(QMessageBox.StandardButton.Cancel)
+        box.setDefaultButton(buttons[0])
+        box.exec()
+        clicked = box.clickedButton()
+        return choices[buttons.index(clicked)] if clicked in buttons else None
 
     def _ask_save(self, name: str) -> str:
         """Ask whether to save the changes of NAME: "save", "discard", "cancel", or, from the arrow of Save,

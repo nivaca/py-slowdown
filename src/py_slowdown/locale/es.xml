@@ -88,6 +88,26 @@
     <tr>De&amp;jar la posición en la pausa</tr>
   </text>
   <text>
+    <en>There are two recordings for {name}. Which one should be opened?</en>
+    <tr>Hay dos grabaciones para {name}. ¿Cuál se abre?</tr>
+  </text>
+  <text>
+    <en>Beside the .slx: {path}</en>
+    <tr>Junto al .slx: {path}</tr>
+  </text>
+  <text>
+    <en>Where the .slx says: {path}</en>
+    <tr>Donde el .slx dice: {path}</tr>
+  </text>
+  <text>
+    <en>Beside the .slx</en>
+    <tr>La que está junto al .slx</tr>
+  </text>
+  <text>
+    <en>Where the .slx says</en>
+    <tr>La que el .slx nombra</tr>
+  </text>
+  <text>
     <en>Stay at the pause: Play/Pause goes on from the pause, instead of going back to where playing started</en>
     <tr>Dejar la posición en la pausa: Tocar/Pausa sigue desde la pausa, en lugar de volver adonde empezó a tocar</tr>
   </text>

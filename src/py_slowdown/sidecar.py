@@ -81,17 +81,29 @@ def _owner(path: Path) -> tuple[str, str] | None:
     return element.get("path", ""), element.get("name", "")
 
 
+def owners(path: Path) -> list[Path]:
+    """The audio files that the .slx at PATH may be of: the one with its name beside the .slx (moved with it),
+    and the one at the path it says, when they are two different files; empty if PATH is not a file of
+    py-slowdown, or its audio file is in neither place."""
+    found = _owner(path)
+    if found is None:
+        return []
+    where, name = found
+    seen: list[Path] = []
+    for audio in (path.parent / name if name else None, Path(where) if where else None):
+        if audio is None or str(audio) in ("", ".") or not audio.name or not audio.is_file():
+            continue
+        # (el mismo archivo por dos caminos, un enlace o la carpeta misma, cuenta una vez)
+        if not any(audio.resolve() == other.resolve() for other in seen):
+            seen.append(audio)
+    return seen
+
+
 def owner(path: Path) -> Path | None:
     """The audio file that the .slx at PATH is of (where it is, or, if it was moved with it, beside the .slx);
     None if PATH is not a file of py-slowdown, or its audio file is in neither place."""
-    found = _owner(path)
-    if found is None:
-        return None
-    where, name = found
-    for audio in (Path(where), path.parent / name):
-        if str(audio) not in ("", ".") and audio.name and audio.is_file():
-            return audio
-    return None
+    found = owners(path)
+    return found[-1] if found else None
 
 
 def find(audio: Path, folder: Path | None = None, extension: str = EXTENSION) -> Path | None:
