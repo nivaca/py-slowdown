@@ -5,6 +5,14 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Unreleased
+
+- The installer for Windows can be signed with Authenticode by SignPath
+  (free code signing for open-source projects, with SignPath Foundation's
+  certificate), from `.github/workflows/installers.yml`, once the project
+  is accepted there; `CODE_SIGNING_POLICY.md` is its policy, and the
+  installer now says its product name and version.
+
 ## 1.6.1 — 2026-11-26
 
 A script to convert many files of Transcribe! at once.

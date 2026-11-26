@@ -45,6 +45,36 @@
    the published key, and attaches the signatures to GitHub's release and
    the installers with their signatures to Codeberg's.
 
+   With SignPath set up (below), the Windows job waits for its signing
+   request to be approved: approve it on SignPath (signing requests of the
+   project py-slowdown) once the tag is pushed; it waits up to four hours.
+
+## Signing the Windows installer with SignPath
+
+The installer for Windows is signed with Authenticode by SignPath, for free,
+with SignPath Foundation's certificate; `CODE_SIGNING_POLICY.md` is the
+policy that SignPath asks for, and the README links to it. To set it up,
+once:
+
+1. Apply at https://signpath.org/apply, with the repository and that policy.
+2. When accepted, in SignPath: add the trusted build system "GitHub.com" to
+   the organization and link it to the project, install the SignPath GitHub
+   App (https://github.com/apps/signpath) on the repository, and paste
+   `packaging/signpath/artifact-configuration.xml` as the project's
+   artifact configuration. Turn on multi-factor authentication there (and on
+   GitHub, where it is already on).
+3. In the repository's settings on GitHub (Secrets and variables > Actions):
+   the secret `SIGNPATH_API_TOKEN` (a SignPath user that may submit), and
+   the variables `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG` and
+   `SIGNPATH_SIGNING_POLICY_SLUG`.
+
+From then on `installers.yml` sends each Windows installer to SignPath,
+waits for the approval, checks the signature (`Get-AuthenticodeSignature`)
+and installs the signed one to try it. Without those variables the steps
+are skipped. The release notes say, with the files: "Code signing policy:
+see CODE_SIGNING_POLICY.md", as SignPath asks for on the download pages.
+`tools/release.py --installers` then adds the GPG signatures, as before.
+
 ## What the RPM build needs
 
 ```bash

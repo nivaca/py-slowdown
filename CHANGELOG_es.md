@@ -5,6 +5,15 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+- El instalador para Windows se puede firmar con Authenticode por SignPath
+  (firma de código gratuita para proyectos de código abierto, con el
+  certificado de SignPath Foundation), desde
+  `.github/workflows/installers.yml`, una vez que el proyecto sea aceptado
+  allí; `CODE_SIGNING_POLICY.md` es su política, y el instalador dice ahora
+  el nombre y la versión del producto.
+
 ## 1.6.1 — 2026-11-26
 
 Un script para convertir de una vez muchos archivos de Transcribe!.

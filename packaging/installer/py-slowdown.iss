@@ -57,6 +57,11 @@ AppCopyright=Copyright (C) 2026 Nicolas Vaughan
 AppComments=Plays audio slower or faster without changing its pitch. GPL-3.0-or-later.
 VersionInfoVersion={#FileVersion}
 VersionInfoDescription=py-slowdown setup
+; El nombre y la versión del producto, que SignPath comprueba antes de firmar
+; (packaging/signpath/artifact-configuration.xml)
+VersionInfoProductName=py-slowdown
+VersionInfoProductVersion={#FileVersion}
+VersionInfoProductTextVersion={#AppVersion}
 DefaultDirName={autopf}\py-slowdown
 DefaultGroupName=py-slowdown
 DisableProgramGroupPage=yes

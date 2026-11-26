@@ -210,6 +210,16 @@ Where things are kept
 
 Uninstalling the program never removes them.
 
+Code signing policy
+-------------------
+
+Free code signing provided by [SignPath.io](https://about.signpath.io),
+certificate by [SignPath Foundation](https://signpath.org). The installer
+for Windows is signed with Authenticode, and only when GitHub builds it from
+this repository; every signing is approved by hand. What is signed, the
+team roles and the privacy policy (the program never connects to the
+internet) are in [CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md).
+
 License
 -------
 
