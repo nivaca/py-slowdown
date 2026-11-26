@@ -84,8 +84,8 @@
     <tr>Seguir desde la pausa</tr>
   </text>
   <text>
-    <en>Sta&amp;y at the pause</en>
-    <tr>De&amp;jar la posición en la pausa</tr>
+    <en>Pla&amp;y from the last pause</en>
+    <tr>Tocar desde la última pausa</tr>
   </text>
   <text>
     <en>There are two recordings for {name}. Which one should be opened?</en>
@@ -108,12 +108,16 @@
     <tr>La que el .slx nombra</tr>
   </text>
   <text>
-    <en>Stay at the pause: Play/Pause goes on from the pause, instead of going back to where playing started</en>
-    <tr>Dejar la posición en la pausa: Tocar/Pausa sigue desde la pausa, en lugar de volver adonde empezó a tocar</tr>
+    <en>Play from the last pause: Play/Pause goes on from the last pause (the dotted line), not from where playing started (the solid line)</en>
+    <tr>Tocar desde la última pausa: Tocar/Pausa sigue desde la última pausa (la línea de puntos), no desde donde empezó a tocar (la línea entera)</tr>
   </text>
   <text>
-    <en>Pause (Space)</en>
-    <tr>Pausar (Espacio)</tr>
+    <en>Play from the last pause (Space)</en>
+    <tr>Tocar desde la última pausa (Espacio)</tr>
+  </text>
+  <text>
+    <en>Paused at {time}; back to {start} (Space continues from the pause)</en>
+    <tr>Pausa en {time}; de vuelta en {start} (Espacio sigue desde la pausa)</tr>
   </text>
   <text>
     <en>Continue from the last pause</en>

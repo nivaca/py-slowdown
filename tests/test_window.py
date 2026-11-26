@@ -117,10 +117,10 @@ def test_pause_goes_back(window, app, wav, output):
     assert window.wave.pause_mark is None
 
 
-def test_stay_at_the_pause(window, app, wav, output):
-    """Playback > Stay at the pause: Space pauses and leaves the position there, as a usual player does, so that
-    Space again goes on from the pause; there is no dotted line of the pause, nor anything to continue from. It is
-    a preference, kept in the settings; turned on after a pause that went back, the position goes to the pause."""
+def test_play_from_the_last_pause(window, app, wav, output):
+    """Playback > Play from the last pause: a pause still takes the position (the solid line) back to where playing
+    started and marks the pause with the dotted line, but Play/Pause then goes on from the dotted line, and the
+    next pause goes back to the same start. Moved by hand while paused, it plays from there. A preference."""
 
     def play_for(seconds):
         until = window.player.position + seconds
@@ -132,36 +132,38 @@ def test_stay_at_the_pause(window, app, wav, output):
         app.processEvents()
 
     loaded(window, app, wav)
+    window.a_from_pause.setChecked(True)
+    assert window.settings.value("play_from_pause", type=bool)
     window.seek(1.0)
     window.toggle()
     play_for(1.0)
-    window.toggle()  # (como siempre: vuelve a 1.0, con la línea de puntos en la pausa)
-    paused = window._paused_at
-    assert window.player.position == pytest.approx(1.0) and paused > 1.5
-    window.a_pause_stays.setChecked(True)
-    assert window.settings.value("pause_stays", type=bool)
-    assert window.player.position == pytest.approx(paused) and window._paused_at is None
-    window._tick()
-    assert window.wave.pause_mark is None and not window.a_continue.isEnabled()
     window.toggle()
-    assert window.b_play.toolTip() == "Pause (Space)"
+    paused = window._paused_at
+    assert window.player.position == pytest.approx(1.0) and paused > 1.5  # (las dos líneas)
+    window._tick()
+    assert window.wave.pause_mark == pytest.approx(paused)
+    assert window.b_play.toolTip() == "Play from the last pause (Space)"
+    window.toggle()  # (sigue desde la línea de puntos)
+    assert window.player.playing and window.player.position >= paused - 0.01
+    window._tick()
+    assert window.wave.pause_mark is None
     play_for(0.5)
     window.toggle()
-    here = window.player.position
-    assert here > paused + 0.3 and not window.player.playing
-    window._tick()
-    assert window.wave.pause_mark is None and not window.a_continue.isEnabled()
-    window.toggle()  # (sigue desde allí)
-    assert window.player.playing and window.player.position >= here - 0.01
+    assert window.player.position == pytest.approx(1.0) and window._paused_at > paused + 0.3
+    # Llevada a mano a otro lugar en la pausa: desde allí
+    window.seek(3.0)
+    assert window._paused_at is None and window.b_play.toolTip() == "Play (Space)"
     window.toggle()
-    # Al final del archivo se queda en el final
-    window.seek(5.5)
+    assert window.player.playing and window.player.position >= 3.0 - 0.01
+    play_for(0.3)
     window.toggle()
-    play_for(1.0)
-    window._tick()
-    assert not window.player.playing and window.player.position > 5.5
-    window.a_pause_stays.setChecked(False)
-    assert not window.settings.value("pause_stays", type=bool)
+    assert window.player.position == pytest.approx(3.0)
+    window.a_from_pause.setChecked(False)
+    assert not window.settings.value("play_from_pause", type=bool)
+    window.toggle()  # (sin la casilla, otra vez desde la línea entera)
+    assert window.player.position < 3.05
+    window.toggle()
+
 
 def test_volume_knob_and_boost(window, app, wav, output):
     """The volume is a knob from 0 to 100%. Boost multiplies the sound (by 1.8 at first; Settings > Volume boost

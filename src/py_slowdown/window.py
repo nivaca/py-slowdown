@@ -1002,11 +1002,11 @@ class Window(QMainWindow):
         self.a_quit = a(tr("&Quit"), self.close, ["Ctrl+Q", "Alt+F4"])
         self.a_play = a(tr("&Play/Pause"), self.toggle, ["Space"])
         self.a_continue = a(tr("&Continue from the pause"), self.continue_playing, ["Shift+Space"])
-        # Una preferencia, no del archivo: pausar sin volver, como un reproductor corriente.
-        self.a_pause_stays = a(tr("Sta&y at the pause"), self._set_pause_stays, checkable=True)
-        self.a_pause_stays.setChecked(self.settings.value("pause_stays", False, type=bool))
-        self.a_pause_stays.setStatusTip(tr("Stay at the pause: Play/Pause goes on from the pause, instead of going "
-                                           "back to where playing started"))
+        # Una preferencia, no del archivo: desde qué línea sigue Tocar/Pausa, la de puntos o la entera.
+        self.a_from_pause = a(tr("Pla&y from the last pause"), self._set_from_pause, checkable=True)
+        self.a_from_pause.setChecked(self.settings.value("play_from_pause", False, type=bool))
+        self.a_from_pause.setStatusTip(tr("Play from the last pause: Play/Pause goes on from the last pause (the "
+                                          "dotted line), not from where playing started (the solid line)"))
         self.a_stop = a(tr("&Stop"), self.stop, ["S"])
         self.a_start = a(tr("Go to the s&tart"), self.go_start, ["Home"])
         self.a_end = a(tr("Go to the &end"), self.go_end, ["End"])
@@ -1078,7 +1078,7 @@ class Window(QMainWindow):
         file.addAction(self.a_quit)
 
         play = bar.addMenu(tr("&Playback"))
-        for action in (self.a_play, self.a_continue, self.a_pause_stays, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
+        for action in (self.a_play, self.a_continue, self.a_from_pause, self.a_stop, None, self.a_start, self.a_back, self.a_back_1,
                        self.a_forward_1, self.a_forward, self.a_end, None,
                        self.a_slower, self.a_faster, self.a_normal, self.speed_menu, None,
                        self.a_higher, self.a_lower, self.a_original_pitch, self.a_formants, self.a_reset_sound, None,
@@ -1673,11 +1673,15 @@ class Window(QMainWindow):
 
     def toggle(self) -> None:
         """Play from the position; or pause, and go back to where playing started, to hear the passage again
-        (Continue from the pause goes on from where it was paused); with Stay at the pause, pause where it is."""
+        (Continue from the pause goes on from where it was paused); with Play from the last pause, play goes on
+        from the pause, and pausing again goes back to where playing first started."""
         if not self.audio:
             return
         if self.player.playing:
             self._pause()
+        elif self.a_from_pause.isChecked() and self._paused_at is not None:
+            self.continue_playing()
+            return
         else:
             self._play()
             self._return_to = self.player.position  # (después de play: al final, vuelve a empezar desde 0)
@@ -1705,18 +1709,16 @@ class Window(QMainWindow):
 
     def _pause(self) -> None:
         self.player.pause()
-        if self.a_pause_stays.isChecked():
-            # The position stays at the pause, so there is no other place to mark or to continue from.
-            self._paused_at = None
-            self._tick()
-            return
         self._paused_at = self.player.position
         back = self._return_point()
         if back is not None:
             self.player.seek(back)
-            self.statusBar().showMessage(tr("Paused at {time}; back to {start} (Shift+Space continues from the "
-                                            "pause)", time=clock(self._paused_at, tenths=True),
-                                            start=clock(back, tenths=True)), 4000)
+            when = {"time": clock(self._paused_at, tenths=True), "start": clock(back, tenths=True)}
+            if self.a_from_pause.isChecked():
+                text = tr("Paused at {time}; back to {start} (Space continues from the pause)", **when)
+            else:
+                text = tr("Paused at {time}; back to {start} (Shift+Space continues from the pause)", **when)
+            self.statusBar().showMessage(text, 4000)
         self._tick()
 
     def _return_point(self) -> float | None:
@@ -1917,6 +1919,10 @@ class Window(QMainWindow):
             self._resume = 0.0
             if self.player.playing:
                 self._return_to = self.player.position  # (llevada a otro lugar mientras suena: desde allí)
+            elif self.a_from_pause.isChecked() and self._paused_at is not None:
+                # Moved by hand while paused: Play/Pause plays from there, not from the old pause.
+                self._paused_at = None
+                self._update_play_button()
             self._tick()
 
     def jump(self, seconds: float) -> None:
@@ -2226,7 +2232,7 @@ class Window(QMainWindow):
             self._resume = 0.0
         if self.player.ended:
             self.player.ended = False
-            if self._return_point() is not None and not self.a_pause_stays.isChecked():
+            if self._return_point() is not None:
                 # (al acabar el archivo, también vuelve adonde empezó a tocar)
                 self.player.seek(self._return_point())
                 self._paused_at = None
@@ -2273,9 +2279,8 @@ class Window(QMainWindow):
             self._draw_icons()
         self.b_play.setIcon(self._play_icons[playing])
         if not playing:
-            tip = tr("Play (Space)")
-        elif self.a_pause_stays.isChecked():
-            tip = tr("Pause (Space)")
+            from_pause = self.a_from_pause.isChecked() and self._paused_at is not None
+            tip = tr("Play from the last pause (Space)") if from_pause else tr("Play (Space)")
         else:
             tip = tr("Pause and go back to where it started (Space); Shift+Space continues from the pause")
         self.b_play.setToolTip(tip)
@@ -2308,16 +2313,10 @@ class Window(QMainWindow):
         self.b_back.setToolTip(tr("Back {n} s (Left); hold to keep going", n=n))
         self.b_forward.setToolTip(tr("Forward {n} s (Right); hold to keep going", n=n))
 
-    def _set_pause_stays(self, on: bool) -> None:
-        self.settings.setValue("pause_stays", on)
-        if not hasattr(self, "b_play"):
-            return  # (al construir la ventana, con la preferencia guardada)
-        if on and not self.player.playing and self._paused_at is not None and self.audio is not None:
-            # (si ya había una pausa con vuelta, la posición va a la pausa: desde allí seguirá)
-            self.player.seek(min(self._paused_at, self.audio.duration))
-            self._paused_at = None
-            self._tick()
-        self._update_play_button()
+    def _set_from_pause(self, on: bool) -> None:
+        self.settings.setValue("play_from_pause", on)
+        if hasattr(self, "b_play"):
+            self._update_play_button()
 
     def _set_follow(self, on: bool) -> None:
         self.wave.follow = on

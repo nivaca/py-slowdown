@@ -10,11 +10,12 @@ Debian package, the RPM, the wheel and the source, are on
 - Opening a `.slx` whose recording is both beside it (by name) and at the
   path it names, two different files, asks which one to open. Before, the
   one at the path was opened without asking.
-- Playback > Stay at the pause (a checkbox, off by default): Play/Pause
-  then pauses where it is and goes on from there, as a usual player does,
-  instead of going back to where playing started; there is no dotted line
-  of the last pause, and at the end of the file the position stays at the
-  end. It is kept for every file.
+- Playback > Play from the last pause (a checkbox, off by default):
+  Play/Pause then goes on from the last pause (the dotted line), as
+  Shift+Space does, instead of from where playing started (the solid
+  line). A pause still takes the position back to that start and marks
+  the pause, so both lines are seen; moved by hand while paused, it plays
+  from there. It is kept for every file.
 - The installer for Windows can be signed with Authenticode by SignPath
   (free code signing for open-source projects, with SignPath Foundation's
   certificate), from `.github/workflows/installers.yml`, once the project

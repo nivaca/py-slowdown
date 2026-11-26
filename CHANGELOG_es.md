@@ -10,11 +10,12 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 - Al abrir un `.slx` cuya grabación está a la vez a su lado (por el nombre)
   y en la ruta que nombra, dos archivos distintos, el programa pregunta cuál
   abrir. Antes abría, sin preguntar, la de la ruta.
-- Reproducción > Dejar la posición en la pausa (una casilla, apagada al
-  principio): Tocar/Pausa pausa entonces donde está y sigue desde allí, como
-  un reproductor corriente, en lugar de volver adonde empezó a tocar; no hay
-  línea de puntos de la última pausa, y al final del archivo la posición se
-  queda en el final. Vale para todos los archivos.
+- Reproducción > Tocar desde la última pausa (una casilla, apagada al
+  principio): Tocar/Pausa sigue entonces desde la última pausa (la línea de
+  puntos), como Mayús+Espacio, en lugar de desde donde empezó a tocar (la
+  línea entera). La pausa sigue llevando la posición a ese comienzo y
+  marcando la pausa, así que se ven las dos líneas; movida a mano durante
+  la pausa, toca desde allí. Vale para todos los archivos.
 - El instalador para Windows se puede firmar con Authenticode por SignPath
   (firma de código gratuita para proyectos de código abierto, con el
   certificado de SignPath Foundation), desde
