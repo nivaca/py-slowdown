@@ -1,4 +1,4 @@
-\newcommand*{\version}{1.6.0}
+\newcommand*{\version}{1.6.1}
 
 \documentclass[12pt,
               article,
@@ -983,6 +983,16 @@ pregunta, si \menu{Preguntar si guardar antes de cerrar un archivo} está
 activa). Cómo escribe Transcribe! sus marcadores se aprendió de
 Transcribe-xsc-file-converter, de Rory O'Kane
 (\url{https://github.com/roryokane/Transcribe-xsc-file-converter}).
+
+Para convertir de una vez muchos archivos de Transcribe!, el código de
+py-slowdown trae un script, \texttt{tools/xsc2slx.py}, que no se instala con
+el programa. Puesto en la carpeta de las grabaciones y corrido allí
+(\texttt{python3 xsc2slx.py}), escribe el \texttt{.slx} de cada
+\texttt{.xsc} de esa carpeta y de sus subcarpetas, con el py-slowdown
+instalado, como lo harían \menu{Archivo\then Importar .xsc} y un guardado.
+Salta las grabaciones que ya tienen su \texttt{.slx} (salvo con
+\texttt{-{}-force}); \texttt{-{}-folder} los escribe todos en una carpeta,
+y \texttt{-{}-dry-run} solo dice lo que haría.
 
 \menu{Configuración\then Archivos de ajustes de cada grabación} elige dónde
 van: \menu{Junto al archivo de audio} (al principio), \menu{En una carpeta}

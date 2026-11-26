@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-slowdown
-Version:        1.6.0
+Version:        1.6.1
 Release:        1%{?dist}
 Summary:        Play audio slower or faster without changing its pitch
 
@@ -99,6 +99,9 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*
 
 %changelog
+* Thu Nov 26 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.6.1-1
+- tools/xsc2slx.py, to convert every .xsc of a folder and its subfolders to .slx
+
 * Wed Nov 25 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.6.0-1
 - Files of Transcribe! (.xsc) are opened, also with File > Import .xsc; the Tap
   button shows the tempo tapped

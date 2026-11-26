@@ -1,4 +1,4 @@
-# py-slowdown 1.6.0: descripción
+# py-slowdown 1.6.1: descripción
 
 ## Análisis
 
@@ -30,7 +30,7 @@ Los marcadores, los bucles (selecciones con nombre), el punto donde se dejó cad
 
 ## Implementación
 
-Está escrito en Python 3.14. Usa PyAV (o el programa ffmpeg) para leer los archivos, la biblioteca Rubber Band para el estiramiento, sounddevice para la tarjeta de sonido, PySide6 para la ventana y NumPy para las cuentas. Son 86 archivos de texto y unas 24 200 líneas, 15 300 de ellas en Python.
+Está escrito en Python 3.14. Usa PyAV (o el programa ffmpeg) para leer los archivos, la biblioteca Rubber Band para el estiramiento, sounddevice para la tarjeta de sonido, PySide6 para la ventana y NumPy para las cuentas. Son 87 archivos de texto y unas 24 400 líneas, 15 400 de ellas en Python.
 
 ### El estiramiento
 
@@ -72,7 +72,7 @@ py-slowdown es software libre, bajo la Licencia Pública General de GNU, versió
 
 Fue desarrollado en Fedora 45, con Python 3.14 y uv. El código está en GitHub (github.com/nivaca/py-slowdown), con una copia en Codeberg.
 
-Cada versión trae un instalador para Windows (hecho con Inno Setup), dos imágenes de disco para macOS (Apple Silicon e Intel), un instalador para cualquier Linux (`.run`), un RPM para Fedora (también en Copr), una AppImage, un paquete de Debian, el wheel y el código, todos firmados con la clave del proyecto (`packaging/RPM-GPG-KEY-py-slowdown`), con `SHA256SUMS` firmado; `install/install.sh` lo instala desde el código en Linux y macOS. Desde el código se abre con `uv run py-slowdown [ARCHIVO]`; las pruebas, con `uv run python tools/test.py`, y la publicación de una versión se explica en `packaging/RELEASING.md`. La configuración (ventana, volumen, salto, idioma, archivos recientes) está en `~/.config/py-slowdown/py-slowdown.conf`; los marcadores y las posiciones, en `~/.local/share/py-slowdown/bookmarks.json` y en el `.slx` de cada grabación, que se escribe al cerrarla o con Archivo > Guardar el .slx (Ctrl+S), y las muestras de un archivo abierto, en un archivo temporal sin nombre dentro de `~/.cache/py-slowdown/`, que desaparece al cerrarlo. El autor es Nicolas Vaughan (nicolasvaughan@proton.me).
+Cada versión trae un instalador para Windows (hecho con Inno Setup), dos imágenes de disco para macOS (Apple Silicon e Intel), un instalador para cualquier Linux (`.run`), un RPM para Fedora (también en Copr), una AppImage, un paquete de Debian, el wheel y el código, todos firmados con la clave del proyecto (`packaging/RPM-GPG-KEY-py-slowdown`), con `SHA256SUMS` firmado; `install/install.sh` lo instala desde el código en Linux y macOS. `tools/xsc2slx.py`, que no se instala, convierte a `.slx` con el programa instalado todos los `.xsc` de una carpeta y sus subcarpetas. Desde el código se abre con `uv run py-slowdown [ARCHIVO]`; las pruebas, con `uv run python tools/test.py`, y la publicación de una versión se explica en `packaging/RELEASING.md`. La configuración (ventana, volumen, salto, idioma, archivos recientes) está en `~/.config/py-slowdown/py-slowdown.conf`; los marcadores y las posiciones, en `~/.local/share/py-slowdown/bookmarks.json` y en el `.slx` de cada grabación, que se escribe al cerrarla o con Archivo > Guardar el .slx (Ctrl+S), y las muestras de un archivo abierto, en un archivo temporal sin nombre dentro de `~/.cache/py-slowdown/`, que desaparece al cerrarlo. El autor es Nicolas Vaughan (nicolasvaughan@proton.me).
 
 ### Los instaladores
 

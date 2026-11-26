@@ -1,4 +1,4 @@
-\newcommand*{\version}{1.6.0}
+\newcommand*{\version}{1.6.1}
 
 \documentclass[12pt,
               article,
@@ -959,6 +959,16 @@ recording's \texttt{.slx} (asked first, if \menu{Ask to save before
 closing a file} is on). How Transcribe! writes its markers was learnt from
 Rory O'Kane's Transcribe-xsc-file-converter
 (\url{https://github.com/roryokane/Transcribe-xsc-file-converter}).
+
+To convert many files of Transcribe! at once, the source of py-slowdown
+has a script, \texttt{tools/xsc2slx.py}, which is not installed with the
+program. Put in the folder of the recordings and run there
+(\texttt{python3 xsc2slx.py}), it writes the \texttt{.slx} of every
+\texttt{.xsc} in that folder and its subfolders, with the py-slowdown
+installed, as \menu{File\then Import .xsc} and a save would. It skips the
+recordings that already have a \texttt{.slx} (unless
+\texttt{-{}-force}); \texttt{-{}-folder} writes them all in one folder,
+and \texttt{-{}-dry-run} only says what it would do.
 
 \menu{Settings\then Settings files of each recording} chooses where they
 go: \menu{Beside the audio file} (at first), \menu{In a folder} (one asks

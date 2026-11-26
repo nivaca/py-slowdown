@@ -79,7 +79,10 @@ Lo que hace
   lo escribe enseguida. Archivo > Importar .xsc abre un archivo
   de Transcribe! (`.xsc`), y también Archivo > Abrir: su grabación llega con sus marcadores (las secciones, los compases con nombre, el
   primer pulso y el tempo), sus bucles, su selección, su velocidad y su
-  afinación, que desde entonces guarda su `.slx`. También puede reabrir el último
+  afinación, que desde entonces guarda su `.slx`. Para convertir muchos de
+  una vez, `tools/xsc2slx.py` (en el código, no se instala con el programa)
+  convierte a `.slx` todos los `.xsc` de una carpeta y de sus subcarpetas.
+  También puede reabrir el último
   archivo al empezar (Configuración > Reabrir el último archivo al
   empezar).
 - Los atajos de teclado se pueden cambiar (Configuración > Atajos de

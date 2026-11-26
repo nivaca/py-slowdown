@@ -5,6 +5,19 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## 1.6.1 — 2026-11-26
+
+A script to convert many files of Transcribe! at once.
+
+- `tools/xsc2slx.py` converts every file of Transcribe! (`.xsc`) in a
+  folder and its subfolders to a `.slx`, with the py-slowdown installed,
+  so that each recording opens as if it had been imported with
+  File > Import .xsc. It is not part of the program: it is put in the folder
+  of the recordings and run there (`python3 xsc2slx.py`). It leaves the
+  `.xsc` files as they are and skips the recordings that already have a
+  `.slx` (unless `--force`); `--folder` writes them in one folder, and
+  `--dry-run` only says what it would do.
+
 ## 1.6.0 — 2026-11-25
 
 Files of Transcribe! are opened, and the Tap button shows the tempo tapped.

@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty-seven stages.
+in twenty-eight stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -868,6 +868,24 @@ the first tap, then the tempo heard, and keeps it until another file is
 opened; the button has the width of its longest text, so the row does not
 move.
 
+28. Many files of Transcribe! at once
+------------------------------------
+
+After 1.6.0 I had some sixty `.xsc` files in my music folder, and opening
+each one to save its `.slx` would have taken an afternoon. Version 1.6.1
+adds a script for that, `tools/xsc2slx.py`, which I kept out of the
+program: it is put in the folder of the recordings and run there, and it
+converts every `.xsc` below it. It does not read the files on its own. It
+imports the installed py-slowdown and uses the same reading of the `.xsc`
+and the same writing of the `.slx` as the window, so a converted
+recording opens exactly as an imported one. If the Python that runs it
+has no py-slowdown, it starts again with the Python of the environment
+that `install/install.sh` makes. A recording that already has its `.slx`
+is skipped, since that file may hold work done since, unless `--force`
+is given; `--dry-run` only lists what would be written. A dry run on my
+folder found 60 files, of which 56 would be converted and 4 already had
+their `.slx`.
+
 Testing
 -------
 
@@ -915,4 +933,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 86 text files and about 24,200 lines (15,300 of them in Python).
+The program has 87 text files and about 24,400 lines (15,400 of them in Python).

@@ -75,7 +75,9 @@ What it does
   so does File > Open: its recording comes with its markers
   (the sections, the measures with a name, the first beat and the tempo),
   its loops, its selection, its speed and its tuning, kept from then on in
-  its `.slx`. It can also reopen the last file when it starts
+  its `.slx`. To convert many at once, `tools/xsc2slx.py` (in the source,
+  not installed with the program) converts every `.xsc` of a folder and its
+  subfolders to `.slx`. It can also reopen the last file when it starts
   (Settings > Reopen the last file when starting).
 - The keyboard shortcuts can be changed (Settings > Keyboard shortcuts),
   also for a foot pedal that sends keys.
