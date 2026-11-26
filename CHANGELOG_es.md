@@ -14,8 +14,8 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
   y el tempo de sus pulsos, sus bucles, su selección, su velocidad y su
   afinación, que desde entonces guarda su `.slx`.
 - El botón **Marcar** muestra el tempo oído mientras se marca («120 BPM»;
-  «…» tras el primer golpe), y vuelve a «Marcar» unos segundos después del
-  último. Su ancho no cambia, así que la fila no se mueve.
+  «…» tras el primer golpe), y lo deja hasta que se abre otro archivo o se
+  cierra este. Su ancho no cambia, así que la fila no se mueve.
 - `tools/zenodo.py`: la descripción del depósito deja fuera la línea que
   lleva a los README en otras lenguas y la sección Screenshots, cuyas
   imágenes Zenodo no muestra.

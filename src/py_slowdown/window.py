@@ -865,18 +865,14 @@ class Window(QMainWindow):
         self.b_tap.setToolTip(tr("Tap with the beat of the music (T), a few times: the tempo of the count-in is "
                                  "measured"))
         self.b_tap.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # Mientras se marca, el botón muestra el tempo oído; un ancho fijo, el del texto más largo, para que la
-        # fila no salte con cada golpe.
+        # El botón muestra el tempo oído, desde el segundo golpe hasta que se abre otro archivo o se cierra este;
+        # un ancho fijo, el del texto más largo, para que la fila no salte con cada golpe.
         width = 0
         for text in (tr("Tap"), "…", tr("{bpm} BPM", bpm=300)):
             self.b_tap.setText(text)
             width = max(width, self.b_tap.sizeHint().width())
         self.b_tap.setText(tr("Tap"))
         self.b_tap.setFixedWidth(width)
-        self._tap_shown = QTimer(self)  # back to "Tap" a while after the last tap
-        self._tap_shown.setSingleShot(True)
-        self._tap_shown.setInterval(int(TapTempo.PAUSE * 1000) + 1500)
-        self._tap_shown.timeout.connect(lambda: self.b_tap.setText(tr("Tap")))
         row.addWidget(self.b_repeat)
         row.addWidget(self.b_tap)
         row.addSpacing(12)
@@ -1451,6 +1447,7 @@ class Window(QMainWindow):
         audio = self.audio
         self.player.unload()
         audio.close()
+        self.b_tap.setText(tr("Tap"))
         self.audio = None
         self.bookmarks = []
         self.loops = []
@@ -1511,6 +1508,7 @@ class Window(QMainWindow):
         else:
             self.set_speed(self.player.speed)
         self.set_hearing("both", "none")
+        self.b_tap.setText(tr("Tap"))  # (el tempo marcado era del archivo anterior)
         self.set_eq(equalizer.FLAT, True)
         self.a_repeat.setChecked(False)
         default = CountIn()
@@ -1738,7 +1736,6 @@ class Window(QMainWindow):
         """A tap with the beat of the music: after a few, the tempo of the count-in. What is tapped is the tempo
         heard; with the count-in following the speed, the recording's own is kept (tapped / speed)."""
         heard = self.tapper.tap()
-        self._tap_shown.start()
         if heard is None:
             self.b_tap.setText("…")
             self.statusBar().showMessage(tr("Tap again, with the beat…"), 3000)
