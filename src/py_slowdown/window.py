@@ -997,6 +997,7 @@ class Window(QMainWindow):
     def _build_actions(self) -> None:
         a = self._action
         self.a_open = a(tr("&Open…"), self.open_dialog, [QKeySequence.StandardKey.Open])
+        self.a_import_xsc = a(tr("&Import from Transcribe!…"), self.import_dialog)
         # (teclas fijas, no las «estándar» de Qt, que cambian con el escritorio: Ctrl+W cierra el archivo y el
         # programa sigue; Alt+F4, o Ctrl+Q, cierra el programa)
         self.a_close = a(tr("&Close"), self.close_file, ["Ctrl+W", "Ctrl+F4"])
@@ -1068,6 +1069,7 @@ class Window(QMainWindow):
         file.addAction(self.a_open)
         self.recent_menu = file.addMenu(tr("Open &recent"))
         self.recent_menu.aboutToShow.connect(self._fill_recent)
+        file.addAction(self.a_import_xsc)
         file.addAction(self.a_save_slx)
         file.addAction(self.a_export_audio)
         file.addAction(self.a_close)
@@ -1253,6 +1255,15 @@ class Window(QMainWindow):
             f"{tr('Audio and video files')} ({patterns} {own} *{transcribe.EXTENSION});;"
             f"{tr('Settings of a recording')} ({own});;{tr('Files of Transcribe!')} (*{transcribe.EXTENSION});;"
             f"{tr('All files')} (*)")
+        if path:
+            self.open_file(path)
+
+    def import_dialog(self) -> None:
+        """File > Import from Transcribe!: a file of Transcribe! (.xsc), opened with its recording."""
+        start = self.settings.value("folder", str(Path.home()))
+        path, _ = QFileDialog.getOpenFileName(
+            self, tr("Import a file of Transcribe!"), start,
+            f"{tr('Files of Transcribe!')} (*{transcribe.EXTENSION});;{tr('All files')} (*)")
         if path:
             self.open_file(path)
 

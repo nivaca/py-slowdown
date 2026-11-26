@@ -100,7 +100,12 @@ def test_open_in_the_window(tmp_path, wav, monkeypatch):
     settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
     window = Window(player=Player(FakeOutput()), store=Store(tmp_path / "bookmarks.json"), settings=settings)
     try:
-        assert window.open_file(make(tmp_path, wav))
+        # File > Import from Transcribe! (the dialog answers with the .xsc)
+        xsc = make(tmp_path, wav)
+        monkeypatch.setattr("py_slowdown.window.QFileDialog.getOpenFileName", lambda *args: (str(xsc), ""))
+        assert window.a_import_xsc in window.menuBar().actions()[0].menu().actions()
+        window.a_import_xsc.trigger()
+        assert window.audio is not None
         window.audio.wait(10)
         window._tick()
         app.processEvents()

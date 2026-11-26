@@ -71,7 +71,8 @@ What it does
   the extension `.slx` (`song.slx` for `song.mp3`), beside it or in a
   folder chosen, so that it travels with the recording; opening the `.slx`
   opens the recording. File > Save the .slx (Ctrl+S) writes it at once.
-  A file of Transcribe! (`.xsc`) opens its recording too, with its markers
+  File > Import from Transcribe! opens a file of Transcribe! (`.xsc`), and
+  so does File > Open: its recording comes with its markers
   (the sections, the measures with a name, the first beat and the tempo),
   its loops, its selection, its speed and its tuning, kept from then on in
   its `.slx`. It can also reopen the last file when it starts
