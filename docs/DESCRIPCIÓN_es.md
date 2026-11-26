@@ -14,7 +14,7 @@ Un ecualizador de cinco bandas (60 Hz, 250 Hz, 1 kHz, 4 kHz y 12 kHz, de −12 a
 
 La ventana tiene además un panel Sonido al costado (la manera de oír y el ecualizador, con su curva y sus ajustes guardados), un modo compacto siempre encima, una pantalla de inicio con las grabaciones recientes, los bucles dibujados al pie de la forma de onda, una franja con el archivo entero al acercar la vista, un reloj que también cuenta compases, menús y teclas en las perillas, y Deshacer los cambios del sonido.
 
-Quien ya trabajaba con Transcribe! puede traer lo hecho: Archivo > Importar .xsc abre su grabación con las secciones y los compases con nombre como marcadores, el primer pulso y el tempo de sus pulsos, los bucles, la selección, la velocidad y la afinación. El botón Marcar muestra el tempo que se marca.
+Quien ya trabajaba con Transcribe! puede traer lo hecho: Archivo > Abrir, con un .xsc, abre su grabación con las secciones y los compases con nombre como marcadores, el primer pulso y el tempo de sus pulsos, los bucles, la selección, la velocidad y la afinación. El botón Marcar muestra el tempo que se marca.
 
 ## Diseño
 

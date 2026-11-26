@@ -72,8 +72,7 @@ What it does
   the extension `.slx` (`song.slx` for `song.mp3`), beside it or in a
   folder chosen, so that it travels with the recording; opening the `.slx`
   opens the recording. File > Save the .slx (Ctrl+S) writes it at once.
-  File > Import .xsc opens a file of Transcribe! (`.xsc`), and
-  so does File > Open: its recording comes with its markers
+  File > Open also opens a file of Transcribe! (`.xsc`): its recording comes with its markers
   (the sections, the measures with a name, the first beat and the tempo),
   its loops, its selection, its speed and its tuning, kept from then on in
   its `.slx`. To convert many at once, `tools/xsc2slx.py` (in the source,

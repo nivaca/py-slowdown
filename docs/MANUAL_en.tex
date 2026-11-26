@@ -954,10 +954,9 @@ other program had them already (Simulink's models end in \texttt{.slx}
 too).
 
 \index{Transcribe"! files}\index{xsc file@\texttt{.xsc} file}%
-\menu{File\then Import .xsc} opens a file of Transcribe!
-(\texttt{.xsc}); it can also be opened in the same ways as a
-\texttt{.slx}, and its
-recording comes with what it kept: its sections as bookmarks (named A, B,
+A file of Transcribe! (\texttt{.xsc}) is opened in the same ways as a
+\texttt{.slx} (\menu{File\then Open}, the command line or a drop on the
+window), and its recording comes with what it kept: its sections as bookmarks (named A, B,
 C\ldots{} when they have no name of their own), the measures that have a
 name, its loops with their names, its selection (or, without one, the point
 where it was), its speed and its tuning, as the pitch. If it has beats, the
@@ -977,7 +976,7 @@ has a script, \texttt{tools/xsc2slx.py}, which is not installed with the
 program. Put in the folder of the recordings and run there
 (\texttt{python3 xsc2slx.py}), it writes the \texttt{.slx} of every
 \texttt{.xsc} in that folder and its subfolders, with the py-slowdown
-installed, as \menu{File\then Import .xsc} and a save would. It skips the
+installed, as opening the \texttt{.xsc} and a save would. It skips the
 recordings that already have a \texttt{.slx} (unless
 \texttt{-{}-force}); \texttt{-{}-folder} writes them all in one folder,
 and \texttt{-{}-dry-run} only says what it would do.

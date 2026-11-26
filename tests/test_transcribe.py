@@ -100,11 +100,12 @@ def test_open_in_the_window(tmp_path, wav, monkeypatch):
     settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
     window = Window(player=Player(FakeOutput()), store=Store(tmp_path / "bookmarks.json"), settings=settings)
     try:
-        # File > Import .xsc (the dialog answers with the .xsc)
+        # File > Open (the dialog answers with the .xsc); no File > Import .xsc any more
         xsc = make(tmp_path, wav)
         monkeypatch.setattr("py_slowdown.window.QFileDialog.getOpenFileName", lambda *args: (str(xsc), ""))
-        assert window.a_import_xsc in window.menuBar().actions()[0].menu().actions()
-        window.a_import_xsc.trigger()
+        names = [action.text() for action in window.menuBar().actions()[0].menu().actions()]
+        assert not any(".xsc" in name for name in names)
+        window.a_open.trigger()
         assert window.audio is not None
         window.audio.wait(10)
         window._tick()

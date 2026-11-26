@@ -7,6 +7,9 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- File > Import .xsc is gone from the menu. A file of Transcribe! (`.xsc`)
+  is still opened with File > Open, from the command line or by a drop on
+  the window, as before.
 - `tools/release.py` now publishes each release on Zenodo
   (`tools/zenodo.py upload --publish`), instead of leaving a draft;
   `--zenodo-draft` still leaves one. `tools/zenodo.py publish` publishes a

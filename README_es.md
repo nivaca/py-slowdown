@@ -77,8 +77,8 @@ Lo que hace
   grabación y la extensión `.slx` (`canción.slx` para `canción.mp3`), junto
   a ella o en una carpeta elegida, de modo que viaja con la grabación;
   abrir el `.slx` abre la grabación. Archivo > Guardar el .slx (Ctrl+S)
-  lo escribe enseguida. Archivo > Importar .xsc abre un archivo
-  de Transcribe! (`.xsc`), y también Archivo > Abrir: su grabación llega con sus marcadores (las secciones, los compases con nombre, el
+  lo escribe enseguida. Archivo > Abrir abre también un archivo
+  de Transcribe! (`.xsc`): su grabación llega con sus marcadores (las secciones, los compases con nombre, el
   primer pulso y el tempo), sus bucles, su selección, su velocidad y su
   afinación, que desde entonces guarda su `.slx`. Para convertir muchos de
   una vez, `tools/xsc2slx.py` (en el código, no se instala con el programa)

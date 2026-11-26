@@ -4,7 +4,7 @@
 No es parte de py-slowdown: usa el py-slowdown instalado (el del RPM, el de
 install/install.sh o cualquiera que Python encuentre), con su propia lectura
 de los .xsc (transcribe.read) y su propia escritura de los .slx
-(sidecar.save), así que el resultado es el mismo que da File > Import .xsc
+(sidecar.save), así que el resultado es el mismo que da abrir el .xsc (File > Open)
 seguido de un guardado. Se pone en la carpeta de las grabaciones y se corre
 allí; sin argumentos, recorre la carpeta donde está el script.
 

@@ -7,6 +7,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- Archivo > Importar .xsc ya no está en el menú. Un archivo de Transcribe!
+  (`.xsc`) se sigue abriendo con Archivo > Abrir, desde la línea de órdenes
+  o soltándolo en la ventana, como antes.
 - `tools/release.py` publica ahora cada versión en Zenodo
   (`tools/zenodo.py upload --publish`), en vez de dejar un borrador;
   `--zenodo-draft` todavía lo deja. `tools/zenodo.py publish` publica un
