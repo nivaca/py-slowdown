@@ -997,7 +997,7 @@ class Window(QMainWindow):
     def _build_actions(self) -> None:
         a = self._action
         self.a_open = a(tr("&Open…"), self.open_dialog, [QKeySequence.StandardKey.Open])
-        self.a_import_xsc = a(tr("&Import .xsc…"), self.import_dialog)
+        self.a_import_xsc = a(tr("&Import .xsc"), self.import_dialog)
         # (teclas fijas, no las «estándar» de Qt, que cambian con el escritorio: Ctrl+W cierra el archivo y el
         # programa sigue; Alt+F4, o Ctrl+Q, cierra el programa)
         self.a_close = a(tr("&Close"), self.close_file, ["Ctrl+W", "Ctrl+F4"])
