@@ -1,3 +1,3 @@
 """py-slowdown: reproducir audio más lento o más rápido sin cambiar su altura."""
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"

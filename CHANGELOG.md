@@ -5,7 +5,9 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 1.6.0 — 2026-11-25
+
+Files of Transcribe! are opened, and the Tap button shows the tempo tapped.
 
 - **Files of Transcribe!** (`.xsc`) are opened (File > Import .xsc,
   File > Open, the command line, or dropped on the window): their recording comes with their

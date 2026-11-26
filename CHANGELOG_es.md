@@ -5,7 +5,10 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Sin publicar
+## 1.6.0 — 2026-11-25
+
+Se abren los archivos de Transcribe!, y el botón Marcar muestra el tempo
+marcado.
 
 - Se abren los **archivos de Transcribe!** (`.xsc`) (Archivo > Importar
   .xsc, Archivo > Abrir, la línea de órdenes, o soltándolos en la

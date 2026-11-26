@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty-six stages.
+in twenty-seven stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -843,10 +843,35 @@ imported the installed RPM, then still 1.3.1, without that repeating. A
 test now plays past the end of a file with Repeat on and no selection, and
 checks that the playing goes on from its start.
 
+27. Files of Transcribe!
+------------------------
+
+Version 1.6.0 opens the files of Transcribe! (`.xsc`), with File > Import
+.xsc, File > Open, the command line or a drop on the window, so that what
+was done in that program is not lost. Seventh String Software does not
+publish the format. It is text, in lines of fields separated by commas,
+grouped in sections; how the markers are written I learnt from Rory
+O'Kane's converter, and the rest from a file of my own, made with
+Transcribe! 9. Its tuning, -32 cents, was the pitch I had given the same
+recording in py-slowdown, which confirmed that field. The sections become
+bookmarks, and the measures only when they have a name of their own: a
+piece with every measure numbered would bring hundreds. The beats are not
+kept as bookmarks either, but they give the first beat and, by the median
+of their intervals, the tempo of the count-in. Some fields (the speed, the
+names of the loops) are read as they seem to be, since my file had none
+to check them with, and the transposition is not read. The recording is
+looked for at the path the file names and, if it is not there, beside it.
+
+The same version makes the Tap button show the tempo as one taps, which
+before was only said, for a moment, in the status bar. It shows "…" after
+the first tap, then the tempo heard, and keeps it until another file is
+opened; the button has the width of its longest text, so the row does not
+move.
+
 Testing
 -------
 
-The program has 252 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 258 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -890,4 +915,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 84 text files and about 23,500 lines (14,900 of them in Python).
+The program has 86 text files and about 24,200 lines (15,300 of them in Python).
