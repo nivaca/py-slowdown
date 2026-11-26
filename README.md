@@ -70,7 +70,11 @@ What it does
   at once. All that is also written in a file with the recording's name and
   the extension `.slx` (`song.slx` for `song.mp3`), beside it or in a
   folder chosen, so that it travels with the recording; opening the `.slx`
-  opens the recording. File > Save the .slx (Ctrl+S) writes it at once. It can also reopen the last file when it starts
+  opens the recording. File > Save the .slx (Ctrl+S) writes it at once.
+  A file of Transcribe! (`.xsc`) opens its recording too, with its markers
+  (the sections, the measures with a name, the first beat and the tempo),
+  its loops, its selection, its speed and its tuning, kept from then on in
+  its `.slx`. It can also reopen the last file when it starts
   (Settings > Reopen the last file when starting).
 - The keyboard shortcuts can be changed (Settings > Keyboard shortcuts),
   also for a foot pedal that sends keys.

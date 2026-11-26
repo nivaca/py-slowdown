@@ -43,7 +43,7 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError, thumbnail
 from .bookmarks import Bookmark, Loop, Store, export_text
-from . import equalizer, export, glyphs, shortcuts, sidecar
+from . import equalizer, export, glyphs, shortcuts, sidecar, transcribe
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, grid_offset, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_BEATS, MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
@@ -1250,16 +1250,26 @@ class Window(QMainWindow):
         start = self.settings.value("folder", str(Path.home()))
         path, _ = QFileDialog.getOpenFileName(
             self, tr("Open an audio file"), start,
-            f"{tr('Audio and video files')} ({patterns} {own});;{tr('Settings of a recording')} ({own});;"
+            f"{tr('Audio and video files')} ({patterns} {own} *{transcribe.EXTENSION});;"
+            f"{tr('Settings of a recording')} ({own});;{tr('Files of Transcribe!')} (*{transcribe.EXTENSION});;"
             f"{tr('All files')} (*)")
         if path:
             self.open_file(path)
 
     def open_file(self, path: str | Path) -> bool:
-        """Open the audio or video file at PATH; or, if PATH is a .slx, the recording it is of, as it says."""
+        """Open the audio or video file at PATH; or, if PATH is a .slx, the recording it is of, as it says; or, if
+        it is a file of Transcribe! (.xsc), its recording with its markers, loops, selection, speed and tuning,
+        which are then saved as any change is (its .slx)."""
         path = Path(path)
         given = None
-        if path.suffix.lower() == sidecar.EXTENSION:
+        imported = path.suffix.lower() == transcribe.EXTENSION
+        if imported:
+            try:
+                path, given = transcribe.read(path)
+            except transcribe.TranscribeError as error:
+                QMessageBox.warning(self, APP, tr("Cannot import {name}: {error}", name=path.name, error=error))
+                return False
+        elif path.suffix.lower() == sidecar.EXTENSION:
             audio_path = sidecar.owner(path)
             given = sidecar.read(path) if audio_path is not None else None
             if given is None:
@@ -1301,10 +1311,21 @@ class Window(QMainWindow):
         self._resume = kept.position if kept else self.store.position(path)
         self._saved = self._snapshot()  # (lo de ahora es lo guardado: los cambios se cuentan desde aquí)
         self.setWindowTitle(f"{path.name} — {APP}")
+        if imported:
+            # Lo de Transcribe! es un cambio: se guarda ya, o se pregunta al cerrar, como los demás.
+            self._saved = ""
+            if self._saving() == "always":
+                self._save_all()
+            self._show_title()
         self.settings.setValue("folder", str(path.parent))
         self._remember(path)
         self._update_enabled()
-        self.statusBar().showMessage(tr("Reading {name}…", name=path.name))
+        if imported:
+            self.statusBar().showMessage(tr("Imported from Transcribe!: {marks} bookmarks, {loops} loops; reading "
+                                            "{name}…", marks=len(self.bookmarks), loops=len(self.loops),
+                                            name=path.name))
+        else:
+            self.statusBar().showMessage(tr("Reading {name}…", name=path.name))
         return True
 
     def open_at_start(self, path: str | None = None) -> None:

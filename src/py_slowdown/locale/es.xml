@@ -316,6 +316,26 @@
     <tr>(ninguno)</tr>
   </text>
   <text>
+    <en>Files of Transcribe!</en>
+    <tr>Archivos de Transcribe!</tr>
+  </text>
+  <text>
+    <en>Cannot import {name}: {error}</en>
+    <tr>No se puede importar {name}: {error}</tr>
+  </text>
+  <text>
+    <en>it is not a file of Transcribe!</en>
+    <tr>no es un archivo de Transcribe!</tr>
+  </text>
+  <text>
+    <en>its recording, {name}, is not there</en>
+    <tr>su grabación, {name}, no está</tr>
+  </text>
+  <text>
+    <en>Imported from Transcribe!: {marks} bookmarks, {loops} loops; reading {name}…</en>
+    <tr>Importado de Transcribe!: {marks} marcadores, {loops} bucles; leyendo {name}…</tr>
+  </text>
+  <text>
     <en>Reading {name}…</en>
     <tr>Leyendo {name}…</tr>
   </text>
@@ -440,8 +460,8 @@
     <tr>ARCHIVO</tr>
   </text>
   <text>
-    <en>an audio or video file to open, or its .slx</en>
-    <tr>un archivo de audio o de video para abrir, o su .slx</tr>
+    <en>an audio or video file to open, its .slx, or a file of Transcribe! (.xsc)</en>
+    <tr>un archivo de audio o de video para abrir, su .slx, o un archivo de Transcribe! (.xsc)</tr>
   </text>
   <text>
     <en>show this help and quit</en>

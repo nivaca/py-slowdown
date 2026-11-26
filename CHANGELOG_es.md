@@ -7,6 +7,11 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- Se abren los **archivos de Transcribe!** (`.xsc`) (Archivo > Abrir, la
+  línea de órdenes, o soltándolos en la ventana): su grabación llega con
+  sus secciones y sus compases con nombre como marcadores, el primer pulso
+  y el tempo de sus pulsos, sus bucles, su selección, su velocidad y su
+  afinación, que desde entonces guarda su `.slx`.
 - El botón **Marcar** muestra el tempo oído mientras se marca («120 BPM»;
   «…» tras el primer golpe), y vuelve a «Marcar» unos segundos después del
   último. Su ancho no cambia, así que la fila no se mueve.

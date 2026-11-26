@@ -7,6 +7,11 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- **Files of Transcribe!** (`.xsc`) are opened (File > Open, the command
+  line, or dropped on the window): their recording comes with their
+  sections and named measures as bookmarks, the first beat and the tempo of
+  their beats, their loops, their selection, their speed and their tuning,
+  kept from then on in its `.slx`.
 - The **Tap** button shows the tempo heard while one taps (“120 BPM”;
   “…” after the first tap), and goes back to “Tap” a few seconds after the
   last one. Its width stays the same, so the row does not move.

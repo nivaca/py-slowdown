@@ -941,6 +941,21 @@ its name beside it. The installers make py-slowdown the program of the
 other program had them already (Simulink's models end in \texttt{.slx}
 too).
 
+\index{Transcribe"! files}\index{xsc file@\texttt{.xsc} file}%
+A file of Transcribe! (\texttt{.xsc}) is opened in the same ways, and its
+recording comes with what it kept: its sections as bookmarks (named A, B,
+C\ldots{} when they have no name of their own), the measures that have a
+name, its loops with their names, its selection (or, without one, the point
+where it was), its speed and its tuning, as the pitch. If it has beats, the
+first measure or beat is the first beat of the recording, and the tempo of
+its beats is that of the count-in, which stays off. The beats themselves are
+not made into bookmarks, nor the measures that are only numbered: there
+would be hundreds. The recording is the one in the path it names, or else
+the one of that name beside the \texttt{.xsc}. The \texttt{.xsc} file is
+not changed: what was read from it is a change like any other, kept in the
+recording's \texttt{.slx} (asked first, if \menu{Ask to save before
+closing a file} is on).
+
 \menu{Settings\then Settings files of each recording} chooses where they
 go: \menu{Beside the audio file} (at first), \menu{In a folder} (one asks
 which), or \menu{Not saved}. \menu{File\then Save the .slx} (\key{Ctrl+S})

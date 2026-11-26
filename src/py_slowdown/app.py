@@ -15,7 +15,7 @@ USAGE = "Play audio slower or faster without changing its pitch, with a waveform
 def build_parser() -> argparse.ArgumentParser:
     """The options of the command line, in the language of the interface."""
     parser = argparse.ArgumentParser(prog="py-slowdown", description=tr(USAGE), add_help=False)
-    parser.add_argument("file", nargs="?", metavar=tr("FILE"), help=tr("an audio or video file to open, or its .slx"))
+    parser.add_argument("file", nargs="?", metavar=tr("FILE"), help=tr("an audio or video file to open, its .slx, or a file of Transcribe! (.xsc)"))
     parser.add_argument("-h", "--help", action="help", help=tr("show this help and quit"))
     parser.add_argument("--version", action="version", version=f"py-slowdown {__version__}",
                         help=tr("show the version and quit"))
