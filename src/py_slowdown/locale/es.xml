@@ -644,6 +644,10 @@
     <tr>Marcar el tempo (con el pulso)</tr>
   </text>
   <text>
+    <en>{bpm} BPM</en>
+    <tr>{bpm} BPM</tr>
+  </text>
+  <text>
     <en>Tap again, with the beat…</en>
     <tr>Marque otra vez, con el pulso…</tr>
   </text>

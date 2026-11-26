@@ -833,9 +833,16 @@ def test_tap_in_the_window(window, app, wav, monkeypatch):
     now = [100.0]
     monkeypatch.setattr(clock, "monotonic", lambda: now[0])
     window.set_speed(0.5)
-    for _ in range(4):
+    window.a_tap.trigger()
+    assert window.b_tap.text() == "…"  # (one tap: no tempo yet)
+    width = window.b_tap.width()
+    now[0] += 1.0
+    for _ in range(3):
         window.a_tap.trigger()
         now[0] += 1.0  # 60 BPM heard, at half speed
+    assert window.b_tap.text() == "60 BPM" and window.b_tap.width() == width  # (the heard tempo, on the button)
+    window._tap_shown.timeout.emit()
+    assert window.b_tap.text() == "Tap"
     assert window.count.bpm == 120  # (el de la grabación: la cuenta sigue la velocidad)
     assert "60 BPM heard" in window.statusBar().currentMessage()
     assert "2 clicks" not in window.a_count.statusTip() and "120 BPM" in window.a_count.statusTip()

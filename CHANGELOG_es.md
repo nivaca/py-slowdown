@@ -7,6 +7,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- El botón **Marcar** muestra el tempo oído mientras se marca («120 BPM»;
+  «…» tras el primer golpe), y vuelve a «Marcar» unos segundos después del
+  último. Su ancho no cambia, así que la fila no se mueve.
 - `tools/zenodo.py`: la descripción del depósito deja fuera la línea que
   lleva a los README en otras lenguas y la sección Screenshots, cuyas
   imágenes Zenodo no muestra.

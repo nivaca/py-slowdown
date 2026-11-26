@@ -7,6 +7,9 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- The **Tap** button shows the tempo heard while one taps (“120 BPM”;
+  “…” after the first tap), and goes back to “Tap” a few seconds after the
+  last one. Its width stays the same, so the row does not move.
 - `tools/zenodo.py`: the description of the deposit leaves out the line
   that points to the README in other languages and the Screenshots section,
   whose images Zenodo does not show.
