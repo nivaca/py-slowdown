@@ -84,6 +84,18 @@
     <tr>Seguir desde la pausa</tr>
   </text>
   <text>
+    <en>Sta&amp;y at the pause</en>
+    <tr>De&amp;jar la posición en la pausa</tr>
+  </text>
+  <text>
+    <en>Stay at the pause: Play/Pause goes on from the pause, instead of going back to where playing started</en>
+    <tr>Dejar la posición en la pausa: Tocar/Pausa sigue desde la pausa, en lugar de volver adonde empezó a tocar</tr>
+  </text>
+  <text>
+    <en>Pause (Space)</en>
+    <tr>Pausar (Espacio)</tr>
+  </text>
+  <text>
     <en>Continue from the last pause</en>
     <tr>Seguir desde la última pausa</tr>
   </text>

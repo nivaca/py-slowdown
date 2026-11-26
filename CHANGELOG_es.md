@@ -7,6 +7,11 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 
 ## Sin publicar
 
+- Reproducción > Dejar la posición en la pausa (una casilla, apagada al
+  principio): Tocar/Pausa pausa entonces donde está y sigue desde allí, como
+  un reproductor corriente, en lugar de volver adonde empezó a tocar; no hay
+  línea de puntos de la última pausa, y al final del archivo la posición se
+  queda en el final. Vale para todos los archivos.
 - El instalador para Windows se puede firmar con Authenticode por SignPath
   (firma de código gratuita para proyectos de código abierto, con el
   certificado de SignPath Foundation), desde

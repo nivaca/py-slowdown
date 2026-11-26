@@ -7,6 +7,11 @@ Debian package, the RPM, the wheel and the source, are on
 
 ## Unreleased
 
+- Playback > Stay at the pause (a checkbox, off by default): Play/Pause
+  then pauses where it is and goes on from there, as a usual player does,
+  instead of going back to where playing started; there is no dotted line
+  of the last pause, and at the end of the file the position stays at the
+  end. It is kept for every file.
 - The installer for Windows can be signed with Authenticode by SignPath
   (free code signing for open-source projects, with SignPath Foundation's
   certificate), from `.github/workflows/installers.yml`, once the project
