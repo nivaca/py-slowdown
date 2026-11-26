@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty-nine stages.
+in thirty stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -910,10 +910,20 @@ it, without saying anything. Now, when both exist and are two different
 files, it asks which one to open; the same file reached by two paths (a
 link, or the same folder) is not a reason to ask.
 
+30. A shorter File menu
+-----------------------
+
+In 1.8.0 File > Import .xsc left the menu. It had never been the only way
+in: File > Open, the command line and a drop on the window all take a
+`.xsc` as well, and its dialog showed nothing that Open did not show, so
+the item only made the File menu longer. The reading itself stays, and so
+does `tools/xsc2slx.py`. The Android version, which had no other way to
+open these files, lost the import altogether at the same time.
+
 Testing
 -------
 
-The program has 260 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 262 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -957,4 +967,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 89 text files and about 24,800 lines (15,600 of them in Python).
+The program has 89 text files and about 24,900 lines (15,600 of them in Python).

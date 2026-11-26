@@ -5,7 +5,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Sin publicar
+## 1.8.0 — 2026-11-26
+
+Un menú Archivo más corto.
 
 - Archivo > Importar .xsc ya no está en el menú. Un archivo de Transcribe!
   (`.xsc`) se sigue abriendo con Archivo > Abrir, desde la línea de órdenes

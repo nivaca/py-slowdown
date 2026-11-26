@@ -5,7 +5,9 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 1.8.0 — 2026-11-26
+
+A shorter File menu.
 
 - File > Import .xsc is gone from the menu. A file of Transcribe! (`.xsc`)
   is still opened with File > Open, from the command line or by a drop on

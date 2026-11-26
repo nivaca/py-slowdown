@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-slowdown
-Version:        1.7.0
+Version:        1.8.0
 Release:        1%{?dist}
 Summary:        Play audio slower or faster without changing its pitch
 
@@ -99,6 +99,10 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*
 
 %changelog
+* Thu Nov 26 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.8.0-1
+- File > Import .xsc taken out of the menu; a .xsc is still opened with File >
+  Open, the command line or a drop
+
 * Thu Nov 26 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.7.0-1
 - Playback > Play from the last pause: Play/Pause goes on from the dotted line;
   a .slx whose recording is both beside it and where it says asks which one to
