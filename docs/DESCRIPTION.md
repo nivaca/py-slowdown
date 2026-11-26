@@ -17,7 +17,9 @@ Breakfast Quay (GPL 2 or later), through a binding of its own; the files
 are read with PyAV (BSD), which brings FFmpeg (LGPL 2.1 or later), or with
 the ffmpeg program; the sound reaches the sound card through sounddevice
 (MIT) and PortAudio (MIT); the window uses PySide6 (LGPL 3), and the
-numbers NumPy (BSD).
+numbers NumPy (BSD). How the files of Transcribe! keep their markers I
+learnt from Rory O'Kane's Transcribe-xsc-file-converter (BlueOak 1.0.0),
+without taking its code.
 
 Nicolas Vaughan is Associate Professor of Literature at the School of Arts
 and Humanities of the Universidad de los Andes, Bogotá, Colombia.

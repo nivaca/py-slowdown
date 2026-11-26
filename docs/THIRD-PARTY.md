@@ -51,6 +51,17 @@ Rubber Band), with the C++ library of [zig](https://ziglang.org) (LLVM's
 libc++, Apache-2.0 WITH LLVM-exception) inside.
 
 
+What it learnt from other programs
+----------------------------------
+
+| Software | Licence | What py-slowdown owes it |
+|---|---|---|
+| [Transcribe-xsc-file-converter](https://github.com/roryokane/Transcribe-xsc-file-converter), by Rory O’Kane | BlueOak-1.0.0 | How the markers are written in the files of Transcribe! (`.xsc`), which py-slowdown opens (`src/py_slowdown/transcribe.py`) |
+
+No code of it is in py-slowdown: its parser was read to learn the format,
+which Seventh String Software, the makers of Transcribe!, do not publish.
+
+
 Tools that build, test and package it
 -------------------------------------
 

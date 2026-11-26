@@ -216,5 +216,8 @@ Library (GPL 2 or later), PortAudio (MIT), PyAV (BSD) with FFmpeg (LGPL 2.1
 or later), PySide6 (LGPL 3), sounddevice (MIT) and NumPy (BSD), all of them
 compatible with that licence. The AppImage and the Debian package carry a
 Rubber Band compiled from its source, which is published with each release.
+How the markers are written in the files of Transcribe! was learnt from
+Rory O’Kane's [Transcribe-xsc-file-converter](https://github.com/roryokane/Transcribe-xsc-file-converter)
+(BlueOak-1.0.0); none of its code is used.
 
 Nicolas Vaughan &lt;nicolasvaughan@proton.me&gt;

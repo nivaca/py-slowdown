@@ -64,7 +64,7 @@ Funciona en Linux, en Windows 10 y posteriores, y en macOS 13 y posteriores (App
 
 ### Licencias
 
-py-slowdown es software libre, bajo la Licencia Pública General de GNU, versión 3 o posterior. Rubber Band está bajo la GPL 2 o posterior (su código se publica con cada versión, porque la AppImage y el paquete de Debian llevan una copia compilada), PyAV y NumPy bajo la licencia BSD, FFmpeg bajo la LGPL 2.1 o posterior, PySide6 bajo la LGPL 3, y sounddevice y PortAudio bajo la licencia MIT.
+py-slowdown es software libre, bajo la Licencia Pública General de GNU, versión 3 o posterior. Rubber Band está bajo la GPL 2 o posterior (su código se publica con cada versión, porque la AppImage y el paquete de Debian llevan una copia compilada), PyAV y NumPy bajo la licencia BSD, FFmpeg bajo la LGPL 2.1 o posterior, PySide6 bajo la LGPL 3, y sounddevice y PortAudio bajo la licencia MIT. Cómo guardan sus marcadores los archivos de Transcribe! se aprendió de Transcribe-xsc-file-converter, de Rory O'Kane (bajo la Blue Oak Model License 1.0.0), sin tomar nada de su código.
 
 ## Ambiente
 

@@ -225,6 +225,9 @@ versión 3 o posterior (véase [LICENSE](LICENSE)). Usa la biblioteca Rubber
 Band (GPL 2 o posterior), PortAudio (MIT), PyAV (BSD) con FFmpeg (LGPL 2.1
 o posterior), PySide6 (LGPL 3), sounddevice (MIT) y NumPy (BSD), todas
 compatibles con esa licencia. La AppImage y el paquete de Debian llevan un
-Rubber Band compilado de su código, que se publica con cada versión.
+Rubber Band compilado de su código, que se publica con cada versión. Cómo
+se escriben los marcadores en los archivos de Transcribe! se aprendió de
+[Transcribe-xsc-file-converter](https://github.com/roryokane/Transcribe-xsc-file-converter), de Rory
+O’Kane (BlueOak-1.0.0); no se usa nada de su código.
 
 Nicolas Vaughan &lt;nicolasvaughan@proton.me&gt;

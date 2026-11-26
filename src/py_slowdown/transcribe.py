@@ -27,6 +27,11 @@ un campo va como \\C, una barra como \\\\), agrupadas en secciones
 
   Los vacíos (principio igual al final) no cuentan.
 
+Seventh String Software no publica el formato. La forma de los marcadores se
+aprendió de Transcribe-xsc-file-converter, de Rory O'Kane (BlueOak-1.0.0,
+https://github.com/roryokane/Transcribe-xsc-file-converter), sin copiar su código;
+lo demás, de archivos de Transcribe! 9.
+
 El .xsc no se toca: lo que se lee se guarda luego en el .slx de la grabación,
 como cualquier cambio.
 """
