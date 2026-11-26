@@ -5,7 +5,9 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 1.7.0 — 2026-11-26
+
+Where Play/Pause plays on from, and which recording a `.slx` opens.
 
 - Opening a `.slx` whose recording is both beside it (by name) and at the
   path it names, two different files, asks which one to open. Before, the

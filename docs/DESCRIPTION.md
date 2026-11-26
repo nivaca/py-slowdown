@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in twenty-eight stages.
+in twenty-nine stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -886,10 +886,34 @@ is given; `--dry-run` only lists what would be written. A dry run on my
 folder found 60 files, of which 56 would be converted and 4 already had
 their `.slx`.
 
+29. Where to play on from, and which recording
+---------------------------------------------
+
+Two things came up in the same day of practice, for version 1.7.0. The
+first was the pause. Since 1.0.0 a pause takes the position back to where
+playing started, and the dotted line marks where it stopped; Shift+Space
+goes on from there. But in a long piece I often want both: to keep the
+place where the passage begins, and still go on from where I stopped,
+with the plain Space. Playback > Play from the last pause does that. My
+first version of it was wrong: it left the position at the pause and drew
+no dotted line, which is only what a usual player does, and lost the
+place to go back to. The two lines have different jobs, the solid one is
+the anchor and the dotted one is temporary, so with the option the pause
+still goes back to the anchor and marks the pause, and only Space changes:
+it plays from the dotted line. If the position is moved by hand during
+the pause, Space plays from there, since that is clearly what was meant.
+
+The second was a `.slx` copied, with a copy of its recording, into another
+folder, while the first recording was still in Downloads. The program
+opened the one at the path written in the `.slx`, and not the one beside
+it, without saying anything. Now, when both exist and are two different
+files, it asks which one to open; the same file reached by two paths (a
+link, or the same folder) is not a reason to ask.
+
 Testing
 -------
 
-The program has 258 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 260 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
@@ -933,4 +957,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 87 text files and about 24,400 lines (15,400 of them in Python).
+The program has 89 text files and about 24,800 lines (15,600 of them in Python).

@@ -29,7 +29,8 @@ Lo que hace
   salto que se elige en Configuración, de 1 a 60 segundos; con el botón
   apretado sigue saltando) y un segundo atrás o adelante. Una pausa lleva
   la posición de vuelta adonde empezó a tocar, para que Espacio toque otra
-  vez el mismo pasaje; Mayús+Espacio sigue, en cambio, desde la pausa.
+  vez el mismo pasaje; Mayús+Espacio sigue, en cambio, desde la pausa (o
+  el mismo Espacio, con Reproducción > Tocar desde la última pausa).
 - Velocidad de 0,25× a 3× (de 25 a 300 %, en una perilla), que se cambia mientras suena, sin que cambie la
   altura. El estiramiento lo hace la [biblioteca Rubber Band](https://breakfastquay.com/rubberband/),
   con su motor R3 («finer»), el de más calidad, por medio de un enlace

@@ -7,7 +7,7 @@ py-slowdown es software libre, bajo la Licencia Pública General de GNU,
 versión 3 o posterior (GPL-3.0-or-later). Está hecho sobre el software de
 código abierto que se lista aquí: las bibliotecas que usa, los programas que
 corre y las herramientas con que se hace, se prueba y se empaqueta. Las
-versiones son las de py-slowdown 1.6.1 (como las resuelve `uv.lock`); `uv
+versiones son las de py-slowdown 1.7.0 (como las resuelve `uv.lock`); `uv
 tree` muestra las de cualquier versión posterior. Las licencias van como
 identificadores SPDX, tal como cada proyecto las declara.
 

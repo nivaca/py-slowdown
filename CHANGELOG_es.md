@@ -5,7 +5,9 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Sin publicar
+## 1.7.0 — 2026-11-26
+
+Desde dónde sigue Tocar/Pausa, y qué grabación abre un `.slx`.
 
 - Al abrir un `.slx` cuya grabación está a la vez a su lado (por el nombre)
   y en la ruta que nombra, dos archivos distintos, el programa pregunta cuál

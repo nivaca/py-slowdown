@@ -28,7 +28,8 @@ What it does
   skip length chosen in Settings, 1 to 60 seconds; hold the button to keep
   going), and one second back or forward. A pause takes the position back
   to where playing started, so that Space plays the same passage again;
-  Shift+Space continues from the pause instead.
+  Shift+Space continues from the pause instead (or Space itself, with
+  Playback > Play from the last pause).
 - Speed from 0.25× to 3× (25% to 300%, on a knob), changed while it plays, with the pitch kept. The
   stretching is done by the [Rubber Band Library](https://breakfastquay.com/rubberband/),
   with its R3 ("finer") engine, its highest quality, called through a small
