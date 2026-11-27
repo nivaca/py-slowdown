@@ -618,7 +618,6 @@ def sharpen(frames: np.ndarray, rate: float, guess: float, most: int = 24) -> fl
     x = mono(frames)
     if not len(x):
         return None
-    x = highpass(x - x.mean(), rate, 0.7 * LOWEST_HZ)
     size = int(max(MIN_FINE, np.ceil(Detector.periods * rate / guess)))
     if len(x) < size:
         if len(x) < MIN_FINE // 2:
@@ -626,12 +625,15 @@ def sharpen(frames: np.ndarray, rate: float, guess: float, most: int = 24) -> fl
         size = len(x)
     count = int(min(most, max(1, (len(x) - size) // (size // 2) + 1)))
     starts = np.linspace(0, len(x) - size, count).astype(int)
-    levels = [level_db(x[s:s + size]) for s in starts]
+    # Cada cuadro se filtra por su cuenta (sin la continua ni el retumbo bajo E1): filtrar de una vez un trozo de
+    # minutos pedía una FFT de millones de puntos, y en el %check del RPM tardaba segundos.
+    frames_ = [highpass(x[s:s + size] - x[s:s + size].mean(), rate, 0.7 * LOWEST_HZ) for s in starts]
+    levels = [level_db(y) for y in frames_]
     found = []
-    for s, level in zip(starts, levels):
+    for y, level in zip(frames_, levels):
         if level < max(levels) - 30:
             continue
-        f, _b, partials = refine(x[s:s + size], rate, guess)
+        f, _b, partials = refine(y, rate, guess)
         if f > 0 and partials and abs(1200 * np.log2(f / guess)) <= 60:
             found.append(f)
     return float(np.median(found)) if found else None
