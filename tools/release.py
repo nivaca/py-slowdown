@@ -1,75 +1,76 @@
 #!/usr/bin/env python3
-"""Publish a release of py-slowdown on GitHub (with gh) and Codeberg (with
-tea): the tag vVERSION (the version of pyproject.toml), signed, with the wheel, the
-source package, a ZIP of the source, the AppImage, the Debian package and the signed RPM attached (the RPM
-also published on Copr), and the source of the Rubber Band Library built into the AppImage and the Debian
-package (the GPL asks for it), each with its signature (FILE.asc), with SHA256SUMS and its signature, and with
-the public key that checks them all; and (--pypi) the wheel and the source package on PyPI.
+"""Publica una versión de py-slowdown en GitHub (con gh) y en Codeberg (con
+tea): la etiqueta vVERSIÓN (la versión de pyproject.toml), firmada, con el wheel, el
+paquete del código, un ZIP del código, la AppImage, el paquete de Debian y el RPM firmado adjuntos (el RPM
+también en Copr), y el código de la biblioteca Rubber Band que llevan dentro la AppImage y el paquete de Debian
+(la GPL lo pide), cada uno con su firma (ARCHIVO.asc), con SHA256SUMS y su firma, y con la clave pública que
+las comprueba todas; y (--pypi) el wheel y el paquete del código en PyPI.
 
-Everything is signed with the project's key (SIGNING_KEY of packaging/build-rpm.sh), and every signature is
-checked, against the public key published, before anything is published.
+Todo se firma con la clave del proyecto (SIGNING_KEY de packaging/build-rpm.sh), y cada firma se comprueba
+con la clave pública que se publica, antes de publicar nada.
 
     uv run python tools/release.py [--notes TEXT | --notes-file FILE] [--no-rpm | --no-copr] [--pypi]
                                    [--no-build] [--no-appimage] [--no-tests] [--redo]
                                    [--only github|codeberg] [--dry-run] [--yes]
     uv run python tools/release.py --installers [--dry-run] [--yes]
 
-The installers for Windows and macOS are made by GitHub, on its own machines, when the tag arrives
-(.github/workflows/installers.yml), and added to the release once this has published it; then --installers
-downloads them, signs them here (FILE.asc, SHA256SUMS-installers and its signature), and attaches the
-signatures to the release on GitHub and the installers and their signatures to the one on Codeberg.
+Los instaladores de Windows y macOS los hace GitHub, en sus propias máquinas, cuando llega la etiqueta
+(.github/workflows/installers.yml), y los añade a la versión una vez que este script la ha publicado; entonces
+--installers los descarga, los firma aquí (ARCHIVO.asc, SHA256SUMS-installers y su firma) y adjunta las firmas
+a la versión de GitHub, y los instaladores con sus firmas a la de Codeberg.
 
-In order, each step only if it is needed:
+En orden, cada paso solo si hace falta:
 
-1. checks that the repository is on main, with nothing left to commit, that
-   the versions agree (pyproject.toml, __init__.py and, unless --no-rpm, the
-   spec), that the tools are installed (gh, tea, gpg; unless --no-rpm,
-   rpmbuild and copr-cli) and that the signing key is in gpg;
-2. runs the tests (unless --no-tests);
-3. makes the wheel and the source package (uv build), the ZIP of the
-   source (git archive of HEAD), the libraries of the AppImage
-   (tools/build-libs.py), the AppImage (tools/bundle-appimage.py),
-   and the Debian package and the installer for Linux (.run) made from it
+1. comprueba que el repositorio esté en main, sin nada por confirmar, que
+   las versiones coincidan (pyproject.toml, __init__.py y, salvo con --no-rpm,
+   el spec), que las herramientas estén instaladas (gh, tea, gpg; salvo con
+   --no-rpm, rpmbuild y copr-cli) y que la clave de firma esté en gpg;
+2. corre las pruebas (salvo con --no-tests);
+3. hace el wheel y el paquete del código (uv build), el ZIP del código
+   (git archive de HEAD), las bibliotecas de la AppImage
+   (tools/build-libs.py), la AppImage (tools/bundle-appimage.py),
+   y el paquete de Debian y el instalador para Linux (.run) que salen de ella
    (tools/bundle-deb.py, tools/bundle-run.py)
-   in build/release/, unless --no-build (then those in
-   build/release/ are used); unless --no-rpm, also the signed RPM in build/rpm/
-   (packaging/build-rpm.sh --sign, which checks its signature; gpg asks for
-   the passphrase); then signs every file (tools/sign_release.py: FILE.asc,
-   build/release/SHA256SUMS and its .asc), and checks each signature with only the
-   public key that is published (packaging/RPM-GPG-KEY-py-slowdown);
-4. tags HEAD as vVERSION, a tag signed with the same key (git tag --sign),
-   and checks it (git tag -v). If the tag is already on another commit, it
-   stops, unless --redo moves it;
-5. pushes main and the tag to each remote (origin is GitHub, codeberg is
-   Codeberg; --redo pushes the tag with --force);
-6. on each forge, makes the release of the tag, or keeps the one there is,
-   and attaches the files to it, replacing those of the same name;
-7. unless --no-rpm or --no-copr, sends the signed source RPM to Copr (copr-cli build, project
-   nivaca/py-slowdown), unless --no-copr. Copr builds it for each Fedora of
-   the project and signs it with its own key. Each build needs a higher
-   version-release than the last, so the spec must have been bumped
-   (rpmdev-bumpspec; see packaging/RELEASING.md);
-8. unless --no-apt (or --no-appimage, which makes no Debian package), adds the
-   Debian package to the APT repository of these programs, github.com/nivaca/apt,
-   with its tool (../apt/tools/apt_repo.py: the index signed and checked);
-9. with --pypi, uploads the wheel and the source package to PyPI (uv publish,
-   with the API token in $UV_PUBLISH_TOKEN). PyPI never takes a file twice:
-   with --redo, those already there are skipped, not replaced.
+   en build/release/, salvo con --no-build (entonces se usan los que haya en
+   build/release/); salvo con --no-rpm, también el RPM firmado en build/rpm/
+   (packaging/build-rpm.sh --sign, que comprueba su firma; gpg pide la
+   frase de contraseña); luego firma cada archivo (tools/sign_release.py:
+   ARCHIVO.asc, build/release/SHA256SUMS y su .asc) y comprueba cada firma solo
+   con la clave pública que se publica (packaging/RPM-GPG-KEY-py-slowdown);
+4. pone en HEAD la etiqueta vVERSIÓN, firmada con la misma clave (git tag
+   --sign), y la comprueba (git tag -v). Si la etiqueta ya está en otro
+   commit, se detiene, salvo que --redo la mueva;
+5. sube main y la etiqueta a cada remoto (origin es GitHub, codeberg es
+   Codeberg; --redo sube la etiqueta con --force);
+6. en cada forja, hace la versión de la etiqueta, o conserva la que haya,
+   y le adjunta los archivos, en lugar de los que tengan el mismo nombre;
+7. salvo con --no-rpm o --no-copr, manda el RPM de código firmado a Copr (copr-cli build, proyecto
+   nivaca/py-slowdown). Copr lo compila para cada Fedora del proyecto y lo
+   firma con su propia clave. Cada compilación necesita una versión-revisión
+   mayor que la anterior, así que el spec debe haberse subido antes
+   (rpmdev-bumpspec; véase packaging/RELEASING.md);
+8. salvo con --no-apt (o --no-appimage, con el que no hay paquete de Debian),
+   añade el paquete de Debian al repositorio APT de estos programas,
+   github.com/nivaca/apt, con su herramienta (../apt/tools/apt_repo.py: el
+   índice firmado y comprobado);
+9. con --pypi, sube el wheel y el paquete del código a PyPI (uv publish,
+   con el token de la API en $UV_PUBLISH_TOKEN). PyPI nunca acepta dos veces
+   un archivo: con --redo, los que ya están se saltan, no se reemplazan.
 
-Only the RPM is kept here once the release is done (in build/rpm/, and its copy in dist/, which holds nothing
-else): at the end, build/release/ and build/zenodo/ are deleted, and the signature of the source of Rubber Band
-(build/libs/ keeps the source itself, for the next build), since the forges and Zenodo have what they held;
---installers likewise deletes build/installers/ once the installers are signed and attached.
+Terminada la publicación, aquí solo queda el RPM (en build/rpm/, y su copia en dist/, que no tiene nada
+más): al final se borran build/release/ y build/zenodo/, y la firma del código de Rubber Band (build/libs/
+conserva el código mismo, para la compilación siguiente), porque las forjas y Zenodo ya tienen lo que
+contenían; --installers borra también build/installers/ una vez firmados y adjuntos los instaladores.
 
-Before doing anything, it shows the commands it will run and asks; --yes
-doesn't ask, --dry-run only shows them. The notes of a new release are
---notes, --notes-file, or else made by GitHub from the commits (on Codeberg,
-none); a release that is there keeps its notes.
+Antes de hacer nada, muestra las órdenes que va a correr y pregunta; con --yes
+no pregunta, y con --dry-run solo las muestra. Las notas de una versión nueva son
+--notes, --notes-file o, si no, las que hace GitHub con los commits (en Codeberg,
+ninguna); una versión que ya está conserva sus notas.
 
-The deposit for Zenodo is collected in build/zenodo/ after the tag (tools/zenodo.py collect: the tree of the
-tag, signed, with SHA256SUMS and the public key), and at the end uploaded to Zenodo and published (the token
-in $ZENODO_TOKEN or in the keyring, see tools/zenodo.py), unless --no-zenodo. It is published there, with a new DOI;
-with --zenodo-draft it is left as a draft, to publish by hand.
+El depósito para Zenodo se reúne en build/zenodo/ después de la etiqueta (tools/zenodo.py collect: el árbol
+de la etiqueta, firmado, con SHA256SUMS y la clave pública), y al final se sube a Zenodo y se publica (el token
+está en $ZENODO_TOKEN o en el llavero, véase tools/zenodo.py), salvo con --no-zenodo. Allí se publica con un
+DOI nuevo; con --zenodo-draft queda como borrador, para publicarlo a mano.
 """
 
 from __future__ import annotations

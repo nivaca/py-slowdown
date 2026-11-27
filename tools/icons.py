@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""Make all the icons afresh from src/py_slowdown/icons/py-slowdown.svg:
+"""Hace de nuevo todos los íconos a partir de src/py_slowdown/icons/py-slowdown.svg:
 
-    uv run --with pillow python tools/icons.py [--svg FILE] [-o FOLDER] [--dry-run]
+    uv run --with pillow python tools/icons.py [--svg ARCHIVO] [-o CARPETA] [--dry-run]
 
-In FOLDER (src/py_slowdown/icons/ by default) it writes:
+En CARPETA (src/py_slowdown/icons/ por omisión) escribe:
 
-* linux/hicolor/NxN/apps/py-slowdown.png, for each N in HICOLOR_SIZES, and
-  linux/hicolor/scalable/apps/py-slowdown.svg (a copy of the SVG), for
-  the installers and the window;
-* macos/py-slowdown.iconset/icon_NxN[@2x].png and macos/py-slowdown.icns;
+* linux/hicolor/NxN/apps/py-slowdown.png, para cada N de HICOLOR_SIZES, y
+  linux/hicolor/scalable/apps/py-slowdown.svg (una copia del SVG), para
+  los instaladores y la ventana;
+* macos/py-slowdown.iconset/icon_NxN[@2x].png y macos/py-slowdown.icns;
 * windows/py-slowdown.ico.
 
-Each size is drawn by Inkscape from the SVG (never scaled down from a
-bigger PNG), all of them in a single run of Inkscape. The .ico is put
-together with Pillow from those same PNGs, and the .icns from the iconset
-as iconutil would (with all ten sizes: see make_icns).
+Inkscape dibuja cada tamaño a partir del SVG (nunca reducido de un PNG más
+grande), todos en una sola ejecución. El .ico lo arma Pillow con esos
+mismos PNG, y el .icns sale del iconset como lo haría iconutil (con los
+diez tamaños: véase make_icns).
 
-Inkscape is the AppImage in ~/AppImages/inkscape.appimage, if it is there;
-else a Flatpak (org.inkscape.Inkscape), run with "flatpak run", with
-absolute paths, and writing only inside FOLDER (a Flatpak does not see the
-host's /tmp: so the PNGs are first drawn in a hidden folder inside FOLDER,
-and only moved to their places once all are there); else the inkscape on
-the PATH. (From py-foliation's.)
+Inkscape es la AppImage de ~/AppImages/inkscape.appimage, si está; si no,
+un Flatpak (org.inkscape.Inkscape), corrido con "flatpak run", con rutas
+absolutas y escribiendo solo dentro de CARPETA (un Flatpak no ve el /tmp
+del sistema, así que los PNG se dibujan primero en una carpeta oculta
+dentro de CARPETA y solo pasan a su lugar cuando están todos); si no, el
+inkscape del PATH. (Tomado del de py-foliation.)
 """
 
 import argparse

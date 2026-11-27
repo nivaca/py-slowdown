@@ -1,26 +1,25 @@
 #!/usr/bin/env python3
-"""Make an AppImage of py-slowdown, for Linux:
+"""Hace una AppImage de py-slowdown, para Linux:
 
-    uv run python tools/bundle-appimage.py [-o FOLDER] [--python APPIMAGE]
+    uv run python tools/bundle-appimage.py [-o CARPETA] [--python APPIMAGE]
                                           [--python-version 3.14] [--appimagetool APPIMAGE]
 
-The AppImage is build/release/py-slowdown-VERSION-x86_64.AppImage (the version of
-pyproject.toml; --output gives another folder). It holds a Python of its own
-(a relocatable Python of the python-appimage project,
-https://github.com/niess/python-appimage) with py-slowdown and everything it
-needs installed into it (PyAV with its FFmpeg, NumPy, sounddevice, PySide6),
-and the Rubber Band and PortAudio that tools/build-libs.py compiles, so it
-runs on any recent Linux (glibc 2.34 or later: Ubuntu 22.04, Debian 12,
-Fedora 35 and later) without installing anything.
+La AppImage es build/release/py-slowdown-VERSIÓN-x86_64.AppImage (la versión de
+pyproject.toml; --output da otra carpeta). Lleva un Python propio (uno
+reubicable del proyecto python-appimage, https://github.com/niess/python-appimage),
+con py-slowdown y todo lo que necesita instalado dentro (PyAV con su FFmpeg,
+NumPy, sounddevice, PySide6), y el Rubber Band y el PortAudio que compila
+tools/build-libs.py; así corre en cualquier Linux reciente (glibc 2.34 o
+posterior: Ubuntu 22.04, Debian 12, Fedora 35 y posteriores) sin instalar nada.
 
-    py-slowdown.AppImage [FILE]     the window, with FILE open
+    py-slowdown.AppImage [ARCHIVO]     la ventana, con ARCHIVO abierto
 
-What it needs is downloaded the first time and kept in the user's cache
-folder (~/.cache/py-slowdown-build): the Python and appimagetool
-(https://github.com/AppImage/appimagetool). The program's wheel is made with
-"uv build", and its dependencies come from PyPI (so this needs the network);
-the two libraries are made by tools/build-libs.py (into build/libs) if they
-are not there yet.
+Lo que necesita se descarga la primera vez y queda en la caché del usuario
+(~/.cache/py-slowdown-build): el Python y appimagetool
+(https://github.com/AppImage/appimagetool). El wheel del programa lo hace
+"uv build", y sus dependencias vienen de PyPI (por eso hace falta la red);
+las dos bibliotecas las hace tools/build-libs.py (en build/libs) si todavía
+no están.
 """
 
 from __future__ import annotations
