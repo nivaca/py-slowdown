@@ -841,7 +841,38 @@ takes the note with the largest sum: its fundamental, even when its second
 or third harmonic is louder. The longer and steadier the passage, the
 surer the result; with several instruments at once, the note found is the
 strongest of the mix, often the bass. If the pitch of playback is moved,
-the panel also says how the note is heard.
+the panel also says how the note is heard. The frequency of the note found
+is then measured again on its harmonics, with the pitch detector described
+below, to hundredths of a cent. Under the note, the panel shows the
+spectrum of the selection, from 30\,Hz to 5\,kHz, with its clearest peaks
+named and the harmonics of the note found marked by dashed lines.
+
+\shot{pitch_en}{1}{The pitch of a melody tracked: its notes over the
+waveform, and the note of the selection, with its spectrum, in the panel
+Notes}
+
+\index{pitch!tracking}\index{tracking the pitch|see{pitch}}%
+\menu{Notes\then Track the pitch} (\key{P}) follows the pitch of the
+selection, moment by moment, or of the part in view if nothing is
+selected. It works in the background, and the status bar shows how far it
+has gone; \key{P} again stops it. Then the pitch is drawn over the
+waveform as a curve (figure~\ref{fig:pitch_en}), on a scale of notes: a
+line at each C, or at each semitone when there is room, with their names
+at the right. Each note it finds is a bar at its height, named with the
+cents it is off (\emph{G3 +8\,¢}), and slides, bends and vibrato can be
+seen in the curve. It follows one line, the strongest: in a solo or a
+clear melody it follows the melody, but in a full mix, or a chord, where
+nothing is clearly periodic, the curve leaves a gap. The curve is kept in
+the file's \texttt{.slx} (section~\ref{sec:each-file}) and comes back
+when the file is opened again; \menu{Notes\then Clear the pitch curve}
+takes it away. A minute of music takes some fifteen seconds.
+
+\index{py-tuner}%
+This pitch analysis comes from py-tuner, a tuner by the same author
+(\url{https://github.com/nivaca/py-tuner}), whose pitch detector
+py-slowdown copies: it finds the period of the sound by McLeod's method,
+chooses its octave from the harmonics, and measures each harmonic exactly
+to fit the fundamental, with the inharmonicity of a string.
 
 \index{reference tone}\index{tone|see{reference tone}}\index{drone|see{reference tone}}%
 \menu{Notes\then Reference tone} (\key{R}, or \menu{On} in the panel)
@@ -1102,6 +1133,7 @@ drag & select\\
 \key{C} & count in before playing\\
 \key{T} & tap the tempo, with the beat\\
 \key{K} & find the note of the selection\\
+\key{P} & track the pitch of the selection\\
 \key{R} & the reference tone on or off\\
 \key{[}, \key{]} & the tone a semitone lower, higher\\
 \key{Ctrl+O} & open a file\\

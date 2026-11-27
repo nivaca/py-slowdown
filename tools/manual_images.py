@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Hace las imágenes del manual de usuario (docs/MANUAL_en.tex, docs/MANUAL_es.tex), en inglés y en español:
 
-    uv run python tools/manual_images.py
+    uv run python tools/manual_images.py [pitch]
 
 Escribe docs/img/manual/NOMBRE_IDIOMA.png: la ventana con un archivo abierto, la forma de onda de cerca, el
 menú del clic derecho sobre la forma de onda, una selección que se repite con la cuenta previa, el diálogo de la
 cuenta previa, el del nombre de un marcador, los menús Reproducción, Oír y Configuración, los bucles, el diálogo
 de Exportar el audio, el de los atajos, la lista de los atajos y el menú de las velocidades. Todo sobre una grabación de muestra hecha aquí
-(con ffmpeg), dibujado
+(con ffmpeg); la altura seguida (Notas > Seguir la altura), sobre una melodía sintética (con pitch, solo esta). Todo dibujado
 fuera de la pantalla, sin tarjeta de sonido y con una configuración propia: la del usuario no se lee ni se
 escribe (HOME y las carpetas XDG apuntan a una carpeta temporal).
 """
@@ -243,18 +243,73 @@ def shoot(lang: str, audio: Path, folder: Path):
     interface.use("en")
 
 
-def main() -> int:
+def melody(folder: Path) -> Path:
+    """A short melody of plucked notes, some a little off and one with vibrato (a WAV), for the pitch tracked."""
+    import wave
+
+    import numpy as np
+
+    from py_slowdown import notes
+
+    rate = 44100
+    rng = np.random.default_rng(0)
+
+    def note(midi: int, seconds: float, cents: float = 0.0, vibrato: float = 0.0) -> np.ndarray:
+        t = np.arange(int(rate * seconds)) / rate
+        f = notes.frequency(midi + cents / 100) * 2 ** (vibrato * np.sin(2 * np.pi * 5.5 * t) / 1200)
+        phase = 2 * np.pi * np.cumsum(f) / rate
+        tone = sum(a * np.sin(h * phase) for h, a in enumerate((1, 0.5, 0.3, 0.2, 0.1), 1))
+        return tone * np.minimum(1, t / 0.01) * np.exp(-0.8 * t)
+
+    x = np.concatenate([note(55, 0.5, 8), note(57, 0.5), note(59, 0.5, -14), note(60, 1.2, 0, 25),
+                        np.zeros(int(0.3 * rate)), note(62, 0.5, 5), note(64, 0.5), note(67, 1.0, -6),
+                        note(62, 0.6)])
+    x = 0.4 * x / np.abs(x).max() + rng.normal(0, 0.003, len(x))
+    path = folder / "melody.wav"
+    with wave.open(str(path), "wb") as out:
+        out.setnchannels(1)
+        out.setsampwidth(2)
+        out.setframerate(rate)
+        out.writeframes((x * 32767).astype("<i2").tobytes())
+    return path
+
+
+def shoot_pitch(lang: str, audio: Path, folder: Path):
+    """The pitch of the melody, tracked, with the note of the selection and its spectrum in the panel Notes."""
+    from py_slowdown import interface
+
+    app, w = window(lang, audio, folder)
+    w.bookmarks = []  # (los de la grabación de muestra quedan fuera de esta melodía corta)
+    w._show_bookmarks()
+    w.set_speed(1.0)
+    w.seek(0.0)
+    w.set_selection((0.0, w.audio.duration))
+    w.find_note()
+    w.track_pitch()
+    while w._pitch_job is not None:
+        settle(app, 0.05)
+    settle(app)
+    save(w, "pitch", lang)
+    w.close()
+    interface.use("en")
+
+
+def main(argv: list[str] | None = None) -> int:
     from screenshots import sample
 
+    only_pitch = "pitch" in (argv if argv is not None else sys.argv[1:])
     OUT.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="py-slowdown-manual-") as tmp:
         folder = Path(tmp)
         for name in ("HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME"):
             os.environ[name] = str(folder)
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
-        audio = sample(folder)
+        audio = None if only_pitch else sample(folder)
+        tune = melody(folder)
         for lang in ("en", "es"):
-            shoot(lang, audio, folder)
+            if audio is not None:
+                shoot(lang, audio, folder)
+            shoot_pitch(lang, tune, folder)
     return 0
 
 

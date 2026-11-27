@@ -65,7 +65,21 @@ Lo que hace
   de la selección, como Do4, con los cents en que se aparta (−12 ¢) y su
   frecuencia, escrita sobre la selección, con las otras notas que destacan
   (las de un acorde). Si la altura de la reproducción está cambiada, dice
-  cómo se oye.
+  cómo se oye. La nota se mide en sus armónicos, a centésimas de cent, y el
+  panel Notas muestra el espectro de la selección con sus picos más claros
+  nombrados.
+- Sigue la altura de un pasaje (Notas > Seguir la altura, P): la altura de
+  la selección, instante a instante, dibujada como una curva sobre la forma
+  de onda, en una escala de notas, con cada nota que halla nombrada y los
+  cents en que se aparta (Sol3 +8 ¢). Los portamentos, las notas estiradas
+  y el vibrato se ven en la curva. Sigue una sola línea, la más fuerte: en
+  una mezcla, donde nada es claramente periódico, la curva deja un hueco.
+  La curva se guarda en el .slx del archivo.
+- El análisis de la altura viene de
+  [py-tuner](https://github.com/nivaca/py-tuner), un afinador del mismo
+  autor, cuyo detector copia py-slowdown: el período por el método de
+  McLeod, la octava elegida por los armónicos, y cada armónico medido con
+  exactitud para ajustar la fundamental.
 - Un tono de referencia (Notas > Tono de referencia, R), que suena con la
   grabación o solo, para hallar una nota en el instrumento, afinarlo con la
   grabación o sostener un bordón bajo un pasaje. En el panel Notas: una
@@ -132,6 +146,7 @@ Teclado
 | Marcar el tempo (con el pulso)    | T                                |
 | El primer pulso está aquí         | Mayús+C                          |
 | Buscar la nota de la selección    | K                                |
+| Seguir la altura de la selección  | P                                |
 | Encender / apagar el tono         | R                                |
 | Tono un semitono abajo / arriba   | [ / ]                            |
 | Abrir un archivo                  | Ctrl+O                           |

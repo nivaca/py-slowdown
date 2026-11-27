@@ -5,6 +5,28 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Unreleased
+
+The pitch of a passage, followed note by note, with the pitch detector of
+[py-tuner](https://github.com/nivaca/py-tuner), a tuner by the same author.
+
+- Notes > Track the pitch (P): the pitch of the selection (or of the part
+  in view), followed in the background, drawn as a curve over the waveform
+  on a scale of notes (a line at each C, or at each semitone when there is
+  room), with each note found named and its cents. It follows the
+  strongest line; where nothing is clearly periodic, the curve leaves a
+  gap. P again stops it; Notes > Clear the pitch curve takes it away. The
+  curve and its notes are kept in the .slx, and the tuning renames them.
+- Find the note (K) measures the note it finds again on its harmonics, as
+  py-tuner does, to hundredths of a cent (before, it could be more than a
+  cent off).
+- The panel Notes shows the spectrum of the selection, with its clearest
+  peaks named and the harmonics of the note found marked.
+- The detector is py-tuner's `pitch.py`, copied with its tests: the period
+  by McLeod's method, the octave chosen from the harmonics, and each
+  harmonic measured exactly to fit the fundamental with the inharmonicity
+  of a string.
+
 ## 1.9.0 — 2026-11-26
 
 Selecting by dragging, the note of a passage, and a reference tone.

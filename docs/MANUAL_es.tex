@@ -867,6 +867,39 @@ su tercer armónico suenen más fuerte. Cuanto más largo y estable el pasaje,
 más seguro el resultado; con varios instrumentos a la vez, la nota hallada
 es la más fuerte de la mezcla, a menudo la del bajo. Si la altura de la
 reproducción está cambiada, el panel dice también cómo se oye la nota.
+Luego la frecuencia de la nota hallada se mide de nuevo en sus armónicos,
+con el detector de la altura que se describe abajo, a centésimas de cent.
+Bajo la nota, el panel muestra el espectro de la selección, de 30\,Hz a
+5\,kHz, con sus picos más claros nombrados y los armónicos de la nota
+hallada marcados con líneas discontinuas.
+
+\shot{pitch_es}{1}{La altura de una melodía, seguida: sus notas sobre la
+forma de onda, y la nota de la selección, con su espectro, en el panel
+Notas}
+
+\index{altura!seguir}\index{seguir la altura|see{altura}}%
+\menu{Notas\then Seguir la altura} (\key{P}) sigue la altura de la
+selección, instante a instante, o de la parte a la vista si no hay nada
+seleccionado. Trabaja en segundo plano, y la barra de estado dice cuánto
+lleva; \key{P} otra vez lo detiene. Después la altura se dibuja sobre la
+forma de onda como una curva (figura~\ref{fig:pitch_es}), en una escala de
+notas: una línea en cada Do, o en cada semitono si hay sitio, con sus
+nombres a la derecha. Cada nota que halla es una barra a su altura,
+nombrada con los cents en que se aparta (\emph{Sol3 +8\,¢}), y en la
+curva se ven los portamentos, las notas estiradas y el vibrato. Sigue una
+sola línea, la más fuerte: en un solo o una melodía clara sigue la
+melodía, pero en una mezcla llena, o en un acorde, donde nada es
+claramente periódico, la curva deja un hueco. La curva se guarda en el
+\texttt{.slx} del archivo (sección~\ref{sec:cada-archivo}) y vuelve al
+abrirlo otra vez; \menu{Notas\then Borrar la curva de la altura} la
+quita. Un minuto de música tarda unos quince segundos.
+
+\index{py-tuner}%
+Este análisis de la altura viene de py-tuner, un afinador del mismo autor
+(\url{https://github.com/nivaca/py-tuner}), cuyo detector de la altura
+copia py-slowdown: halla el período del sonido por el método de McLeod,
+elige su octava por los armónicos y mide cada armónico con exactitud para
+ajustar la fundamental, con la inarmonicidad de una cuerda.
 
 \index{tono de referencia}\index{bordon@bordón|see{tono de referencia}}%
 \menu{Notas\then Tono de referencia} (\key{R}, o \menu{Encendido} en el
@@ -1128,6 +1161,7 @@ arrastrar & seleccionar\\
 \key{C} & contar antes de tocar\\
 \key{T} & marcar el tempo, con el pulso\\
 \key{K} & buscar la nota de la selección\\
+\key{P} & seguir la altura de la selección\\
 \key{R} & encender o apagar el tono de referencia\\
 \key{[}, \key{]} & el tono un semitono más bajo, más alto\\
 \key{Ctrl+O} & abrir un archivo\\

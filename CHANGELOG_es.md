@@ -5,6 +5,29 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+La altura de un pasaje, seguida nota a nota, con el detector de la altura
+de [py-tuner](https://github.com/nivaca/py-tuner), un afinador del mismo
+autor.
+
+- Notas > Seguir la altura (P): la altura de la selección (o de la parte a
+  la vista), seguida en segundo plano, dibujada como una curva sobre la
+  forma de onda en una escala de notas (una línea en cada Do, o en cada
+  semitono si hay sitio), con cada nota hallada nombrada y sus cents. Sigue
+  la línea más fuerte; donde nada es claramente periódico, la curva deja un
+  hueco. P otra vez la detiene; Notas > Borrar la curva de la altura la
+  quita. La curva y sus notas se guardan en el .slx, y la afinación les
+  cambia el nombre.
+- Buscar la nota (K) mide de nuevo la nota que halla en sus armónicos, como
+  py-tuner, a centésimas de cent (antes podía errar en más de un cent).
+- El panel Notas muestra el espectro de la selección, con sus picos más
+  claros nombrados y los armónicos de la nota hallada marcados.
+- El detector es el `pitch.py` de py-tuner, copiado con sus pruebas: el
+  período por el método de McLeod, la octava elegida por los armónicos, y
+  cada armónico medido con exactitud para ajustar la fundamental con la
+  inarmonicidad de una cuerda.
+
 ## 1.9.0 — 2026-11-26
 
 Seleccionar arrastrando, la nota de un pasaje y un tono de referencia.

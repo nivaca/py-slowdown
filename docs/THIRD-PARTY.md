@@ -62,6 +62,27 @@ No code of it is in py-slowdown: its parser was read to learn the format,
 which Seventh String Software, the makers of Transcribe!, do not publish.
 
 
+Where the pitch analysis comes from
+-----------------------------------
+
+The pitch analysis of py-slowdown 2.0 (Notes > Track the pitch, and the
+exactness of Find the note) comes from py-tuner, a tuner by the same author:
+
+| Software | Licence | What py-slowdown took from it |
+|---|---|---|
+| [py-tuner](https://github.com/nivaca/py-tuner) (also on [Codeberg](https://codeberg.org/nivaca/py-tuner)), by Nicolas Vaughan | GPL-3.0-or-later | Code copied: its pitch detector (`pitch.py` of py-tuner 0.3.0, now `src/py_slowdown/pitch.py`), which finds the period by McLeod's method, chooses the octave from the harmonics, and measures each harmonic exactly to fit the fundamental with the string's inharmonicity; its tests (`tests/test_pitch.py`). Adapted: the splitting of a recording into notes (from its report of a WAV file and its stabilizer) and the spectrum with its clearest peaks named |
+
+py-tuner owes some ideas of that detector to three other tuners, whose
+sources were read, not copied, for py-tuner (no code of them is in
+py-tuner or in py-slowdown):
+
+| Software | Licence | The ideas that reached py-slowdown through py-tuner |
+|---|---|---|
+| [Strobie](https://github.com/dsego/strobe-tuner) (strobe-tuner), by Davorin Šego | GPL-3.0 | The prominence of a partial over its local background (its harmonic stack), used to choose the octave and to name the peaks of the spectrum; the high-pass under the range; the spectrum with its loudest peaks named |
+| [Entropy Piano Tuner](https://gitlab.com/tp3/Entropy-Piano-Tuner), by Haye Hinrichsen and Christoph Wick | GPL-3.0 | The negative weights of its key recognizer's kernel, where the partials of a wrong octave would fall |
+| [Tuneo](https://github.com/DonBraulio/tuneo), by Braulio Ríos | "MIT No-Competition" (MIT with a restriction on commercial app stores) | Following the note that is sounding (its octave) from one moment to the next |
+
+
 Tools that build, test and package it
 -------------------------------------
 

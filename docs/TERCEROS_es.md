@@ -65,6 +65,27 @@ el formato, que Seventh String Software, los autores de Transcribe!, no
 publican.
 
 
+De dónde viene el análisis de la altura
+---------------------------------------
+
+El análisis de la altura de py-slowdown 2.0 (Notas > Seguir la altura, y la
+exactitud de Buscar la nota) viene de py-tuner, un afinador del mismo autor:
+
+| Software | Licencia | Lo que py-slowdown tomó de él |
+|---|---|---|
+| [py-tuner](https://github.com/nivaca/py-tuner) (también en [Codeberg](https://codeberg.org/nivaca/py-tuner)), de Nicolas Vaughan | GPL-3.0-or-later | Código copiado: su detector de la altura (el `pitch.py` de py-tuner 0.3.0, ahora `src/py_slowdown/pitch.py`), que halla el período por el método de McLeod, elige la octava por los armónicos y mide cada armónico con exactitud para ajustar la fundamental con la inarmonicidad de la cuerda; sus pruebas (`tests/test_pitch.py`). Adaptado: la división de una grabación en notas (de su informe de un archivo WAV y de su estabilizador) y el espectro con sus picos más claros nombrados |
+
+py-tuner debe algunas ideas de ese detector a otros tres afinadores, cuyo
+código se leyó para py-tuner, sin copiarlo (ni py-tuner ni py-slowdown
+tienen nada de él):
+
+| Software | Licencia | Las ideas que llegaron a py-slowdown por py-tuner |
+|---|---|---|
+| [Strobie](https://github.com/dsego/strobe-tuner) (strobe-tuner), de Davorin Šego | GPL-3.0 | La prominencia de una parcial sobre el fondo que la rodea (su pila de armónicos), con la que se elige la octava y se nombran los picos del espectro; el filtro paso alto bajo el margen; el espectro con sus picos más fuertes nombrados |
+| [Entropy Piano Tuner](https://gitlab.com/tp3/Entropy-Piano-Tuner), de Haye Hinrichsen y Christoph Wick | GPL-3.0 | Los pesos negativos del núcleo de su reconocedor de teclas, donde caerían las parciales de una octava equivocada |
+| [Tuneo](https://github.com/DonBraulio/tuneo), de Braulio Ríos | "MIT No-Competition" (MIT con una restricción sobre las tiendas comerciales de aplicaciones) | Seguir la nota que suena (su octava) de un instante al siguiente |
+
+
 Las herramientas con que se hace, se prueba y se empaqueta
 ---------------------------------------------------------
 

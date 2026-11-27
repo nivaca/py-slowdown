@@ -60,6 +60,20 @@ What it does
   the selection, as C4 with the cents it is off (−12 ¢) and its frequency,
   written on the selection, with the other notes that stand out (those of
   a chord). If the pitch of playback is moved, it says how it is heard.
+  The note is measured on its harmonics, to hundredths of a cent, and the
+  panel Notes shows the spectrum of the selection with its clearest peaks
+  named.
+- Follows the pitch of a passage (Notes > Track the pitch, P): the pitch of
+  the selection, moment by moment, drawn as a curve over the waveform on a
+  scale of notes, with each note it finds named and the cents it is off
+  (G3 +8 ¢). Slides, bends and vibrato show in the curve. It follows one
+  line, the strongest: in a mix, where nothing is clearly periodic, the
+  curve leaves a gap. The curve is kept in the file's .slx.
+- The pitch analysis comes from
+  [py-tuner](https://github.com/nivaca/py-tuner), a tuner by the same
+  author, whose detector py-slowdown copies: the period by McLeod's method,
+  the octave chosen from the harmonics, and each harmonic measured exactly
+  to fit the fundamental.
 - A reference tone (Notes > Reference tone, R), which sounds with the
   recording or alone, to find a note on the instrument, tune it to the
   recording, or hold a drone under a passage. In the panel Notes: a knob
@@ -124,6 +138,7 @@ Keyboard
 | Tap the tempo (with the beat)  | T                                |
 | The first beat is here         | Shift+C                          |
 | Find the note of the selection | K                                |
+| Track the pitch                | P                                |
 | Reference tone on / off        | R                                |
 | Tone a semitone lower / higher | [ / ]                            |
 | Open a file                    | Ctrl+O                           |
