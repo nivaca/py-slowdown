@@ -5,7 +5,8 @@ de Hann de unos 0,37 s, a lo sumo MAX_WINDOWS repartidas por el trozo) y, para
 cada fundamental posible entre E1 y C7, de diez en diez cents, suma lo que hay
 en sus armónicos, cada uno con menos peso que el anterior. La fundamental que
 más suma es la nota; su frecuencia se afina luego en el pico de su armónico más
-fuerte. También da las otras notas que destacan (las de un acorde), sin las
+fuerte, y después con pitch.sharpen (el ajuste de los armónicos de py-tuner),
+que la mide a centésimas de cent. También da las otras notas que destacan (las de un acorde), sin las
 octavas ni la duodécima de la principal, que son sus propios armónicos.
 
 Tone hace el tono de referencia que suena con la grabación, o solo: una nota
@@ -21,6 +22,8 @@ import math
 from dataclasses import dataclass, field
 
 import numpy as np
+
+from . import pitch
 
 A4 = 440.0  # Hz: the usual tuning
 TUNINGS = (415.0, 430.0, 432.0, 435.0, 438.0, 440.0, 442.0, 443.0, 444.0, 446.0)
@@ -139,6 +142,8 @@ def find(frames: np.ndarray, rate: int, a4: float = A4) -> Found | None:
              if f0 * h < nyquist]
     (center, _height), h = max(peaks, key=lambda p: p[0][1])
     hz = center * bin_hz / h
+    # Y más exacta aún, con el ajuste de sus armónicos que viene de py-tuner (pitch.sharpen), si lo hay.
+    hz = pitch.sharpen(frames, rate, hz) or hz
     midi, cents = nearest(hz, a4)
     others = _others(steps, salience, best, midi)
     return Found(hz, midi, cents, others)

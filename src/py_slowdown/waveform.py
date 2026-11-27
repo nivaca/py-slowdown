@@ -4,7 +4,9 @@ Waveform dibuja el mínimo y el máximo de cada columna de píxeles: con los pic
 que Audio calculó (Peaks) cuando la vista es amplia, y con las muestras mismas
 cuando se acerca más que un grupo de picos por píxel. La parte ya tocada va en
 otro color; encima, una regla de tiempos, la línea de la posición y los
-marcadores con su nombre, y la selección que se repite. Un clic lleva la
+marcadores con su nombre, y la selección que se repite. La altura seguida
+(Notas > Seguir la altura) va sobre la onda: su curva, sobre una escala de
+notas, y la etiqueta de cada nota con su nombre y sus cents. Un clic lleva la
 posición allí; arrastrar (con Mayús o sin ella) hace una selección;
 Ctrl+rueda acerca o aleja la vista alrededor del puntero, y la rueda sola la
 corre. Durante la cuenta previa, el pulso se ve en grande. WaveformView le pone una barra de desplazamiento debajo.
@@ -18,9 +20,10 @@ from pathlib import Path
 
 import numpy as np
 from PySide6.QtCore import QEvent, QPointF, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPalette, QPen
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QImage, QPainter, QPainterPath, QPalette, QPen
 from PySide6.QtWidgets import QMenu, QScrollBar, QSizePolicy, QVBoxLayout, QWidget
 
+from . import notes
 from .audio import BUCKET, Audio
 from .bookmarks import Bookmark
 from .interface import tr
@@ -101,6 +104,10 @@ class Waveform(QWidget):
         self.selection: tuple[float, float] | None = None  # seconds
         self.repeating = False  # whether the selection is repeated (it is drawn stronger)
         self.note: str | None = None  # la nota que se halló en la selección (C4 −12 ¢), escrita en ella
+        self.pitch_track = None  # la altura seguida en un trozo (pitch.Track), dibujada sobre la onda
+        self.pitch_a4 = notes.A4  # (la afinación de los nombres de sus notas)
+        self._pitch_key = None
+        self._pitch_image: QImage | None = None
         self.count: int | None = None  # the beat of a count-in, drawn big
         self.loops: list = []  # los bucles guardados (bookmarks.Loop), dibujados al pie
         self.recent: list[tuple[str, object]] = []  # sin archivo: las grabaciones recientes (ruta, resumen o None)
@@ -135,6 +142,8 @@ class Waveform(QWidget):
         self._cache_key = None
         self._reading = None
         self._loudest = (0, 0.0)
+        self.pitch_track = None
+        self._pitch_key = None
         self.viewChanged.emit()
         self.update()
 
@@ -305,6 +314,8 @@ class Waveform(QWidget):
             "mark": QColor("#f2b134") if dark else QColor("#b8730a"),
             "select": QColor("#4cc38a") if dark else QColor("#1f8a5b"),
             "note_text": QColor("#10241a") if dark else QColor("#ffffff"),  # (sobre el color de la selección)
+            "pitch": QColor("#e58fc4") if dark else QColor("#a1407a"),  # (la curva de la altura y sus notas)
+            "pitch_text": QColor("#2a0d1f") if dark else QColor("#ffffff"),
         }
 
     def paintEvent(self, _event) -> None:
@@ -321,6 +332,7 @@ class Waveform(QWidget):
         self._paint_ruler(painter, colors, w)
         self._paint_wave(painter, colors, w, top, h - top)
         self._paint_selection(painter, colors, h)  # (encima de la onda, transparente: la tiñe)
+        self._paint_pitch(painter, colors, w, h)
         self._paint_first_beat(painter, colors, h)
         self._paint_pause_mark(painter, colors, h)
         self._paint_marks(painter, colors, h)
@@ -569,6 +581,137 @@ class Waveform(QWidget):
             painter.drawText(box, Qt.AlignmentFlag.AlignCenter, self.note)
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.setFont(QFont(self.font()))
+
+    # --- la altura seguida
+
+    def set_pitch_track(self, track, a4: float | None = None) -> None:
+        """Draw TRACK (a pitch.Track, or None to draw none) over the wave, its notes named with A4 at A4 Hz."""
+        self.pitch_track = track
+        if a4 is not None:
+            self.pitch_a4 = a4
+        self._pitch_key = None
+        self.update()
+
+    def _paint_pitch(self, painter: QPainter, colors, w: int, h: int) -> None:
+        # La curva y sus notas se dibujan en una imagen, que solo se rehace si cambia la vista (como la onda: al
+        # avanzar la posición, solo se copia).
+        track = self.pitch_track
+        if track is None or not len(track.times) or not np.any(track.hz > 0):
+            return
+        key = (self.start, self.current_fpp(), w, h, id(track), self.pitch_a4, colors["pitch"].rgba(),
+               colors["base"].rgba())
+        if key != self._pitch_key:
+            self._pitch_image = self._pitch_picture(colors, w, h)
+            self._pitch_key = key
+        if self._pitch_image is not None:
+            painter.drawImage(QPointF(0, 0), self._pitch_image)
+
+    def pitch_scale(self, h: int) -> tuple[float, float, float, float]:
+        """Where the notes of the track go: (lowest MIDI, highest MIDI, the y of the highest, the y of the lowest),
+        two semitones past the notes found either side, and at least an octave."""
+        found = self.pitch_track.hz[self.pitch_track.hz > 0]
+        midis = 69 + 12 * np.log2(found / self.pitch_a4)
+        low, high = math.floor(float(midis.min())) - 2, math.ceil(float(midis.max())) + 2
+        if high - low < 12:
+            low -= (12 - (high - low)) // 2
+            high = low + 12
+        return low, high, RULER + FLAG + 26.0, h - LANE - 6.0
+
+    def _pitch_picture(self, colors, w: int, h: int) -> QImage | None:
+        track = self.pitch_track
+        x0, x1 = max(0.0, self.x_of(track.start)), min(float(w), self.x_of(track.end))
+        if x1 <= 0 or x0 >= w or x1 - x0 < 2:
+            return None
+        image = QImage(w, h, QImage.Format.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(image)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        low, high, top, bottom = self.pitch_scale(h)
+
+        def y_of(midi: float) -> float:
+            return bottom - (midi - low) / (high - low) * (bottom - top)
+
+        # Un velo sobre la onda, para que la curva se lea; y la escala: una línea en cada Do, o en cada semitono
+        # si hay sitio para ellas, con su nombre a la derecha (a la izquierda está la nota que K halló).
+        veil = QColor(colors["base"])
+        veil.setAlpha(150)
+        painter.fillRect(QRectF(x0, top - 20, x1 - x0, bottom - top + 26), veil)
+        semitones = (bottom - top) / (high - low) >= 10
+        font = QFont(self.font())
+        font.setPixelSize(10)
+        painter.setFont(font)
+        small = QFontMetrics(font)
+        faint = QColor(colors["faint"])
+        for midi in range(int(low), int(high) + 1):
+            if not semitones and midi % 12:
+                continue
+            y = y_of(midi)
+            strong = midi % 12 == 0
+            line = QColor(faint)
+            line.setAlpha(150 if strong else 70)
+            painter.setPen(QPen(line, 1, Qt.PenStyle.SolidLine if strong else Qt.PenStyle.DotLine))
+            painter.drawLine(QPointF(x0, y), QPointF(x1, y))
+            if strong or (semitones and (bottom - top) / (high - low) >= 13):
+                painter.setPen(faint)
+                label = notes.name(midi)
+                painter.drawText(QPointF(x1 - small.horizontalAdvance(label) - 4, y - 2), label)
+        # La curva, a trozos: se corta donde no hay altura (o donde falta más de un par de cuadros).
+        times, hz = track.times, track.hz
+        found = hz > 0
+        midis = np.where(found, 69 + 12 * np.log2(np.where(found, hz, 1.0) / self.pitch_a4), np.nan)
+        xs = (times * self.audio.rate - self.start) / self.current_fpp()
+        paths: list[QPainterPath] = []
+        path = None
+        last_t = None
+        for t, x, m in zip(times, xs, midis):
+            if np.isnan(m) or x < -20 or x > w + 20:
+                path, last_t = None, None
+                continue
+            point = QPointF(float(x), y_of(float(m)))
+            if path is None or last_t is None or t - last_t > 0.06:
+                path = QPainterPath(point)
+                paths.append(path)
+            else:
+                path.lineTo(point)
+            last_t = t
+        halo = QColor(colors["base"])
+        halo.setAlpha(200)
+        for pen in (QPen(halo, 4.5), QPen(colors["pitch"], 2)):
+            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+            painter.setPen(pen)
+            for p in paths:
+                painter.drawPath(p)
+        # Cada nota: una barra suave a su altura, de su comienzo a su final, y su nombre con sus cents encima (si
+        # no tapa la de antes).
+        bold = QFont(self.font())
+        bold.setPixelSize(11)
+        bold.setBold(True)
+        painter.setFont(bold)
+        metrics = QFontMetrics(bold)
+        right = -math.inf
+        bar = QColor(colors["pitch"])
+        bar.setAlpha(60)
+        for note in track.notes:
+            a, b = self.x_of(note.start), self.x_of(note.end)
+            if b < 0 or a > w:
+                continue
+            midi, cents = notes.nearest(note.hz, self.pitch_a4)
+            y = y_of(69 + 12 * math.log2(note.hz / self.pitch_a4))
+            painter.fillRect(QRectF(a, y - 4, max(2.0, b - a), 8), bar)
+            label = f"{notes.name(midi)} {notes.cents_text(cents)}".rstrip()
+            box = QRectF(a, y - 10 - metrics.height() - 2, metrics.horizontalAdvance(label) + 8,
+                         metrics.height() + 2)
+            if box.left() < right + 3:
+                continue
+            right = box.right()
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(colors["pitch"])
+            painter.drawRoundedRect(box, 3, 3)
+            painter.setPen(colors["pitch_text"])
+            painter.drawText(box, Qt.AlignmentFlag.AlignCenter, label)
+        painter.end()
+        return image
 
     def _paint_ruler(self, painter: QPainter, colors, w: int) -> None:
         rate = self.audio.rate

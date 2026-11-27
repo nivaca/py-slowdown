@@ -34,6 +34,30 @@ def test_round_trip(tmp_path):
     assert sidecar.load(tmp_path / "other.mp3") is None
 
 
+def test_the_pitch_tracked(tmp_path):
+    """The pitch tracked in a part (Notes > Track the pitch): its curve where it was found, and its notes."""
+    import numpy as np
+
+    from py_slowdown.pitch import Note, Track
+
+    audio = tmp_path / "song.mp3"
+    audio.write_bytes(b"x")
+    times = np.array([95.0, 95.02, 95.04, 95.06])
+    track = Track(95.0, 103.5, times, np.array([196.0213, 0.0, 196.5, 197.0]), [Note(95.0, 95.06, 196.0193)])
+    first = state()
+    first.pitch = track
+    path = sidecar.save(audio, first)
+    again = sidecar.read(path).pitch
+    assert (again.start, again.end) == (95.0, 103.5)
+    assert list(again.times) == [95.0, 95.04, 95.06] and list(again.hz) == [196.021, 196.5, 197.0]
+    assert again.notes == [Note(95.0, 95.06, 196.0193)]
+    # Sin altura seguida, no hay <pitch>; uno que no se entiende no se lee.
+    assert sidecar.read(sidecar.save(audio, state())).pitch is None
+    for broken in ('<pitch start="5" end="2">', '<pitch start="1" end="2"><curve>a b</curve>'):
+        path.write_text(f'<?xml version="1.0"?><py-slowdown>{broken}</pitch></py-slowdown>')
+        assert sidecar.read(path).pitch is None
+
+
 def test_two_files_of_the_same_name(tmp_path):
     """song.mp3 and song.flac in one folder: the first is song.slx, the second song.flac.slx; each reads its own."""
     mp3, flac = tmp_path / "song.mp3", tmp_path / "song.flac"

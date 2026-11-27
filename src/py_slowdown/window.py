@@ -14,10 +14,14 @@ from __future__ import annotations
 
 import json
 import math
+import threading
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QPointF, QSettings, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QKeySequence, QPainter, QPalette, QPen
+import numpy as np
+
+from PySide6.QtCore import QEvent, QObject, QPointF, QRectF, QSettings, QSize, Qt, QTimer, Signal
+from PySide6.QtGui import (QAction, QActionGroup, QColor, QFont, QIcon, QKeySequence, QPainter, QPainterPath,
+                           QPalette, QPen)
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -33,6 +37,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QStyle,
     QTabWidget,
     QToolButton,
@@ -43,7 +48,7 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError, thumbnail
 from .bookmarks import Bookmark, Loop, Store, export_text
-from . import equalizer, export, glyphs, notes, shortcuts, sidecar, transcribe
+from . import equalizer, export, glyphs, notes, pitch, shortcuts, sidecar, transcribe
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, grid_offset, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_BEATS, MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
@@ -153,6 +158,7 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Tap the tempo (with the beat)"), "T"),
         (tr("The first beat is here (count-in)"), tr("Shift+C")),
         (tr("Find the note of the selection"), "K"),
+        (tr("Track the pitch of the selection"), "P"),
         (tr("Reference tone on / off"), "R"),
         (tr("Reference tone a semitone lower / higher"), "[ / ]"),
         (tr("Open a file"), "Ctrl+O"),
@@ -464,6 +470,9 @@ class NotesPanel(QWidget):
         self.found.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.detail = QLabel(tr("Select a part and find its note (K)"), self)
         self.detail.setWordWrap(True)
+        self.spectrum = Spectrum(self)
+        self.spectrum.setToolTip(tr("The spectrum of the selection, with its clearest peaks named; the dashed "
+                                    "lines are the harmonics of the note found"))
         self.find_button = QPushButton(tr("Find"), self)
         self.find_button.setToolTip(tr("Find the main note of the selection, or of the two seconds from the "
                                        "position if there is none (K)"))
@@ -542,6 +551,7 @@ class NotesPanel(QWidget):
         layout.addWidget(found_heading)
         layout.addWidget(self.found)
         layout.addWidget(self.detail)
+        layout.addWidget(self.spectrum)
         layout.addLayout(buttons)
         layout.addSpacing(8)
         tone_row = QHBoxLayout()
@@ -572,6 +582,8 @@ class NotesPanel(QWidget):
         if found is None:
             self.found.setText("—")
             self.detail.setText(tr("No clear note at {where}", where=where))
+            self.spectrum.target = 0.0
+            self.spectrum.update()
             return
         self.found.setText(found.text())
         lines = [f"{found.hz:.1f} Hz · {where}"]
@@ -582,6 +594,124 @@ class NotesPanel(QWidget):
             heard = f"{notes.name(midi)} {notes.cents_text(cents)}".rstrip()
             lines.append(tr("Heard as {note}, with the pitch moved", note=heard))
         self.detail.setText("\n".join(lines))
+
+
+class Spectrum(QWidget):
+    """The spectrum of the selection in the panel Notes, on a logarithmic axis, with its clearest peaks named and
+    the harmonics of the note found marked (as py-tuner's spectrum, which follows that of Strobie, by Davorin
+    Šego)."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.freqs = np.zeros(0)
+        self.levels = np.zeros(0)
+        self.peaks: list[tuple[float, str]] = []
+        self.target = 0.0  # the note found (Hz): its harmonics are marked
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFixedHeight(120)
+        self.setMinimumWidth(200)
+
+    def set_data(self, freqs, levels, peaks: list[tuple[float, str]], target: float) -> None:
+        self.freqs, self.levels, self.peaks, self.target = freqs, levels, peaks, target
+        self.update()
+
+    def clear(self) -> None:
+        self.set_data(np.zeros(0), np.zeros(0), [], 0.0)
+
+    def x_of(self, f: float) -> float:
+        lo, hi = math.log(pitch.SPECTRUM_LOW), math.log(pitch.SPECTRUM_HIGH)
+        return (math.log(max(f, 1e-9)) - lo) / (hi - lo) * self.width()
+
+    def paintEvent(self, _event) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        palette = self.palette()
+        w, h = self.width(), self.height()
+        painter.fillRect(self.rect(), palette.color(QPalette.ColorRole.Base))
+        text = palette.color(QPalette.ColorRole.Text)
+        dim = QColor(text)
+        dim.setAlphaF(0.25)
+        font = QFont(self.font())
+        font.setPixelSize(10)
+        painter.setFont(font)
+        # las octavas, en los La (55, 110, 220... Hz)
+        f = 55.0
+        while f < pitch.SPECTRUM_HIGH:
+            x = self.x_of(f)
+            painter.setPen(QPen(dim, 1))
+            painter.drawLine(QPointF(x, 14), QPointF(x, h))
+            if x + 2 + painter.fontMetrics().horizontalAdvance(f"{f:g}") < w:
+                painter.drawText(QPointF(x + 2, h - 3), f"{f:g}")
+            f *= 2
+        if not len(self.levels):
+            painter.end()
+            return
+
+        def y_of(db: float) -> float:
+            return 14 + (1 - max(0.0, min(1.0, (db + 70) / 70))) * (h - 30)
+
+        if self.target > 0:
+            mark = QColor(palette.color(QPalette.ColorRole.Highlight))
+            mark.setAlphaF(0.6)
+            painter.setPen(QPen(mark, 1, Qt.PenStyle.DashLine))
+            n = 1
+            while n * self.target < pitch.SPECTRUM_HIGH and n <= 16:
+                x = self.x_of(n * self.target)
+                painter.drawLine(QPointF(x, 14), QPointF(x, h - 14))
+                n += 1
+        path = QPainterPath()
+        for i, (f, db) in enumerate(zip(self.freqs, self.levels)):
+            point = QPointF(self.x_of(float(f)), y_of(float(db)))
+            path.moveTo(point) if i == 0 else path.lineTo(point)
+        painter.setPen(QPen(text, 1.3))
+        painter.drawPath(path)
+        # los picos más claros, con su nota; uno que taparía a otro más fuerte (ya puesto) se queda sin nombre
+        metrics = painter.fontMetrics()
+        placed: list[tuple[float, float]] = []
+        for f, label in self.peaks:
+            x = self.x_of(f)
+            half = metrics.horizontalAdvance(label) / 2 + 3
+            if any(abs(x - other) < half + other_half for other, other_half in placed):
+                continue
+            placed.append((x, half))
+            painter.setPen(text)
+            painter.drawText(QRectF(x - half, 0, 2 * half, 14), Qt.AlignmentFlag.AlignCenter, label)
+        painter.end()
+
+
+class PitchJob(QObject):
+    """Tracks the pitch of a part (pitch.track) in a thread of its own; progressed(fraction) now and then, and
+    finished((job, track)) at the end (track None: stopped). Connected to methods of the window, they arrive in
+    its thread."""
+
+    progressed = Signal(float)
+    finished = Signal(object)
+
+    def __init__(self, audio: Audio, start: float, end: float, parent=None):
+        super().__init__(parent)
+        self.audio = audio
+        self.start, self.end = start, end
+        self._stop = threading.Event()
+        rate = audio.rate
+        # (con lo de antes del trozo que piden los primeros cuadros, y algo después, para los últimos)
+        margin = pitch.detector(rate).history / rate
+        self.offset = max(0.0, start - margin)
+        self.frames = audio.frames(int(self.offset * rate), int((end + 0.5) * rate))
+        self._thread = threading.Thread(target=self._run, name="pitch", daemon=True)
+
+    def run(self) -> None:
+        self._thread.start()
+
+    def cancel(self) -> None:
+        self._stop.set()
+
+    def _run(self) -> None:
+        try:
+            track = pitch.track(self.frames, self.audio.rate, self.offset, self.start, self.end,
+                                progress=self.progressed.emit, cancelled=self._stop.is_set)
+        except Exception:  # noqa: BLE001 (lo que falle aquí no debe tumbar la ventana)
+            track = None
+        self.finished.emit((self, track))
 
 
 def chord_names() -> dict[str, str]:
@@ -859,6 +989,8 @@ class Window(QMainWindow):
         self._saved = ""  # what was saved of the file open (_snapshot), to tell its changes
         self.bookmarks: list[Bookmark] = []
         self.loops: list[Loop] = []
+        self.pitch_track: pitch.Track | None = None  # la altura seguida (Notes > Track the pitch)
+        self._pitch_job: PitchJob | None = None
         self._resume = 0.0  # where to go once the file is decoded that far
         # Al pausar, la posición vuelve adonde empezó a tocar (para oír el pasaje otra vez); Continuar sigue
         # desde donde se pausó.
@@ -1210,6 +1342,10 @@ class Window(QMainWindow):
         self.a_find_note = a(tr("&Find the note"), self.find_note, ["K"])
         self.a_find_note.setStatusTip(tr("Find the note: the main note of the selection (or of the two seconds "
                                          "from the position), written on it and in the panel Notes"))
+        self.a_track_pitch = a(tr("Track the &pitch"), self.track_pitch, ["P"])
+        self.a_track_pitch.setStatusTip(tr("Track the pitch of the selection (or of the part in view): its curve "
+                                           "and its notes, drawn over the waveform; P again stops it"))
+        self.a_clear_pitch = a(tr("Clear the pitch &curve"), self.clear_pitch)
         self.a_tone = a(tr("&Reference tone"), lambda on: self.set_tone(on=on), ["R"], checkable=True)
         self.a_tone.setStatusTip(tr("Reference tone: a note that sounds with the recording, or alone; its note, "
                                     "chord and sound are in the panel Notes"))
@@ -1306,7 +1442,8 @@ class Window(QMainWindow):
             marks.addSeparator() if action is None else marks.addAction(action)
 
         notes_menu = bar.addMenu(tr("&Notes"))
-        for action in (self.a_find_note, None, self.a_tone, self.a_tone_found, self.a_tone_up, self.a_tone_down):
+        for action in (self.a_find_note, self.a_track_pitch, self.a_clear_pitch, None, self.a_tone,
+                       self.a_tone_found, self.a_tone_up, self.a_tone_down):
             notes_menu.addSeparator() if action is None else notes_menu.addAction(action)
         notes_menu.addSeparator()
         tunings = notes_menu.addMenu(tr("&Tuning"))
@@ -1507,6 +1644,8 @@ class Window(QMainWindow):
         self._show_bookmarks()
         self.loops = kept.loops if kept else self.store.loops(path)
         self._show_loops()
+        self.pitch_track = kept.pitch if kept else None  # (la altura seguida va solo en el .slx)
+        self.wave.set_pitch_track(self.pitch_track, self.tone.a4)
         # Cada archivo empieza con lo de siempre, y luego con lo que se guardó de él (no con lo del anterior).
         self._reset_file_settings()
         self._apply_file_settings(kept.settings if kept else self.store.settings(path))
@@ -1553,7 +1692,10 @@ class Window(QMainWindow):
         # Lo que se guarda de un archivo, salvo la posición (moverla no es un cambio que haya que preguntar).
         marks = [(round(b.time, 3), b.label, b.first_beat) for b in self.bookmarks]
         loops = [(round(x.start, 3), round(x.end, 3), x.label) for x in self.loops]
-        return json.dumps([self._file_settings(), marks, loops], sort_keys=True, default=str)
+        track = self.pitch_track
+        heights = ([round(track.start, 3), round(track.end, 3), [(round(n.start, 3), round(n.hz, 3))
+                                                                  for n in track.notes]] if track else None)
+        return json.dumps([self._file_settings(), marks, loops, heights], sort_keys=True, default=str)
 
     def _changed(self) -> bool:
         """Whether the file open has changes not saved yet (only while Ask to save is on: else all is saved as
@@ -1660,6 +1802,9 @@ class Window(QMainWindow):
         audio = self.audio
         self.set_tone(on=False)
         self.found = None
+        self._stop_tracking()
+        self.pitch_track = None
+        self.notes_panel.spectrum.clear()
         self.player.unload()
         audio.close()
         self.b_tap.setText(tr("Tap"))
@@ -1793,7 +1938,7 @@ class Window(QMainWindow):
         if (not on and not asked) or self.audio is None:
             return None
         state = sidecar.FileState(self._position_to_keep(), self._file_settings(), list(self.bookmarks),
-                                  list(self.loops))
+                                  list(self.loops), self.pitch_track)
         try:
             return sidecar.save(self.audio.path, state, folder)
         except OSError as error:
@@ -2412,6 +2557,7 @@ class Window(QMainWindow):
         self.set_tone(a4=float(a4))
         if a4 in self.a_tunings:
             self.a_tunings[a4].setChecked(True)
+        self.wave.set_pitch_track(self.pitch_track, float(a4))  # (sus notas, con los nombres de esta afinación)
         if self.found is not None:
             self.find_note()  # (los mismos hertz con otros nombres y otros cents)
 
@@ -2422,8 +2568,10 @@ class Window(QMainWindow):
             return
         start, end = self.selection or (self.player.position, self.player.position + 2.0)
         rate = self.audio.rate
-        found = notes.find(self.audio.frames(int(start * rate), int(end * rate)), rate, self.tone.a4)
+        frames = self.audio.frames(int(start * rate), int(end * rate))
+        found = notes.find(frames, rate, self.tone.a4)
         self.found = found
+        self._show_spectrum(frames, rate, found)
         where = (f"{clock(start, tenths=True)} – {clock(end, tenths=True)}" if self.selection
                  else clock(start, tenths=True))
         self.notes_panel.show_found(found, where, self.player.pitch, self.tone.a4)
@@ -2434,6 +2582,96 @@ class Window(QMainWindow):
         else:
             self.wave.show_value(found.text() if found else tr("No clear note"))
         self._update_notes_enabled()
+
+    def _show_spectrum(self, frames: np.ndarray, rate: int, found: notes.Found | None) -> None:
+        # El espectro de lo buscado, en el panel Notas: el promedio de notes.spectrum, con sus picos nombrados.
+        panel = self.notes_panel.spectrum
+        if len(frames) < notes.MIN_SECONDS * rate:
+            panel.clear()
+            return
+        mag, bin_hz = notes.spectrum(frames, rate)
+        if not np.any(mag > 0):
+            panel.clear()
+            return
+        freqs, levels = pitch.spectrum_points(mag, bin_hz)
+        named = []
+        for hz, _level in pitch.named_peaks(mag, bin_hz):
+            midi, cents = notes.nearest(hz, self.tone.a4)
+            named.append((hz, f"{notes.name(midi)} {round(cents):+d}"))
+        panel.set_data(freqs, levels, named, found.hz if found else 0.0)
+
+    # --- la altura seguida (pitch.py, que viene de py-tuner)
+
+    def track_pitch(self) -> None:
+        """Track the pitch of the selection, or of the part in view if there is none, in the background: its curve
+        and its notes are drawn over the waveform when it ends. While it runs, the same stops it."""
+        if self.audio is None:
+            return
+        if self._pitch_job is not None:
+            self._stop_tracking()
+            self.statusBar().showMessage(tr("Pitch tracking stopped"), 3000)
+            return
+        rate = self.audio.rate
+        if self.selection:
+            start, end = self.selection
+        else:
+            start = self.wave.start / rate
+            end = min(self.audio.duration, start + self.wave.visible_frames() / rate)
+        if end - start < pitch.MIN_NOTE:
+            return
+        if not self.audio.done and self.audio.decoded < end * rate:
+            self.statusBar().showMessage(tr("The file is not read up to there yet"), 4000)
+            return
+        job = PitchJob(self.audio, start, end, self)
+        job.progressed.connect(self._tracking_progress)
+        job.finished.connect(self._tracked)
+        self._pitch_job = job
+        self.a_track_pitch.setText(tr("Stop tracking the &pitch"))
+        self._tracking_progress(0.0)
+        job.run()
+
+    def _tracking_progress(self, fraction: float) -> None:
+        if self._pitch_job is not None:
+            self.statusBar().showMessage(tr("Tracking the pitch… {percent}%", percent=round(100 * fraction)))
+
+    def _stop_tracking(self) -> None:
+        if self._pitch_job is not None:
+            self._pitch_job.cancel()
+            self._pitch_job = None
+            self.a_track_pitch.setText(tr("Track the &pitch"))
+
+    def _tracked(self, result: tuple) -> None:
+        # Lo que dio el seguimiento: si es aún el de este archivo (y no se detuvo), se dibuja y se guarda.
+        job, track = result
+        if job is not self._pitch_job:
+            return
+        self._pitch_job = None
+        self.a_track_pitch.setText(tr("Track the &pitch"))
+        if track is None or job.audio is not self.audio:
+            return
+        where = f"{clock(track.start, tenths=True)} – {clock(track.end, tenths=True)}"
+        if not track.found:
+            self.statusBar().showMessage(tr("No clear pitch at {where}", where=where), 6000)
+            return
+        self.pitch_track = track
+        self.wave.set_pitch_track(track, self.tone.a4)
+        self.statusBar().showMessage(tr("{count} notes at {where}", count=len(track.notes), where=where), 6000)
+        self._pitch_changed()
+
+    def clear_pitch(self) -> None:
+        """Notes > Clear the pitch curve: no curve over the waveform (and none in the .slx)."""
+        if self.pitch_track is None:
+            return
+        self.pitch_track = None
+        self.wave.set_pitch_track(None)
+        self._pitch_changed()
+
+    def _pitch_changed(self) -> None:
+        # Como un bucle: se guarda enseguida si así se guarda todo; si no, cuenta como un cambio.
+        if self.audio and self._saving() == "always":
+            self._write_sidecar()
+        self._update_notes_enabled()
+        self._show_title()
 
     def tone_to_found(self) -> None:
         """The reference tone on the note found, as it is heard (the pitch of playback moved too), on."""
@@ -2449,8 +2687,9 @@ class Window(QMainWindow):
 
     def _update_notes_enabled(self) -> None:
         loaded = self.audio is not None
-        for action in (self.a_find_note, self.a_tone, self.a_tone_up, self.a_tone_down):
+        for action in (self.a_find_note, self.a_track_pitch, self.a_tone, self.a_tone_up, self.a_tone_down):
             action.setEnabled(loaded)
+        self.a_clear_pitch.setEnabled(loaded and self.pitch_track is not None)
         self.a_tone_found.setEnabled(loaded and self.found is not None)
         panel = self.notes_panel
         for widget in (panel.find_button, panel.on, panel.note, panel.cents, panel.volume, panel.chord,

@@ -1843,6 +1843,93 @@ def test_find_the_note_and_the_reference_tone(window, app, wav, output):
     assert window.settings.value("tone/midi", type=int) == 45
 
 
+def tracked(window, app, seconds=30):
+    # Espera a que termine el seguimiento de la altura (en su hilo), con los eventos que trae su resultado.
+    import time
+
+    limit = time.monotonic() + seconds
+    while window._pitch_job is not None and time.monotonic() < limit:
+        app.processEvents()
+        time.sleep(0.01)
+    app.processEvents()
+    assert window._pitch_job is None
+
+
+def test_track_the_pitch(window, app, wav):
+    """Notes > Track the pitch (P) follows the A3 of the test file in the selection, in the background: its curve
+    and its notes are drawn over the waveform, kept in the .slx and back when the file is opened again; the
+    tuning renames them, P while it runs stops it, Clear the pitch curve takes it away; the spectrum of the panel
+    Notes comes with Find the note."""
+    import numpy as np
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    from py_slowdown import notes, sidecar
+
+    assert not window.a_track_pitch.isEnabled() and not window.a_clear_pitch.isEnabled()
+    window.a_ask_save.setChecked(False)  # (lo que se hace se guarda en el momento)
+    loaded(window, app, wav)
+    window.set_selection((0.3, 2.7))
+    QTest.keyClick(window.wave, Qt.Key.Key_P)
+    assert window._pitch_job is not None and window.a_track_pitch.text() != "Track the &pitch"
+    tracked(window, app)
+    track = window.pitch_track
+    assert track is not None and window.wave.pitch_track is track and window.a_clear_pitch.isEnabled()
+    assert (track.start, track.end) == (0.3, 2.7) and track.notes
+    assert {notes.nearest(n.hz)[0] for n in track.notes} == {57}
+    assert all(abs(notes.nearest(n.hz)[1]) < 0.5 for n in track.notes)
+    assert "notes at 0:00.3 – 0:02.7" in window.statusBar().currentMessage()
+    image = window.wave.grab().toImage()  # (se dibuja, con su escala y sus etiquetas)
+    assert window.wave._pitch_image is not None and not image.isNull()
+    low, high, top, bottom = window.wave.pitch_scale(window.wave.height())
+    assert low < 57 < high and high - low >= 12 and top < bottom
+    # En el .slx, y de vuelta al abrirlo otra vez
+    saved = sidecar.read(sidecar.find(wav)).pitch
+    assert saved is not None and len(saved.notes) == len(track.notes)
+    window.close_file()
+    assert window.pitch_track is None and window.wave.pitch_track is None
+    loaded(window, app, wav)
+    assert window.pitch_track is not None and window.wave.pitch_track is window.pitch_track
+    assert len(window.pitch_track.notes) == len(track.notes)
+    # La afinación cambia los nombres de sus notas
+    window.set_tuning(415.0)
+    assert window.wave.pitch_a4 == 415.0
+    window.set_tuning(440.0)
+    # Sin selección: la parte a la vista; P otra vez, mientras sigue, lo detiene
+    window.set_selection(None)
+    window.track_pitch()
+    window.track_pitch()
+    assert window._pitch_job is None and "stopped" in window.statusBar().currentMessage()
+    tracked(window, app)
+    # Borrarla: ni en la onda ni en el .slx
+    window.clear_pitch()
+    assert window.pitch_track is None and window.wave.pitch_track is None and not window.a_clear_pitch.isEnabled()
+    assert sidecar.read(sidecar.find(wav)).pitch is None
+    # El espectro de Find the note, con sus picos nombrados y los armónicos de la nota
+    window.set_selection((0.3, 2.7))
+    window.find_note()
+    spectrum = window.notes_panel.spectrum
+    assert len(spectrum.levels) and spectrum.target == pytest.approx(220, rel=0.01)
+    assert spectrum.peaks and spectrum.peaks[0][1].startswith("A3")
+    assert not spectrum.grab().toImage().isNull()
+    window.close_file()
+    assert not len(spectrum.levels)
+    assert np.isfinite(track.hz).all()
+
+
+def test_track_the_pitch_of_silence(window, app, tmp_path):
+    import numpy as np
+    from conftest import write
+
+    path = tmp_path / "quiet.wav"
+    write(path, np.zeros((44100 * 3, 2), np.float32))
+    loaded(window, app, path)
+    window.set_selection((0.5, 2.0))
+    window.track_pitch()
+    tracked(window, app)
+    assert window.pitch_track is None and "No clear pitch" in window.statusBar().currentMessage()
+
+
 def test_silence_has_no_note(window, app, tmp_path):
     import numpy as np
     from conftest import write

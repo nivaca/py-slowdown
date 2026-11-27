@@ -1533,4 +1533,48 @@
     <en>Reference tone a semitone lower / higher</en>
     <tr>Tono de referencia un semitono más bajo / más alto</tr>
   </text>
+  <text>
+    <en>Track the &amp;pitch</en>
+    <tr>&amp;Seguir la altura</tr>
+  </text>
+  <text>
+    <en>Stop tracking the &amp;pitch</en>
+    <tr>&amp;Dejar de seguir la altura</tr>
+  </text>
+  <text>
+    <en>Clear the pitch &amp;curve</en>
+    <tr>Borrar la &amp;curva de la altura</tr>
+  </text>
+  <text>
+    <en>Track the pitch of the selection</en>
+    <tr>Seguir la altura de la selección</tr>
+  </text>
+  <text>
+    <en>Track the pitch of the selection (or of the part in view): its curve and its notes, drawn over the waveform; P again stops it</en>
+    <tr>Seguir la altura de la selección (o de la parte a la vista): su curva y sus notas, dibujadas sobre la forma de onda; P otra vez lo detiene</tr>
+  </text>
+  <text>
+    <en>Tracking the pitch… {percent}%</en>
+    <tr>Siguiendo la altura… {percent} %</tr>
+  </text>
+  <text>
+    <en>Pitch tracking stopped</en>
+    <tr>Seguimiento de la altura detenido</tr>
+  </text>
+  <text>
+    <en>No clear pitch at {where}</en>
+    <tr>Ninguna altura clara en {where}</tr>
+  </text>
+  <text>
+    <en>{count} notes at {where}</en>
+    <tr>{count} notas en {where}</tr>
+  </text>
+  <text>
+    <en>The file is not read up to there yet</en>
+    <tr>El archivo aún no está leído hasta allí</tr>
+  </text>
+  <text>
+    <en>The spectrum of the selection, with its clearest peaks named; the dashed lines are the harmonics of the note found</en>
+    <tr>El espectro de la selección, con sus picos más claros nombrados; las líneas discontinuas son los armónicos de la nota encontrada</tr>
+  </text>
 </interface>

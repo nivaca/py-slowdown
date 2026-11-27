@@ -23,7 +23,14 @@ fecha:
         <bookmark time="21.5">La segunda estrofa</bookmark>
       </bookmarks>
       <loops><loop start="95.0" end="103.5">El puente</loop></loops>
+      <pitch start="95.0" end="103.5">
+        <curve>95.012 196.021 95.032 196.018 ...</curve>
+        <note start="95.06" end="95.46" hz="196.0193"/>
+      </pitch>
     </py-slowdown>
+
+La altura seguida (Notas > Seguir la altura) va en <pitch>: el trozo, los pares
+tiempo y hertz de la curva (solo donde se halló altura) y las notas.
 
 Si canción.slx ya es de otro archivo (canción.flac, en la misma carpeta), el de
 este se llama canción.mp3.slx; y si también ese es de otro (en una carpeta
@@ -42,8 +49,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
+
 from . import __version__
 from .bookmarks import Bookmark, Loop
+from .pitch import Note, Track
 
 FORMAT = "1"
 EXTENSION = ".slx"
@@ -58,6 +68,7 @@ class FileState:
     settings: dict = field(default_factory=dict)  # como Window._file_settings: speed, pitch, hearing...
     bookmarks: list[Bookmark] = field(default_factory=list)
     loops: list[Loop] = field(default_factory=list)
+    pitch: Track | None = None  # la altura seguida en un trozo (Notes > Track the pitch)
 
 
 def candidates(audio: Path, folder: Path | None = None, extension: str = EXTENSION) -> list[Path]:
@@ -205,7 +216,28 @@ def read(path: Path) -> FileState | None:
         start, end = _number(loop, "start", -1.0), _number(loop, "end", -1.0)
         if 0.0 <= start < end:
             state.loops.append(Loop(start, end, (loop.text or "").strip()))
+    state.pitch = _read_pitch(root.find("pitch"))
     return state
+
+
+def _read_pitch(element: ET.Element | None) -> Track | None:
+    # La altura guardada, o None si no la hay (o no se entiende).
+    if element is None:
+        return None
+    start, end = _number(element, "start", -1.0), _number(element, "end", -1.0)
+    if not 0.0 <= start < end:
+        return None
+    try:
+        values = [float(v) for v in (element.findtext("curve") or "").split()]
+    except ValueError:
+        return None
+    pairs = np.array(values[: len(values) // 2 * 2]).reshape(-1, 2)
+    notes = []
+    for note in element.iterfind("note"):
+        a, b, hz = _number(note, "start", -1.0), _number(note, "end", -1.0), _number(note, "hz", 0.0)
+        if 0.0 <= a <= b and hz > 0:
+            notes.append(Note(a, b, hz))
+    return Track(start, end, pairs[:, 0].copy(), pairs[:, 1].copy(), notes)
 
 
 def _text(value: float) -> str:
@@ -255,6 +287,14 @@ def save(audio: Path, state: FileState, folder: Path | None = None) -> Path:
     loops = ET.SubElement(root, "loops")
     for loop in sorted(state.loops, key=lambda x: (x.start, x.end)):
         ET.SubElement(loops, "loop", start=_text(loop.start), end=_text(loop.end)).text = loop.label
+    if state.pitch is not None:
+        track = state.pitch
+        element = ET.SubElement(root, "pitch", start=_text(track.start), end=_text(track.end))
+        found = track.hz > 0
+        ET.SubElement(element, "curve").text = " ".join(
+            f"{t:.3f} {f:.3f}" for t, f in zip(track.times[found], track.hz[found]))
+        for note in track.notes:
+            ET.SubElement(element, "note", start=_text(note.start), end=_text(note.end), hz=f"{note.hz:.4f}")
     ET.indent(root, space="  ")
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
