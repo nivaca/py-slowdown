@@ -293,7 +293,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if not sys.platform.startswith("linux"):
         sys.exit("bundle-appimage.py: AppImages are made on Linux")
-    output = args.output or DIST
+    output = (args.output or DIST).resolve()  # (la prueba final corre la AppImage desde otra carpeta)
     output.mkdir(parents=True, exist_ok=True)
     try:
         path = bundle(output, args.python, args.appimagetool, args.python_version)

@@ -190,6 +190,7 @@ def main(argv=None) -> int:
                         help="the AppImage to make it from (tools/bundle-appimage.py)")
     parser.add_argument("-o", "--output", type=Path, default=DIST, help="the folder of the package (build/release)")
     args = parser.parse_args(argv)
+    args.output = args.output.resolve()  # (una ruta relativa vale también si algo corre en otra carpeta)
     if not args.appimage.is_file():
         sys.exit(f"bundle-deb.py: there is no {args.appimage} (make it first: tools/bundle-appimage.py)")
     args.output.mkdir(parents=True, exist_ok=True)
