@@ -11,8 +11,9 @@
 # Builds py-slowdown's RPM (and source RPM) from this checkout, into
 # build/rpm/ — not ~/rpmbuild, so nothing outside the repo is touched. The
 # RPM (signed, with --sign) is also copied to dist/, replacing the older RPMs
-# there: it is the only package kept in dist/ (tools/release.py makes the
-# others in build/release/, and deletes them once they are published).
+# there. dist/ keeps only the newest .rpm, .tar.gz and .zip: tools/release.py
+# makes the rest of a release in build/release/, copies the source package
+# and the ZIP to dist/, and deletes build/release/ once all is published.
 #
 #   packaging/build-rpm.sh [--sign[=KEY]]
 #

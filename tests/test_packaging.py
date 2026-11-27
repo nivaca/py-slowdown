@@ -179,3 +179,24 @@ def test_the_appimage_starts_the_window(tmp_path):
     out = subprocess.run([str(apprun), "talk.mp3"], capture_output=True, text=True, check=True,
                          env={"PATH": "/usr/bin:/bin", "PYTHONPATH": "/elsewhere"}).stdout.strip()
     assert out == "-m py_slowdown talk.mp3"
+
+
+def test_keep_in_dist(tmp_path):
+    """dist/ keeps the newest source package and ZIP, in place of older ones; anything else there stays."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("release", ROOT / "tools" / "release.py")
+    release = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(release)
+    out = tmp_path / "build" / "release"
+    out.mkdir(parents=True)
+    for made, _ in release.KEPT:
+        (tmp_path / made).write_text("new")
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "py_slowdown-0.0.1.tar.gz").write_text("old")
+    (dist / "py-slowdown-0.0.1.zip").write_text("old")
+    (dist / "py-slowdown-0.0.1-1.fc45.noarch.rpm").write_text("rpm")
+    assert release.keep_in_dist(tmp_path) == 0
+    names = sorted(p.name for p in dist.iterdir())
+    assert names == sorted(["py-slowdown-0.0.1-1.fc45.noarch.rpm", Path(release.SDIST).name, Path(release.ZIP).name])

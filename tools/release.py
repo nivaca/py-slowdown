@@ -57,8 +57,10 @@ En orden, cada paso solo si hace falta:
    con el token de la API en $UV_PUBLISH_TOKEN). PyPI nunca acepta dos veces
    un archivo: con --redo, los que ya están se saltan, no se reemplazan.
 
-Terminada la publicación, aquí solo queda el RPM (en build/rpm/, y su copia en dist/, que no tiene nada
-más): al final se borran build/release/ y build/zenodo/, y la firma del código de Rubber Band (build/libs/
+Hecha la publicación, aquí solo quedan, en dist/, el RPM (que packaging/build-rpm.sh copia allí y deja
+también en build/rpm/), el paquete fuente (.tar.gz) y el ZIP del código, cada uno en lugar de los de
+versiones anteriores; lo demás (la rueda, la AppImage, SHA256SUMS y todas las firmas) ya lo tienen las forjas
+y Zenodo. Al final se borran build/release/ y build/zenodo/, y la firma del código de Rubber Band (build/libs/
 conserva el código mismo, para la compilación siguiente), porque las forjas y Zenodo ya tienen lo que
 contenían; --installers borra también build/installers/ una vez firmados y adjuntos los instaladores.
 
@@ -91,12 +93,14 @@ VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["versi
 TAG = f"v{VERSION}"
 TITLE = f"py-slowdown {VERSION}"
 BRANCH = "main"
-# Lo que se publica se hace en build/release/, no en dist/: en local solo se guarda el RPM (en build/rpm/, y su
-# copia en dist/, que no tiene nada más)
+# Lo que se publica se hace en build/release/, no en dist/: en local se guardan, en dist/, solo el RPM, el paquete
+# fuente y el ZIP, la última versión de cada uno
 OUT = "build/release"
 WHEEL = f"{OUT}/py_slowdown-{VERSION}-py3-none-any.whl"
 SDIST = f"{OUT}/py_slowdown-{VERSION}.tar.gz"
 ZIP = f"{OUT}/py-slowdown-{VERSION}.zip"
+# Los paquetes que se guardan en dist/ (además del RPM), la última versión de cada clase: (archivo, patrón de los viejos)
+KEPT = ((SDIST, "py_slowdown-*.tar.gz"), (ZIP, "py-slowdown-*.zip"))
 APPIMAGE = f"{OUT}/py-slowdown-{VERSION}-x86_64.AppImage"
 DEB = f"{OUT}/py-slowdown_{VERSION}-1_amd64.deb"  # (hecho de la AppImage, va con ella)
 # La herramienta del repositorio APT de estos programas: el proyecto apt, junto a este (github.com/nivaca/apt)
@@ -447,10 +451,12 @@ class Release:
         self.run_plan()
 
     def clean_up(self):
-        """Once all is published: only the RPM stays here (build/rpm/, and its copy in dist/); the rest is on the
-        forges and on Zenodo."""
+        """Once all is published: dist/ keeps the RPM (copied by build-rpm.sh), the source package and the ZIP, the
+        newest of each; the rest of build/release/ is deleted, as it is on the forges and on Zenodo."""
+        self.plan("Keep the source package and the ZIP in dist/, in place of older ones", sys.executable,
+                  "tools/release.py", "--keep-in-dist")
         # (el código de Rubber Band se queda en build/libs/, donde tools/build-libs.py lo busca; su firma, no)
-        self.plan("Delete what was published from build/ (only the RPM stays)", "rm", "-rf", OUT, "build/zenodo",
+        self.plan("Delete what was published from build/ (only the RPM stays there)", "rm", "-rf", OUT, "build/zenodo",
                   f"{RUBBERBAND_SOURCE}.asc")
 
 
@@ -490,12 +496,35 @@ def main(argv=None):
     parser.add_argument("--zenodo", action="store_true",
                         help="(the upload to Zenodo is made always now, unless --no-zenodo: kept "
                              "for older scripts)")
+    parser.add_argument("--keep-in-dist", action="store_true",
+                        help="only copy the source package and the ZIP of build/release/ to dist/, in place of "
+                             "older ones (the release does it at the end)")
     parser.add_argument("-n", "--dry-run", action="store_true", help="only show the commands")
     parser.add_argument("-y", "--yes", action="store_true", help="don't ask before running them")
     args = parser.parse_args(argv)
     if args.notes_file:
         args.notes_file = str(Path(args.notes_file).resolve())
+    if args.keep_in_dist:
+        sys.exit(keep_in_dist())
     Release(args)()
+
+
+def keep_in_dist(root: Path = ROOT) -> int:
+    """Copies the source package and the ZIP of build/release/ to dist/, deleting their older versions there. Copias,
+    no movimientos: la publicación los borra de build/release/ después, con todo lo demás."""
+    dist = root / "dist"
+    dist.mkdir(exist_ok=True)
+    for made, pattern in KEPT:
+        source = root / made
+        if not source.is_file():
+            print(f"release.py: there is no {made}", file=sys.stderr)
+            return 1
+        for old in dist.glob(pattern):
+            if old.name != source.name:
+                old.unlink()
+        shutil.copy2(source, dist / source.name)
+        print(f"Kept {source.name} in dist/")
+    return 0
 
 
 if __name__ == "__main__":
