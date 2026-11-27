@@ -5,7 +5,7 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Unreleased
+## 2.0.0 — 2026-11-27
 
 The pitch of a passage, followed note by note, with the pitch detector of
 [py-tuner](https://github.com/nivaca/py-tuner), a tuner by the same author.

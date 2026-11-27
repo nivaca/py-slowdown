@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-slowdown
-Version:        1.9.0
+Version:        2.0.0
 Release:        1%{?dist}
 Summary:        Play audio slower or faster without changing its pitch
 
@@ -101,6 +101,11 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-slowdown.1*
 
 %changelog
+* Fri Nov 27 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 2.0.0-1
+- Notes > Track the pitch (P), with the pitch detector of py-tuner: its curve
+  and its notes over the waveform; Find the note measured on its harmonics; the
+  spectrum of the selection in the panel Notes
+
 * Thu Nov 26 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 1.9.0-1
 - Dragging on the waveform selects; Notes > Find the note (K) and a reference
   tone (R), with the tuning of A4

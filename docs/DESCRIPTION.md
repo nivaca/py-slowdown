@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in thirty-one stages.
+in thirty-two stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -19,7 +19,12 @@ the ffmpeg program; the sound reaches the sound card through sounddevice
 (MIT) and PortAudio (MIT); the window uses PySide6 (LGPL 3), and the
 numbers NumPy (BSD). How the files of Transcribe! keep their markers I
 learnt from Rory O'Kane's Transcribe-xsc-file-converter (BlueOak 1.0.0),
-without taking its code.
+without taking its code. The pitch detector comes from py-tuner, my own
+tuner (GPL 3 or later, https://github.com/nivaca/py-tuner), whose code it
+copies; py-tuner, in its turn, owes some of its ideas to Strobie, by
+Davorin Šego, and to Entropy Piano Tuner, by Haye Hinrichsen and Christoph
+Wick (both GPL 3), and to Tuneo, by Braulio Ríos (MIT with a restriction),
+whose sources were read, not copied.
 
 Nicolas Vaughan is Associate Professor of Literature at the School of Arts
 and Humanities of the Universidad de los Andes, Bogotá, Colombia.
@@ -957,10 +962,52 @@ the new one along a single block, so that nothing clicks. I checked it
 through PipeWire, recording what went out, and not only in the tests.
 Notes > Tuning sets A4, from 415 to 446 Hz, for both.
 
+32. The pitch of a passage, from py-tuner
+-----------------------------------------
+
+Version 2.0.0 brings into py-slowdown the pitch analysis of py-tuner, a
+tuner I made in the same weeks (https://github.com/nivaca/py-tuner). A
+tuner must say how far a string is from its note, to the tenth of a cent,
+and py-tuner's detector does it in two steps: a coarse period by McLeod's
+method (the normalized square difference function, computed with the
+FFT), with the octave and the twelfth checked against the harmonics, as
+Strobie and Entropy Piano Tuner do; then each harmonic is located exactly,
+at the true maximum of the Fourier transform of the windowed frame, and
+the fundamental comes from a weighted fit to the model of a real string,
+with its inharmonicity. Since both programs are mine and under the same
+licence, I copied that module, `pitch.py`, whole, with its tests, rather
+than making py-slowdown depend on py-tuner, which would have brought its
+sound input into every package.
+
+Three things were made with it. Find the note keeps its method, which
+works on chords and mixes, but the frequency it finds is then measured
+again on the harmonics, in several frames along the selection, and the
+median is taken; on clean notes the error went from up to a cent and a
+third to less than a thousandth. The panel Notes also shows the spectrum
+of the selection, with its clearest peaks named, as py-tuner does.
+
+The largest is Notes > Track the pitch (P). The detector runs every
+twenty milliseconds along the selection, in a thread of its own, so the
+window does not wait, and each estimate prefers the octave of the one
+before, as Tuneo follows the note that is sounding. Frames 40 dB under the
+loudest of the part are left out, and so are lone values. Then the curve
+is split into notes, as py-tuner's report of a WAV file does: a note goes
+on while each value stays within half a semitone of its recent median, so
+that vibrato and slow slides stay one note, and a jump confirmed by three
+values starts another. The first version cut a note at every frame that
+was missing, so two frames without pitch are now allowed. The curve is
+drawn over the waveform, on a scale of notes, with each note named and
+its cents. It is drawn once into an image, like the waveform itself,
+since painting thousands of points at every step of the position had
+already made the sound stutter once. The detector was made for one
+string, so in a mix it follows only the strongest line, and where nothing
+is clearly periodic the curve has a gap; I prefer an honest gap to a
+wrong note. The result is kept in the `.slx` of the recording.
+
 Testing
 -------
 
-The program has 278 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 329 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds; the `%check` of the
 RPM runs them the same way, with Fedora's Python, on the installed package. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
@@ -986,7 +1033,7 @@ files of 1.2.0, opening it), the first beat and its grid, the keyboard
 shortcuts and the waveform kept for the next time; and the window's
 details: the menus and the keys of the knobs, the detents of the speed, the
 loops on the waveform, the clock, the panel Sound, the compact mode, the
-start screen, the zoom to the selection, and selecting by dragging; and the notes found in tones, chords and noise, and the reference tone, which must not click. The player is
+start screen, the zoom to the selection, and selecting by dragging; and the notes found in tones, chords and noise, and the reference tone, which must not click; py-tuner's own tests of the pitch detector (strings of known frequency, with noise, a weak or missing fundamental, inharmonicity), and a melody tracked note by note, within a fifth of a cent, the splitting into notes, and the pitch tracked in the window, kept in the `.slx` and opened again. The player is
 tested with a sound card that the tests drive themselves, and the window
 offscreen: opening a file, the controls, a pause that goes back, the volume above 100%, the clicks of the count-in, the speed, the pitch in semitones and cents, the bookmarks, the
 point where it was left, a file that is not audio, the window without
@@ -1005,4 +1052,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 91 text files and about 26,200 lines (16,500 of them in Python).
+The program has 93 text files and about 28,100 lines (18,200 of them in Python).
