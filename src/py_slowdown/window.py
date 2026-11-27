@@ -144,7 +144,7 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Zoom to the selection"), "Z"),
         (tr("Zoom around the pointer"), tr("Ctrl+wheel")),
         (tr("Repeat the selection"), "L"),
-        (tr("Select with the mouse"), tr("Shift+drag")),
+        (tr("Select with the mouse"), tr("Drag")),
         (tr("Start / end of the selection at the position"), "I / O"),
         (tr("Clear the selection"), tr("Esc")),
         (tr("Select the whole file"), "Ctrl+A"),
@@ -858,7 +858,7 @@ class Window(QMainWindow):
         self.b_repeat.setCheckable(True)
         self.b_repeat.setAutoRaise(True)
         self.b_repeat.setToolTip(tr("Repeat the selection, or the whole file if there is none, without a pause (L); "
-                                    "Shift+drag on the waveform selects"))
+                                    "dragging on the waveform selects"))
         self.b_repeat.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.b_tap = QToolButton(self)
         self.b_tap.setText(tr("Tap"))
@@ -1884,7 +1884,7 @@ class Window(QMainWindow):
         self.wave.set_selection(self.selection, on)
         self._apply_loop()
         if on and not self.selection:
-            self.statusBar().showMessage(tr("Repeating the whole file (to repeat only a part, select it: Shift+drag "
+            self.statusBar().showMessage(tr("Repeating the whole file (to repeat only a part, select it: drag "
                                             "on the waveform, or I and O)"), 6000)
 
     def _apply_loop(self) -> None:
@@ -2522,7 +2522,7 @@ class Window(QMainWindow):
             keys = [k.toString(shortcuts.NATIVE) for k in action.shortcuts() if not k.isEmpty()]
             if keys:
                 rows.append((shortcuts.plain(action.text()), "   ".join(keys)))
-        rows += [(tr("Zoom around the pointer"), tr("Ctrl+wheel")), (tr("Select with the mouse"), tr("Shift+drag"))]
+        rows += [(tr("Zoom around the pointer"), tr("Ctrl+wheel")), (tr("Select with the mouse"), tr("Drag"))]
         return rows
 
     def show_shortcuts(self) -> None:

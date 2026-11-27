@@ -5,7 +5,7 @@ que Audio calculó (Peaks) cuando la vista es amplia, y con las muestras mismas
 cuando se acerca más que un grupo de picos por píxel. La parte ya tocada va en
 otro color; encima, una regla de tiempos, la línea de la posición y los
 marcadores con su nombre, y la selección que se repite. Un clic lleva la
-posición allí; arrastrar la sigue; Mayús+arrastrar hace una selección;
+posición allí; arrastrar (con Mayús o sin ella) hace una selección;
 Ctrl+rueda acerca o aleja la vista alrededor del puntero, y la rueda sola la
 corre. Durante la cuenta previa, el pulso se ve en grande. WaveformView le pone una barra de desplazamiento debajo.
 """
@@ -34,6 +34,7 @@ LOOP_COLORS = ("#e69f00", "#56b4e9", "#009e73", "#cc79a7", "#d55e00", "#0072b2",
 FLAG = 16  # alto de la banda de los marcadores
 MIN_FPP = 1.0  # a lo sumo un cuadro por píxel
 GRAB = 5  # píxeles a cada lado de un marcador que cuentan como suyos
+DRAG = 4  # pixels the mouse must move, button down, for a click to become a selection
 
 # Pasos de la regla, en segundos: se usa el primero que deje unos 90 píxeles entre marcas.
 # Mientras se lee un archivo, la onda se redibuja a lo sumo cada tanto (segundos): cada vez se rehacen sus imágenes.
@@ -110,8 +111,9 @@ class Waveform(QWidget):
         self._flash_alpha = 0
         self.first_beat: float | None = None  # the beat on which the recording comes in after the count
         self.pause_mark: float | None = None  # where the last pause was, to continue from it (Shift+Space)
-        self._dragging = False
-        self._selecting: float | None = None  # where a Shift+drag began
+        self._dragging = False  # un botón apretado sobre la onda, que aún no se movió (o que ya selecciona)
+        self._pressed: tuple[float, float] | None = None  # (x, segundos) del clic, mientras no se arrastra
+        self._selecting: float | None = None  # where a drag (with Shift or without) began
         self._cache_key = None
         self._cache: tuple[np.ndarray, np.ndarray] | None = None
         self._reading = None  # lo que se dibujó de la lectura: (columna de lo leído, largo, terminado)
@@ -679,8 +681,10 @@ class Waveform(QWidget):
         if loop is not None:
             self.loopClicked.emit(loop)  # (lo elige, lo repite y va a su comienzo)
             return
+        # Sin Mayús, un clic lleva la posición allí al soltar; si antes se arrastra, es una selección, como
+        # con Mayús (y la posición no se mueve).
         self._dragging = True
-        self.seekRequested.emit(self.seconds_at(x))
+        self._pressed = (x, self.seconds_at(x))
 
     def mouseMoveEvent(self, event) -> None:
         x = event.position().x()
@@ -692,12 +696,14 @@ class Waveform(QWidget):
                 self.setCursor(Qt.CursorShape.PointingHandCursor if row is not None else Qt.CursorShape.ArrowCursor)
                 self.update()
             return
+        if self._pressed is not None and abs(x - self._pressed[0]) >= DRAG:
+            self._selecting = self._pressed[1]
+            self._pressed = None
         if self._selecting is not None:
             here = self.seconds_at(x)
             self.set_selection((min(self._selecting, here), max(self._selecting, here)))
             return
         if self._dragging:
-            self.seekRequested.emit(self.seconds_at(x))
             return
         if self.audio:
             mark = self.bookmark_at(x)
@@ -715,12 +721,15 @@ class Waveform(QWidget):
 
     def mouseReleaseEvent(self, event) -> None:
         self._dragging = False
+        pressed, self._pressed = self._pressed, None
         if self._selecting is not None:
             here = self.seconds_at(event.position().x())
             start, end = sorted((self._selecting, here))
             self._selecting = None
             # (un clic con Mayús, sin arrastrar, quita la selección)
             self.selectionChanged.emit((start, end) if end - start > 0.05 else None)
+        elif pressed is not None:
+            self.seekRequested.emit(pressed[1])  # un clic sin arrastrar: la posición, allí
 
     def mouseDoubleClickEvent(self, event) -> None:
         mark = self.bookmark_at(event.position().x())

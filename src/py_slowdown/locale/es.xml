@@ -612,8 +612,8 @@
     <tr>Selección: {start} – {end}</tr>
   </text>
   <text>
-    <en>Shift+drag</en>
-    <tr>Mayús+arrastrar</tr>
+    <en>Drag</en>
+    <tr>Arrastrar</tr>
   </text>
   <text>
     <en>Start / end of the selection at the position</en>
@@ -1162,12 +1162,12 @@
     <tr>Cambios de &amp;esta grabación</tr>
   </text>
   <text>
-    <en>Repeat the selection, or the whole file if there is none, without a pause (L); Shift+drag on the waveform selects</en>
-    <tr>Repetir la selección, o el archivo entero si no hay, sin pausa (L); Mayús+arrastrar sobre la forma de onda selecciona</tr>
+    <en>Repeat the selection, or the whole file if there is none, without a pause (L); dragging on the waveform selects</en>
+    <tr>Repetir la selección, o el archivo entero si no hay, sin pausa (L); arrastrar sobre la forma de onda selecciona</tr>
   </text>
   <text>
-    <en>Repeating the whole file (to repeat only a part, select it: Shift+drag on the waveform, or I and O)</en>
-    <tr>Se repite el archivo entero (para repetir solo una parte, selecciónela: Mayús+arrastrar sobre la forma de onda, o I y O)</tr>
+    <en>Repeating the whole file (to repeat only a part, select it: drag on the waveform, or I and O)</en>
+    <tr>Se repite el archivo entero (para repetir solo una parte, selecciónela: arrastre sobre la forma de onda, o I y O)</tr>
   </text>
   <text>
     <en>The speed: slower or faster (Down, Up; the mouse wheel by 5%), the pitch stays the same; a double click goes back to 100%</en>
