@@ -100,6 +100,7 @@ class Waveform(QWidget):
         self.follow = True
         self.selection: tuple[float, float] | None = None  # seconds
         self.repeating = False  # whether the selection is repeated (it is drawn stronger)
+        self.note: str | None = None  # la nota que se halló en la selección (C4 −12 ¢), escrita en ella
         self.count: int | None = None  # the beat of a count-in, drawn big
         self.loops: list = []  # los bucles guardados (bookmarks.Loop), dibujados al pie
         self.recent: list[tuple[str, object]] = []  # sin archivo: las grabaciones recientes (ruta, resumen o None)
@@ -303,6 +304,7 @@ class Waveform(QWidget):
             "cursor": QColor("#ff5a3c") if dark else QColor("#d62d0f"),
             "mark": QColor("#f2b134") if dark else QColor("#b8730a"),
             "select": QColor("#4cc38a") if dark else QColor("#1f8a5b"),
+            "note_text": QColor("#10241a") if dark else QColor("#ffffff"),  # (sobre el color de la selección)
         }
 
     def paintEvent(self, _event) -> None:
@@ -532,6 +534,8 @@ class Waveform(QWidget):
             self.update()
 
     def set_selection(self, selection: tuple[float, float] | None, repeating: bool | None = None) -> None:
+        if selection != self.selection:
+            self.note = None  # (la nota hallada era de la selección de antes)
         self.selection = selection
         if repeating is not None:
             self.repeating = repeating
@@ -549,6 +553,22 @@ class Waveform(QWidget):
         for x in (x0, x1):
             painter.drawLine(QPointF(x, RULER), QPointF(x, h))
         painter.fillRect(QRectF(x0, 0, x1 - x0, 4), edge)  # (también en la regla)
+        if self.note:
+            # La nota hallada, en una etiqueta arriba a la izquierda de la selección (a la vista, mientras dure).
+            font = QFont(painter.font())
+            font.setBold(True)
+            font.setPixelSize(15)
+            painter.setFont(font)
+            metrics = QFontMetrics(font)
+            box = QRectF(max(0.0, x0) + 4, RULER + FLAG + 4, metrics.horizontalAdvance(self.note) + 12,
+                         metrics.height() + 4)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(edge)
+            painter.drawRoundedRect(box, 4, 4)
+            painter.setPen(colors["note_text"])
+            painter.drawText(box, Qt.AlignmentFlag.AlignCenter, self.note)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setFont(QFont(self.font()))
 
     def _paint_ruler(self, painter: QPainter, colors, w: int) -> None:
         rate = self.audio.rate

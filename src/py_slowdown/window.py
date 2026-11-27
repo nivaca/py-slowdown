@@ -43,7 +43,7 @@ from PySide6.QtWidgets import (
 from . import __version__, interface, rubberband
 from .audio import EXTENSIONS, Audio, AudioError, thumbnail
 from .bookmarks import Bookmark, Loop, Store, export_text
-from . import equalizer, export, glyphs, shortcuts, sidecar, transcribe
+from . import equalizer, export, glyphs, notes, shortcuts, sidecar, transcribe
 from .countin import MAX_OFFSET, CountIn, CountInDialog, TapTempo, grid_offset, number, recording_tempo
 from .exportdialog import ExportDialog, run_export, suggested_name
 from .engine import MAX_BEATS, MAX_BPM, MAX_PITCH, MAX_SPEED, MIN_BPM, MIN_LOOP, MIN_SPEED, Output, Player, max_earlier
@@ -152,6 +152,9 @@ def shortcut_rows() -> list[tuple[str, str]]:
         (tr("Count in before playing"), "C"),
         (tr("Tap the tempo (with the beat)"), "T"),
         (tr("The first beat is here (count-in)"), tr("Shift+C")),
+        (tr("Find the note of the selection"), "K"),
+        (tr("Reference tone on / off"), "R"),
+        (tr("Reference tone a semitone lower / higher"), "[ / ]"),
         (tr("Open a file"), "Ctrl+O"),
         (tr("Close the file (the program stays open)"), "Ctrl+W"),
         (tr("Quit"), "Alt+F4   Ctrl+Q"),
@@ -439,6 +442,162 @@ class SoundPanel(QWidget):
 
     def _chosen(self, _index=None) -> None:
         self.window.set_hearing(self.channels.currentData(), self.filter.currentData())
+
+
+class NotesPanel(QWidget):
+    """The panel Notes, at the side of the window: the note found in the selection (Notes > Find the note), and
+    the reference tone, with knobs for its note, its cents and its volume, and lists for a chord on it, its sound
+    and the tuning. It shows and changes what the window keeps (Window.tone, Window.found)."""
+
+    def __init__(self, window, parent=None):
+        super().__init__(parent)
+        self.window = window
+        bold = QLabel(self).font()
+        bold.setBold(True)
+        found_heading = QLabel(tr("Note of the selection"), self)
+        found_heading.setFont(bold)
+        self.found = QLabel("—", self)
+        big = QLabel(self).font()
+        big.setPixelSize(26)
+        big.setBold(True)
+        self.found.setFont(big)
+        self.found.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.detail = QLabel(tr("Select a part and find its note (K)"), self)
+        self.detail.setWordWrap(True)
+        self.find_button = QPushButton(tr("Find"), self)
+        self.find_button.setToolTip(tr("Find the main note of the selection, or of the two seconds from the "
+                                       "position if there is none (K)"))
+        self.hear_button = QPushButton(tr("Hear it"), self)
+        self.hear_button.setToolTip(tr("The reference tone on that note, as it is heard (with its cents)"))
+        for button in (self.find_button, self.hear_button):
+            button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.find_button.clicked.connect(window.find_note)
+        self.hear_button.clicked.connect(window.tone_to_found)
+
+        tone_heading = QLabel(tr("Reference tone"), self)
+        tone_heading.setFont(bold)
+        # (encendido, lleno del color de selección del tema, como los botones de la barra de mandos)
+        self.on = QToolButton(self)
+        self.on.setText(tr("On"))
+        self.on.setCheckable(True)
+        self.on.setMinimumWidth(80)
+        self.setStyleSheet(
+            "QToolButton:checked { background-color: palette(highlight); color: palette(highlighted-text);"
+            " border: 1px solid palette(highlight); border-radius: 3px; }")
+        self.on.setToolTip(tr("Sound the reference tone, with the recording or alone (R)"))
+        self.on.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.on.toggled.connect(lambda on: window.set_tone(on=on))
+        self.note = Knob(notes.name, range(24, 97, 12), home=notes.ToneSettings().midi, step=1, parent=self)
+        self.note.setRange(24, 96)
+        self.note.setPageStep(12)
+        self.note.choices = tuple(range(24, 97, 12)) + tuple(range(33, 97, 12))
+        self.note.choices = tuple(sorted(self.note.choices))
+        self.note.setToolTip(tr("The note of the tone: the mouse wheel or the arrows move it a semitone, Page Up "
+                                "and Page Down an octave ([ and ] also a semitone)"))
+        self.cents = PitchDial(" ¢", 10, self)
+        self.cents.setRange(-50, 50)
+        self.cents.setPageStep(10)
+        self.cents.setToolTip(tr("Cents above or below the note; a double click goes back to 0"))
+        self.volume = Knob(lambda value: f"{value}%", range(0, 101, 25), home=50, step=5, parent=self)
+        self.volume.setRange(0, 100)
+        self.volume.choices = (10, 25, 50, 75, 100)
+        self.volume.setToolTip(tr("The volume of the tone (that of the recording is apart)"))
+        self.note.valueChanged.connect(lambda v: window.set_tone(midi=v))
+        self.cents.valueChanged.connect(lambda v: window.set_tone(cents=v))
+        self.volume.valueChanged.connect(lambda v: window.set_tone(volume=v))
+        knobs = QHBoxLayout()
+        knobs.setSpacing(10)
+        for knob, label in ((self.note, tr("Note")), (self.cents, tr("Cents")), (self.volume, tr("Volume"))):
+            column = QVBoxLayout()
+            column.addWidget(knob, 0, Qt.AlignmentFlag.AlignHCenter)
+            name = QLabel(label, self)
+            name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            column.addWidget(name)
+            knobs.addLayout(column)
+        knobs.addStretch()
+        self.chord = QComboBox(self)
+        for key, text in chord_names().items():
+            self.chord.addItem(text, key)
+        self.timbre = QComboBox(self)
+        for key, text in timbre_names().items():
+            self.timbre.addItem(text, key)
+        self.tuning = QComboBox(self)
+        for hz in notes.TUNINGS:
+            self.tuning.addItem(tuning_name(hz), hz)
+        self.tuning.setToolTip(tr("The frequency of A4, for the names of the notes found and for the tone"))
+        self.chord.currentIndexChanged.connect(lambda _i: window.set_tone(chord=self.chord.currentData()))
+        self.timbre.currentIndexChanged.connect(lambda _i: window.set_tone(timbre=self.timbre.currentData()))
+        self.tuning.currentIndexChanged.connect(lambda _i: window.set_tuning(self.tuning.currentData()))
+        form = QFormLayout()
+        form.addRow(tr("Chord:"), self.chord)
+        form.addRow(tr("Sound:"), self.timbre)
+        form.addRow(tr("Tuning:"), self.tuning)
+
+        buttons = QHBoxLayout()
+        buttons.addWidget(self.find_button)
+        buttons.addWidget(self.hear_button)
+        buttons.addStretch()
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.addWidget(found_heading)
+        layout.addWidget(self.found)
+        layout.addWidget(self.detail)
+        layout.addLayout(buttons)
+        layout.addSpacing(8)
+        tone_row = QHBoxLayout()
+        tone_row.addWidget(tone_heading)
+        tone_row.addStretch()
+        tone_row.addWidget(self.on)
+        layout.addLayout(tone_row)
+        layout.addLayout(knobs)
+        layout.addLayout(form)
+        layout.addStretch()
+
+    def show_tone(self, tone: notes.ToneSettings) -> None:
+        """Put the knobs and lists where TONE says (without changing it again)."""
+        for widget, value in ((self.on, tone.on), (self.note, tone.midi), (self.cents, tone.cents),
+                              (self.volume, tone.volume)):
+            widget.blockSignals(True)
+            widget.setChecked(value) if widget is self.on else widget.setValue(value)
+            widget.blockSignals(False)
+            widget.update()
+        for box, key in ((self.chord, tone.chord), (self.timbre, tone.timbre), (self.tuning, tone.a4)):
+            box.blockSignals(True)
+            box.setCurrentIndex(max(0, box.findData(key)))
+            box.blockSignals(False)
+
+    def show_found(self, found: notes.Found | None, where: str, pitch: float, a4: float) -> None:
+        """What was found at WHERE (a time or two), with the PITCH shift of playback (semitones), or that
+        nothing was."""
+        if found is None:
+            self.found.setText("—")
+            self.detail.setText(tr("No clear note at {where}", where=where))
+            return
+        self.found.setText(found.text())
+        lines = [f"{found.hz:.1f} Hz · {where}"]
+        if found.others:
+            lines.append(tr("Also: {notes}", notes=", ".join(notes.name(m) for m in found.others)))
+        if abs(pitch) >= 0.005:
+            midi, cents = notes.nearest(found.hz * 2 ** (pitch / 12), a4)
+            heard = f"{notes.name(midi)} {notes.cents_text(cents)}".rstrip()
+            lines.append(tr("Heard as {note}, with the pitch moved", note=heard))
+        self.detail.setText("\n".join(lines))
+
+
+def chord_names() -> dict[str, str]:
+    """What the reference tone plays on its note, by key of notes.CHORDS."""
+    return {"note": tr("The note alone"), "fifth": tr("With its fifth"), "octave": tr("With its octave"),
+            "major": tr("Major chord"), "minor": tr("Minor chord")}
+
+
+def timbre_names() -> dict[str, str]:
+    """The sounds of the reference tone, by key of notes.TIMBRES."""
+    return {"pure": tr("Pure (a sine wave)"), "soft": tr("Soft"), "bright": tr("Bright, like an organ")}
+
+
+def tuning_name(hz: float) -> str:
+    """A4 = 440 Hz."""
+    return tr("A4 = {hz} Hz", hz=number(hz))
 
 
 class Clock(QLabel):
@@ -753,10 +912,22 @@ class Window(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.sound_dock)
         self.splitDockWidget(self.dock, self.sound_dock, Qt.Orientation.Vertical)
         self.sound_dock.hide()
+        # El panel Notas: la nota hallada en la selección y el tono de referencia; al principio, escondido.
+        self.tone = self._load_tone()
+        self.found: notes.Found | None = None
+        self.notes_panel = NotesPanel(self, self)
+        self.notes_dock = QDockWidget(tr("Notes"), self)
+        self.notes_dock.setObjectName("notes")
+        self.notes_dock.setWidget(self.notes_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.notes_dock)
+        self.splitDockWidget(self.dock, self.notes_dock, Qt.Orientation.Vertical)
+        self.notes_dock.hide()
 
         self._build_actions()
         self._build_menus()
         self._connect()
+        self.player.set_tone(self.tone)
+        self.notes_panel.show_tone(self.tone)
 
         self.timer = QTimer(self)
         self.timer.setInterval(33)  # unas 30 veces por segundo
@@ -1036,6 +1207,15 @@ class Window(QMainWindow):
         self.a_tap = a(tr("Tap the tempo"), self.tap_tempo, ["T"])
         self.a_first_beat = a(tr("The &first beat is here"), lambda: self.set_first_beat(None), ["Shift+C"])
         self.a_no_first_beat = a(tr("&Remove the first beat"), self.remove_first_beat)
+        self.a_find_note = a(tr("&Find the note"), self.find_note, ["K"])
+        self.a_find_note.setStatusTip(tr("Find the note: the main note of the selection (or of the two seconds "
+                                         "from the position), written on it and in the panel Notes"))
+        self.a_tone = a(tr("&Reference tone"), lambda on: self.set_tone(on=on), ["R"], checkable=True)
+        self.a_tone.setStatusTip(tr("Reference tone: a note that sounds with the recording, or alone; its note, "
+                                    "chord and sound are in the panel Notes"))
+        self.a_tone_found = a(tr("Tone on the note f&ound"), self.tone_to_found)
+        self.a_tone_up = a(tr("Tone a semitone &higher"), lambda: self.set_tone(midi=self.tone.midi + 1), ["]"])
+        self.a_tone_down = a(tr("Tone a semitone &lower"), lambda: self.set_tone(midi=self.tone.midi - 1), ["["])
         self.a_ask_save = a(tr("As&k to save before closing a file"), self._set_ask_save, checkable=True)
         self.a_ask_save.setChecked(self.settings.value("ask_save", True, type=bool))
         self.a_reopen = a(tr("&Reopen the last file when starting"), self._set_reopen, checkable=True)
@@ -1125,12 +1305,30 @@ class Window(QMainWindow):
         for action in (self.a_mark, self.a_prev_mark, self.a_next_mark, None, self.a_export):
             marks.addSeparator() if action is None else marks.addAction(action)
 
+        notes_menu = bar.addMenu(tr("&Notes"))
+        for action in (self.a_find_note, None, self.a_tone, self.a_tone_found, self.a_tone_up, self.a_tone_down):
+            notes_menu.addSeparator() if action is None else notes_menu.addAction(action)
+        notes_menu.addSeparator()
+        tunings = notes_menu.addMenu(tr("&Tuning"))
+        group = QActionGroup(self)
+        self.a_tunings: dict[float, QAction] = {}
+        for hz in notes.TUNINGS:
+            action = tunings.addAction(tuning_name(hz))
+            action.setCheckable(True)
+            action.setChecked(hz == self.tone.a4)
+            action.triggered.connect(lambda _=False, h=hz: self.set_tuning(h))
+            group.addAction(action)
+            self.a_tunings[hz] = action
+        notes_menu.addSeparator()
+        notes_menu.addAction(self.notes_dock.toggleViewAction())
+
         view = bar.addMenu(tr("&View"))
         for action in (self.a_zoom_in, self.a_zoom_out, self.a_fit, self.a_zoom_selection, None, self.a_follow):
             view.addSeparator() if action is None else view.addAction(action)
         view.addSeparator()
         view.addAction(self.dock.toggleViewAction())
         view.addAction(self.sound_dock.toggleViewAction())
+        view.addAction(self.notes_dock.toggleViewAction())
         view.addSeparator()
         view.addAction(self.a_compact)
 
@@ -1460,6 +1658,8 @@ class Window(QMainWindow):
         else:
             self._save_all()
         audio = self.audio
+        self.set_tone(on=False)
+        self.found = None
         self.player.unload()
         audio.close()
         self.b_tap.setText(tr("Tap"))
@@ -1859,6 +2059,9 @@ class Window(QMainWindow):
             limit = self.audio.duration if self.audio else 0.0
             start, end = max(0.0, start), min(end, limit)
             selection = (start, end) if end - start >= MIN_LOOP else None
+        if selection != self.selection:
+            self.found = None
+            self._update_notes_enabled()
         self.selection = selection
         self.wave.set_selection(selection, self.a_repeat.isChecked())
         self._apply_loop()
@@ -2138,6 +2341,7 @@ class Window(QMainWindow):
             self._normal = (self.saveGeometry(), self.saveState())
             self.dock.hide()
             self.sound_dock.hide()
+            self.notes_dock.hide()
             self.statusBar().hide()
             self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
             self.show()  # (cambiar las banderas esconde la ventana)
@@ -2153,6 +2357,106 @@ class Window(QMainWindow):
             self.statusBar().show()
         if self.a_compact.isChecked() != on:
             self.a_compact.setChecked(on)
+
+    # --- las notas: la nota de la selección y el tono de referencia
+
+    def _load_tone(self) -> notes.ToneSettings:
+        """The reference tone as it was left (always off at first)."""
+        default = notes.ToneSettings()
+        value = self.settings.value
+
+        def whole(key: str, fallback: int, low: int, high: int) -> int:
+            try:
+                return min(high, max(low, int(value(f"tone/{key}", fallback))))
+            except (TypeError, ValueError):
+                return fallback
+
+        chord, timbre = value("tone/chord", default.chord), value("tone/timbre", default.timbre)
+        try:
+            a4 = float(value("tone/a4", default.a4))
+        except (TypeError, ValueError):
+            a4 = default.a4
+        return notes.ToneSettings(midi=whole("midi", default.midi, 24, 96), cents=whole("cents", 0, -50, 50),
+                                  chord=chord if chord in notes.CHORDS else default.chord,
+                                  timbre=timbre if timbre in notes.TIMBRES else default.timbre,
+                                  volume=whole("volume", default.volume, 0, 100),
+                                  a4=a4 if a4 in notes.TUNINGS else default.a4, on=False)
+
+    def set_tone(self, **changes) -> None:
+        """Change the reference tone (any field of notes.ToneSettings): it sounds at once, if on, and the panel
+        Notes and the menu show it. It sounds only with a file open."""
+        from dataclasses import replace
+
+        if "midi" in changes:
+            changes["midi"] = min(96, max(24, int(changes["midi"])))
+        if changes.get("on") and self.audio is None:
+            changes["on"] = False
+        tone = replace(self.tone, **changes)
+        if tone == self.tone and "on" not in changes:
+            return
+        self.tone = tone
+        self.player.set_tone(tone)
+        for key in ("midi", "cents", "chord", "timbre", "volume", "a4"):
+            self.settings.setValue(f"tone/{key}", getattr(tone, key))
+        if "notes_panel" in vars(self):
+            self.notes_panel.show_tone(tone)
+        if "a_tone" in vars(self) and self.a_tone.isChecked() != tone.on:
+            self.a_tone.blockSignals(True)
+            self.a_tone.setChecked(tone.on)
+            self.a_tone.blockSignals(False)
+        if tone.on and any(k in changes for k in ("midi", "cents", "chord")) and self.audio is not None:
+            self.wave.show_value(f"{notes.name(tone.midi)} {notes.cents_text(tone.cents)}".rstrip())
+
+    def set_tuning(self, a4: float) -> None:
+        """The frequency of A4 (Hz): for the tone and the names of the notes found."""
+        self.set_tone(a4=float(a4))
+        if a4 in self.a_tunings:
+            self.a_tunings[a4].setChecked(True)
+        if self.found is not None:
+            self.find_note()  # (los mismos hertz con otros nombres y otros cents)
+
+    def find_note(self) -> None:
+        """Find the main note of the selection (or of the two seconds from the position), write it on the
+        selection and show it, with its details, in the panel Notes."""
+        if self.audio is None:
+            return
+        start, end = self.selection or (self.player.position, self.player.position + 2.0)
+        rate = self.audio.rate
+        found = notes.find(self.audio.frames(int(start * rate), int(end * rate)), rate, self.tone.a4)
+        self.found = found
+        where = (f"{clock(start, tenths=True)} – {clock(end, tenths=True)}" if self.selection
+                 else clock(start, tenths=True))
+        self.notes_panel.show_found(found, where, self.player.pitch, self.tone.a4)
+        self.notes_dock.show()
+        if self.selection:
+            self.wave.note = found.text() if found else tr("No clear note")
+            self.wave.update()
+        else:
+            self.wave.show_value(found.text() if found else tr("No clear note"))
+        self._update_notes_enabled()
+
+    def tone_to_found(self) -> None:
+        """The reference tone on the note found, as it is heard (the pitch of playback moved too), on."""
+        if self.found is None:
+            return
+        exact = 69 + 12 * math.log2(self.found.hz / self.tone.a4) + self.player.pitch
+        midi = round(exact)
+        while midi < 24:
+            midi += 12
+        while midi > 96:
+            midi -= 12
+        self.set_tone(midi=midi, cents=round((exact - round(exact)) * 100), on=True)
+
+    def _update_notes_enabled(self) -> None:
+        loaded = self.audio is not None
+        for action in (self.a_find_note, self.a_tone, self.a_tone_up, self.a_tone_down):
+            action.setEnabled(loaded)
+        self.a_tone_found.setEnabled(loaded and self.found is not None)
+        panel = self.notes_panel
+        for widget in (panel.find_button, panel.on, panel.note, panel.cents, panel.volume, panel.chord,
+                       panel.timbre):
+            widget.setEnabled(loaded)
+        panel.hear_button.setEnabled(loaded and self.found is not None)
 
     def reset_sound(self) -> None:
         """The recording as it is: speed 100%, its own pitch (the formants off), both channels without a filter,
@@ -2288,6 +2592,7 @@ class Window(QMainWindow):
         self.a_export.setEnabled(loaded and bool(self.bookmarks))
         self.a_first_beat.setEnabled(loaded)
         self.a_no_first_beat.setEnabled(loaded and self.first_beat() is not None)
+        self._update_notes_enabled()
         self._update_loop_saving()
         self._update_hearing_choices()
         self._update_play_button()

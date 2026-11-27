@@ -840,7 +840,7 @@ def test_count_in_settings_are_easy_to_reach(window, app, monkeypatch):
 
     assert not hasattr(window, "b_count") and not hasattr(window, "b_hear") and hasattr(window, "b_tap")
     menus = {a.text(): a.menu() for a in window.menuBar().actions()}
-    assert list(menus) == ["&File", "&Playback", "H&ear", "&Count-in", "&Bookmarks", "&View", "&Settings", "&Help"]
+    assert list(menus) == ["&File", "&Playback", "H&ear", "&Count-in", "&Bookmarks", "&Notes", "&View", "&Settings", "&Help"]
     assert menus["&Count-in"].actions()[:2] == [window.a_count, window.a_tap]
     assert window.a_count_settings in menus["&Count-in"].actions()
     assert window.a_count not in menus["&Playback"].actions() and window.a_count_settings not in menus["&Settings"].actions()
@@ -1784,3 +1784,73 @@ def test_zoom_to_the_selection_and_pinch(window, app, wav):
     before = wave.current_fpp()
     wave.pinch(1.0, wave.width() / 2)  # (los dedos se separan: el doble de cerca)
     assert wave.current_fpp() == pytest.approx(before / 2, rel=0.01)
+
+
+def test_find_the_note_and_the_reference_tone(window, app, wav, output):
+    """Notes > Find the note (K) finds the A3 of the test file in the selection, writes it on the selection and in
+    the panel Notes; the reference tone sounds that note, paused or not, from the panel or the menu; a new
+    selection forgets the note; the tone goes off with the file, and nothing of it works without a file."""
+    import numpy as np
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    assert not window.a_find_note.isEnabled() and not window.a_tone.isEnabled()
+    window.a_tone.setChecked(True)
+    assert not window.tone.on
+    loaded(window, app, wav)
+    window.set_selection((0.5, 2.5))  # (con un golpe en el segundo 1 y otro en el 2)
+    assert not window.a_tone_found.isEnabled()
+    QTest.keyClick(window.wave, Qt.Key.Key_K)
+    assert window.found.midi == 57 and abs(window.found.cents) < 3
+    assert window.wave.note == "A3" and window.notes_panel.found.text() == "A3"
+    assert window.notes_dock.isVisible() and window.a_tone_found.isEnabled()
+    # El tono en esa nota, oída medio tono más alta: B♭3
+    window.set_pitch(1.0)
+    window.find_note()
+    assert "B♭3" in window.notes_panel.detail.text()
+    window.a_tone_found.trigger()
+    assert window.tone.on and window.tone.midi == 58 and window.a_tone.isChecked()
+    assert window.notes_panel.on.isChecked() and window.notes_panel.note.value() == 58
+    assert not window.player.playing
+    output.pull(1024)
+    assert np.abs(output.pull(1024)).max() > 0.01
+    # Las teclas [ y ], la perilla, el acorde: lo mismo en el tono
+    QTest.keyClick(window.wave, Qt.Key.Key_BracketRight)
+    assert window.tone.midi == 59
+    window.notes_panel.note.setValue(45)
+    window.notes_panel.chord.setCurrentIndex(window.notes_panel.chord.findData("fifth"))
+    assert window.tone.midi == 45 and window.tone.chord == "fifth"
+    assert window.player.tone_settings == window.tone
+    window.a_tone.trigger()
+    assert not window.tone.on and not window.notes_panel.on.isChecked()
+    window.notes_panel.on.click()
+    assert window.tone.on and window.a_tone.isChecked()
+    # La afinación cambia los nombres de lo hallado
+    window.set_pitch(0.0)
+    window.set_tuning(415.0)
+    assert window.found.midi == 58 and window.a_tunings[415.0].isChecked()
+    window.set_tuning(440.0)
+    # Otra selección: lo hallado se olvida
+    window.set_selection((3.2, 3.8))
+    assert window.found is None and window.wave.note is None and not window.a_tone_found.isEnabled()
+    # Sin selección: los dos segundos desde la posición, en grande un momento
+    window.set_selection(None)
+    window.seek(4.2)
+    window.find_note()
+    assert window.found.midi == 57 and window.wave.flash == "A3"
+    window.close_file()
+    assert not window.tone.on and not window.a_tone.isChecked() and not window.a_tone.isEnabled()
+    assert window.settings.value("tone/midi", type=int) == 45
+
+
+def test_silence_has_no_note(window, app, tmp_path):
+    import numpy as np
+    from conftest import write
+
+    path = tmp_path / "quiet.wav"
+    write(path, np.zeros((44100 * 3, 2), np.float32))
+    loaded(window, app, path)
+    window.set_selection((0.5, 2.0))
+    window.find_note()
+    assert window.found is None and window.wave.note == "No clear note"
+    assert window.notes_panel.found.text() == "—" and not window.a_tone_found.isEnabled()

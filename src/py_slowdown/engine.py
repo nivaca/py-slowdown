@@ -13,7 +13,8 @@ Player lo lleva a la tarjeta de sonido: un hilo productor llena una cola corta
 archivo donde empieza y cuántos cuadros del archivo vale cada cuadro de salida,
 de modo que la posición que se muestra es la que suena. Los cortes (pausa, salto,
 cambio entre copia y Rubber Band) se suavizan con rampas de pocos milisegundos,
-para que no chasqueen.
+para que no chasqueen. Encima de la grabación, y aunque esté en pausa, suena el
+tono de referencia (notes.Tone), si está encendido.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ from .audio import Audio
 from . import equalizer
 from .equalizer import Equalizer
 from .hearing import Hearing
+from .notes import Tone, ToneSettings
 
 MIN_SPEED = 0.25
 MAX_SPEED = 3.0
@@ -427,6 +429,8 @@ class Player:
         self._requests: list[tuple[str, float]] = []
         self._thread: threading.Thread | None = None
         self._running = False
+        self.tone_settings = ToneSettings()  # the reference tone, heard with the recording (or alone)
+        self._tone: Tone | None = None
 
     # --- el archivo
 
@@ -446,6 +450,8 @@ class Player:
         self._queued = 0
         self._eof = False
         self.ended = False
+        self._tone = Tone(audio.rate)
+        self._tone.set(self.tone_settings)
         self._running = True
         self._thread = threading.Thread(target=self._produce, name="produce", daemon=True)
         self._thread.start()
@@ -461,6 +467,7 @@ class Player:
             self._thread = None
         self.output.close()
         self.audio = None
+        self._tone = None
 
     # --- los mandos
 
@@ -553,6 +560,12 @@ class Player:
         with self._lock:
             self._requests.append(("pitch", self._pitch))
             self._wake.notify_all()
+
+    def set_tone(self, settings: ToneSettings) -> None:
+        """The reference tone (see notes.py): it sounds while SETTINGS.on, playing or not, if a file is open."""
+        self.tone_settings = settings
+        if self._tone is not None:
+            self._tone.set(settings)
 
     @property
     def eq(self) -> tuple[int, ...]:
@@ -718,6 +731,14 @@ class Player:
 
     def _callback(self, out: np.ndarray) -> None:
         out.fill(0.0)
+        self._music(out)
+        tone = self._tone
+        if tone is not None and not tone.silent:
+            # El tono de referencia, en todos los canales, con su propio volumen (no el de la grabación).
+            out += tone.render(len(out))[:, None]
+            np.clip(out, -1.0, 1.0, out=out)
+
+    def _music(self, out: np.ndarray) -> None:
         frames = len(out)
         target = 1.0 if self.playing else 0.0
         if self._gain == 0.0 and target == 0.0:

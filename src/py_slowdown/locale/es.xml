@@ -1357,4 +1357,180 @@
     <en>Zoom to the selection</en>
     <tr>Acercar a la selección</tr>
   </text>
+  <text>
+    <en>&amp;Find the note</en>
+    <tr>&amp;Buscar la nota</tr>
+  </text>
+  <text>
+    <en>&amp;Notes</en>
+    <tr>&amp;Notas</tr>
+  </text>
+  <text>
+    <en>&amp;Reference tone</en>
+    <tr>&amp;Tono de referencia</tr>
+  </text>
+  <text>
+    <en>&amp;Tuning</en>
+    <tr>A&amp;finación</tr>
+  </text>
+  <text>
+    <en>A4 = {hz} Hz</en>
+    <tr>La4 = {hz} Hz</tr>
+  </text>
+  <text>
+    <en>Also: {notes}</en>
+    <tr>También: {notes}</tr>
+  </text>
+  <text>
+    <en>Bright, like an organ</en>
+    <tr>Brillante, como de órgano</tr>
+  </text>
+  <text>
+    <en>C C♯ D E♭ E F F♯ G A♭ A B♭ B</en>
+    <tr>Do Do♯ Re Mi♭ Mi Fa Fa♯ Sol La♭ La Si♭ Si</tr>
+  </text>
+  <text>
+    <en>Cents</en>
+    <tr>Cents</tr>
+  </text>
+  <text>
+    <en>Cents above or below the note; a double click goes back to 0</en>
+    <tr>Cents por encima o por debajo de la nota; un doble clic vuelve a 0</tr>
+  </text>
+  <text>
+    <en>Chord:</en>
+    <tr>Acorde:</tr>
+  </text>
+  <text>
+    <en>Find</en>
+    <tr>Buscar</tr>
+  </text>
+  <text>
+    <en>Find the main note of the selection, or of the two seconds from the position if there is none (K)</en>
+    <tr>Buscar la nota principal de la selección, o de los dos segundos desde la posición si no hay (K)</tr>
+  </text>
+  <text>
+    <en>Find the note: the main note of the selection (or of the two seconds from the position), written on it and in the panel Notes</en>
+    <tr>Buscar la nota: la nota principal de la selección (o de los dos segundos desde la posición), escrita sobre ella y en el panel Notas</tr>
+  </text>
+  <text>
+    <en>Hear it</en>
+    <tr>Oírla</tr>
+  </text>
+  <text>
+    <en>Heard as {note}, with the pitch moved</en>
+    <tr>Se oye como {note}, con la altura cambiada</tr>
+  </text>
+  <text>
+    <en>Major chord</en>
+    <tr>Acorde mayor</tr>
+  </text>
+  <text>
+    <en>Minor chord</en>
+    <tr>Acorde menor</tr>
+  </text>
+  <text>
+    <en>No clear note</en>
+    <tr>Ninguna nota clara</tr>
+  </text>
+  <text>
+    <en>No clear note at {where}</en>
+    <tr>Ninguna nota clara en {where}</tr>
+  </text>
+  <text>
+    <en>Note</en>
+    <tr>Nota</tr>
+  </text>
+  <text>
+    <en>Note of the selection</en>
+    <tr>Nota de la selección</tr>
+  </text>
+  <text>
+    <en>Notes</en>
+    <tr>Notas</tr>
+  </text>
+  <text>
+    <en>On</en>
+    <tr>Encendido</tr>
+  </text>
+  <text>
+    <en>Pure (a sine wave)</en>
+    <tr>Puro (una onda senoidal)</tr>
+  </text>
+  <text>
+    <en>Reference tone</en>
+    <tr>Tono de referencia</tr>
+  </text>
+  <text>
+    <en>Reference tone: a note that sounds with the recording, or alone; its note, chord and sound are in the panel Notes</en>
+    <tr>Tono de referencia: una nota que suena con la grabación, o sola; su nota, su acorde y su sonido están en el panel Notas</tr>
+  </text>
+  <text>
+    <en>Select a part and find its note (K)</en>
+    <tr>Seleccione una parte y busque su nota (K)</tr>
+  </text>
+  <text>
+    <en>Soft</en>
+    <tr>Suave</tr>
+  </text>
+  <text>
+    <en>Sound the reference tone, with the recording or alone (R)</en>
+    <tr>Hacer sonar el tono de referencia, con la grabación o solo (R)</tr>
+  </text>
+  <text>
+    <en>The frequency of A4, for the names of the notes found and for the tone</en>
+    <tr>La frecuencia del La4, para los nombres de las notas halladas y para el tono</tr>
+  </text>
+  <text>
+    <en>The note alone</en>
+    <tr>La nota sola</tr>
+  </text>
+  <text>
+    <en>The note of the tone: the mouse wheel or the arrows move it a semitone, Page Up and Page Down an octave ([ and ] also a semitone)</en>
+    <tr>La nota del tono: la rueda del ratón o las flechas la mueven un semitono, RePág y AvPág una octava ([ y ] también un semitono)</tr>
+  </text>
+  <text>
+    <en>The reference tone on that note, as it is heard (with its cents)</en>
+    <tr>El tono de referencia en esa nota, como se oye (con sus cents)</tr>
+  </text>
+  <text>
+    <en>The volume of the tone (that of the recording is apart)</en>
+    <tr>El volumen del tono (el de la grabación es aparte)</tr>
+  </text>
+  <text>
+    <en>Tone a semitone &amp;higher</en>
+    <tr>Tono un semitono más &amp;alto</tr>
+  </text>
+  <text>
+    <en>Tone a semitone &amp;lower</en>
+    <tr>Tono un semitono más ba&amp;jo</tr>
+  </text>
+  <text>
+    <en>Tone on the note f&amp;ound</en>
+    <tr>Tono en la nota &amp;encontrada</tr>
+  </text>
+  <text>
+    <en>Tuning:</en>
+    <tr>Afinación:</tr>
+  </text>
+  <text>
+    <en>With its fifth</en>
+    <tr>Con su quinta</tr>
+  </text>
+  <text>
+    <en>With its octave</en>
+    <tr>Con su octava</tr>
+  </text>
+  <text>
+    <en>Find the note of the selection</en>
+    <tr>Buscar la nota de la selección</tr>
+  </text>
+  <text>
+    <en>Reference tone on / off</en>
+    <tr>Encender / apagar el tono de referencia</tr>
+  </text>
+  <text>
+    <en>Reference tone a semitone lower / higher</en>
+    <tr>Tono de referencia un semitono más bajo / más alto</tr>
+  </text>
 </interface>
