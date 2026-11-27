@@ -29,6 +29,9 @@
    then it sends the signed source RPM to Copr (project nivaca/py-slowdown).
    `--dry-run` only shows the commands. It also makes the installer for
    Linux (`.run`, from the AppImage).
+   Everything but the RPM is made in `build/release/`, not in `dist/`, and
+   deleted at the end, once published: only the RPM is kept here, in
+   `build/rpm/` and its copy in `dist/`.
 
 3. The tag starts `.github/workflows/installers.yml` on GitHub, which makes
    the installers for Windows (Inno Setup) and macOS (a `.dmg` for Apple
@@ -43,7 +46,8 @@
    This downloads them, signs them here (`FILE.asc`, and
    `SHA256SUMS-installers` with its signature), checks each signature with
    the published key, and attaches the signatures to GitHub's release and
-   the installers with their signatures to Codeberg's.
+   the installers with their signatures to Codeberg's. Then it deletes
+   `build/installers/`: the forges have them.
 
    With SignPath set up (below), the Windows job waits for its signing
    request to be approved: approve it on SignPath (signing requests of the
@@ -144,7 +148,7 @@ API token in `~/.config/copr` (it expires after 180 days).
 
 ## Zenodo
 
-Each release leaves in `dist/zenodo/` what goes to Zenodo: the tree of the
+Each release makes in `build/zenodo/` what goes to Zenodo: the tree of the
 tag as `py-slowdown-VERSION-source.tar.gz`, made with `git archive`, its signature,
 a `SHA256SUMS` of only that file with its signature, and the public key.
 `tools/release.py` makes it after the tag (`tools/zenodo.py collect`),

@@ -3,7 +3,7 @@
 
     uv run python tools/bundle-run.py [--appimage APPIMAGE] [-o CARPETA]
 
-El instalador es dist/py-slowdown-VERSIÓN-linux-x86_64.run: el script packaging/installer/install-run.sh
+El instalador es build/release/py-slowdown-VERSIÓN-linux-x86_64.run: el script packaging/installer/install-run.sh
 seguido de un tar.gz con lo que trae la AppImage (tools/bundle-appimage.py), que se desempaca, más las páginas
 de manual. Instala para el usuario, o para todos si se corre como root, con la orden, la entrada del menú, los
 íconos y un desinstalador (véase install-run.sh). Sirve en las distribuciones que no usan .deb ni .rpm, y en
@@ -24,7 +24,7 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DIST = ROOT / "dist"
+DIST = ROOT / "build" / "release"  # (no dist/, que solo guarda el RPM)
 VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
 APP = "py-slowdown"
 HEADER = ROOT / "packaging" / "installer" / "install-run.sh"
@@ -105,7 +105,7 @@ def main(argv=None) -> int:
                                      description="Make the installer of py-slowdown for Linux (.run), from its AppImage.")
     parser.add_argument("--appimage", type=Path, default=DIST / f"{APP}-{VERSION}-x86_64.AppImage",
                         help="the AppImage to make it from (tools/bundle-appimage.py)")
-    parser.add_argument("-o", "--output", type=Path, default=DIST, help="the folder to write it in (dist)")
+    parser.add_argument("-o", "--output", type=Path, default=DIST, help="the folder to write it in (build/release)")
     args = parser.parse_args(argv)
     if not args.appimage.is_file():
         sys.exit(f"bundle-run.py: there is no {args.appimage} (make it first: tools/bundle-appimage.py)")
