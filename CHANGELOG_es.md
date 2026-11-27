@@ -5,7 +5,7 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
-## Sin publicar
+## 1.9.0 — 2026-11-26
 
 Seleccionar arrastrando, la nota de un pasaje y un tono de referencia.
 

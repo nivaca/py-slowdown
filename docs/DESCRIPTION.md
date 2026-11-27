@@ -9,7 +9,7 @@ again at a speed one can follow. It is an app for music, not for
 transcribing speech. It follows the shape of his other desktop
 programs, such as py-pdftools (a Qt window, an interface in English and
 Spanish, settings kept between sessions). Here I explain how it was made,
-in thirty stages.
+in thirty-one stages.
 
 py-slowdown is free software, under the GNU General Public License,
 version 3 or later. The stretching is done by the Rubber Band Library, by
@@ -920,10 +920,47 @@ the item only made the File menu longer. The reading itself stays, and so
 does `tools/xsc2slx.py`. The Android version, which had no other way to
 open these files, lost the import altogether at the same time.
 
+31. Selecting by dragging, the note of a passage, and a reference tone
+----------------------------------------------------------------------
+
+Version 1.9.0 came from three requests at once. The first was small:
+a plain drag on the waveform now selects, as Shift+drag did. Until then a
+drag moved the position along, which I almost never needed, while
+selecting is what one does all the time. A click now takes the position
+there only when the button is released, and only if the mouse did not
+move more than four pixels; otherwise it is a selection, and the position
+stays where it was.
+
+The second was to know which note sounds in a passage. The loudest peak
+of the spectrum is not the answer, since the second or third harmonic of
+a note is often louder than the note itself. So `notes.py` averages the
+spectrum of the selection and, for each possible fundamental from E1 to
+C7 in steps of ten cents, adds up what there is at its first ten
+harmonics, each one weighing a little less than the one before; the
+fundamental with the largest sum is the note, and its frequency is then
+refined at the peak of its strongest harmonic. The result is written on
+the selection itself, as C4 or A3 −20 ¢, and in a new panel Notes, with
+the other notes that stand out (those of a chord, leaving out the
+octaves and twelfths of the main one, which are its own harmonics). With
+a mix, it finds the strongest note, often the bass; with a note whose
+fundamental is missing altogether, it names the octave above.
+
+The third was reference pitches. I did not want a keyboard on the screen,
+so the reference is a tone that sounds with the recording, playing or
+paused, as a drone: a note on a knob, with its cents, alone or with its
+fifth, its octave, or a major or minor chord, in a pure, soft or bright
+sound, with its own volume. Tone on the note found puts it on the note
+just found, as it is heard with the pitch moved, so that it matches the
+recording exactly. The tone is a few sine waves that the function of the
+sound card adds to the recording; each change fades from the old sound to
+the new one along a single block, so that nothing clicks. I checked it
+through PipeWire, recording what went out, and not only in the tests.
+Notes > Tuning sets A4, from 415 to 446 Hz, for both.
+
 Testing
 -------
 
-The program has 262 tests (`tests/`), which `tools/test.py` runs at once,
+The program has 278 tests (`tests/`), which `tools/test.py` runs at once,
 each file in a process of its own, in a few seconds; the `%check` of the
 RPM runs them the same way, with Fedora's Python, on the installed package. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
@@ -949,7 +986,7 @@ files of 1.2.0, opening it), the first beat and its grid, the keyboard
 shortcuts and the waveform kept for the next time; and the window's
 details: the menus and the keys of the knobs, the detents of the speed, the
 loops on the waveform, the clock, the panel Sound, the compact mode, the
-start screen and the zoom to the selection. The player is
+start screen, the zoom to the selection, and selecting by dragging; and the notes found in tones, chords and noise, and the reference tone, which must not click. The player is
 tested with a sound card that the tests drive themselves, and the window
 offscreen: opening a file, the controls, a pause that goes back, the volume above 100%, the clicks of the count-in, the speed, the pitch in semitones and cents, the bookmarks, the
 point where it was left, a file that is not audio, the window without
@@ -968,4 +1005,4 @@ Rubber Band compiled for the AppImage; the AppImage was built and started
 with a file, the Debian package was built and its contents checked, the
 RPM was built (its tests need two Fedora packages not installed here), and
 the installer installed the program in a temporary home and removed it.
-The program has 89 text files and about 24,900 lines (15,600 of them in Python).
+The program has 91 text files and about 26,200 lines (16,500 of them in Python).
