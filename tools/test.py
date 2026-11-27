@@ -86,6 +86,12 @@ def main(argv=None) -> int:
     work = Path(tempfile.mkdtemp(prefix="py-slowdown-tests-"))
     # (dibujos fuera de la pantalla si nada se pidió: los de Xvfb o el escritorio siguen en manos de conftest.py)
     env = {**os.environ}
+    # Un solo hilo de BLAS (y de OpenMP) por proceso: los procesos ya llenan los procesadores. Con el NumPy de
+    # Fedora (FlexiBLAS sobre OpenBLAS con OpenMP), cada proceso abría tantos hilos como procesadores, que se
+    # esperaban girando, y dos archivos de pruebas juntos tardaban unas cuarenta veces más (test_notes, 51 s y
+    # no 1,3, en el %check del RPM de la 2.0.0).
+    for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "FLEXIBLAS_NUM_THREADS"):
+        env.setdefault(name, "1")
     start = time.time()
     failed: list[tuple[Path, str]] = []
     totals: dict[str, int] = {}
