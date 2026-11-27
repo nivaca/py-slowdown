@@ -51,11 +51,23 @@ What it does
 - Hears one part of the mix (Hear): one channel, the two in one, the mix
   without its centre (where the voice and the solo usually are), only the
   bass, or everything but the bass.
-- Repeats a selection without end and without a gap (Shift+drag on the
+- Repeats a selection without end and without a gap (drag on the
   waveform, or I and O, then L): the end of the passage runs into its
   start through a short fade, at any speed; with nothing selected, the whole
   file is repeated. Selections can be kept as
   loops with a name (Shift+L), to repeat them again with a double click.
+- Finds the note of a passage (Notes > Find the note, K): the main note of
+  the selection, as C4 with the cents it is off (−12 ¢) and its frequency,
+  written on the selection, with the other notes that stand out (those of
+  a chord). If the pitch of playback is moved, it says how it is heard.
+- A reference tone (Notes > Reference tone, R), which sounds with the
+  recording or alone, to find a note on the instrument, tune it to the
+  recording, or hold a drone under a passage. In the panel Notes: a knob
+  for its note (C1 to C7; [ and ] move it a semitone), one for its cents and
+  one for its volume; the note alone or with its fifth, its octave, a major
+  or a minor chord; a pure, soft or bright sound. Tone on the note found
+  puts it on the note just found, as it is heard. The tuning (A4 = 440 Hz,
+  or 415 to 446) serves both.
 - Counts in before playing, as a metronome (C): the number of clicks and
   the tempo are chosen, and the tempo can follow the speed; the tempo can
   be measured by tapping with the beat (T). With the recording's first
@@ -104,13 +116,16 @@ Keyboard
 | Original pitch                 | Shift+N                          |
 | Reset the sound                | Ctrl+Shift+N                     |
 | Repeat the selection           | L                                |
-| Select                         | Shift+drag, or I and O           |
+| Select                         | Drag, or I and O                 |
 | Clear the selection            | Esc                              |
 | Select the whole file          | Ctrl+A                           |
 | Save the selection as a loop   | Shift+L                          |
 | Count in before playing        | C                                |
 | Tap the tempo (with the beat)  | T                                |
 | The first beat is here         | Shift+C                          |
+| Find the note of the selection | K                                |
+| Reference tone on / off        | R                                |
+| Tone a semitone lower / higher | [ / ]                            |
 | Open a file                    | Ctrl+O                           |
 | Close the file (stay open)     | Ctrl+W                           |
 | Quit                           | Alt+F4, Ctrl+Q                   |

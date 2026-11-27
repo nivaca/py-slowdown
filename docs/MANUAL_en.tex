@@ -634,8 +634,8 @@ some 40 milliseconds, which is not heard, and which the export takes away.
 \section{The waveform}
 
 \index{waveform}\index{position}%
-A click on the waveform takes the position there, and dragging moves it,
-whether the recording plays or not. The waveform is scaled to the loudest
+A click on the waveform takes the position there, whether the recording
+plays or not; dragging on it selects a part (section~\ref{sec:repeat}). The waveform is scaled to the loudest
 point of the file, so that a quiet recording does not look flat.
 
 \shot{zoom_en}{0.85}{A closer view, around a bookmark}
@@ -705,8 +705,8 @@ bookmarks.
 
 \index{selection}\index{repeat}\index{loop|see{repeat}}%
 A passage can be repeated without end, to hear it until it is understood
-or to play along with it. First select it: \key{Shift+drag} on the
-waveform; or, with the position at its start, \key{I}, and at its end,
+or to play along with it. First select it: drag on the waveform (with
+\key{Shift} or without it); or, with the position at its start, \key{I}, and at its end,
 \key{O} (one of them alone selects from the position to the end, or from
 the start, of the file); or, with a right click, \menu{Select from here to
 the next bookmark}. The selection is drawn in green, also on the ruler,
@@ -821,6 +821,50 @@ pointer over the items of that menu, the status bar says what they are now. They
 speed}, the tempo changes with the speed: a song at 120 BPM played at
 0.5\,× is counted at 60, as it will sound. The dialog says what will be
 heard at the speed of that moment. These settings are kept.
+
+\section{Notes}
+\label{sec:notes}
+
+\index{note!finding}\index{pitch!of a passage}%
+\menu{Notes\then Find the note} (\key{K}) says which note sounds in the
+selection: select a held note, or a chord, and press \key{K}. The note is
+written on the selection, as C4 (the middle C), with the cents it is off
+when there are three or more (\emph{A3 −20\,¢}: a little flat), and the
+panel \menu{Notes} opens at the side, with the note in large, its
+frequency and the other notes that stand out, those of a chord. Without a
+selection, the note of the two seconds from the position is shown, large,
+for a moment. A new selection clears the note found.
+
+The program adds up, for every note from E1 to C7 (in steps of ten cents),
+what the recording has at its harmonics, the first ones counting most, and
+takes the note with the largest sum: its fundamental, even when its second
+or third harmonic is louder. The longer and steadier the passage, the
+surer the result; with several instruments at once, the note found is the
+strongest of the mix, often the bass. If the pitch of playback is moved,
+the panel also says how the note is heard.
+
+\index{reference tone}\index{tone|see{reference tone}}\index{drone|see{reference tone}}%
+\menu{Notes\then Reference tone} (\key{R}, or \menu{On} in the panel)
+sounds a steady note with the recording, playing or paused: to find a note
+on the instrument, to check the tuning of the instrument against the
+recording, or to keep the tonic under a passage while one practises it. In
+the panel \menu{Notes}, three knobs choose its note (from C1 to C7; the
+wheel and the arrows move it a semitone, \key{PgUp} and \key{PgDn} an
+octave), its cents (from −50 to +50) and its volume, which is its own,
+apart from that of the recording. \menu{Chord} plays the note alone, with
+its fifth, with its octave, or a major or minor chord on it;
+\menu{Sound} makes it pure (a sine wave), soft or bright, like an organ.
+\key{[} and \key{]} move it a semitone from the keyboard.
+\menu{Notes\then Tone on the note found} (or \menu{Hear it}, in the panel)
+puts the tone on the note just found, with its cents and with the pitch of
+playback, so that it sounds just as the recording does. The tone is not
+exported, and it stops when the file is closed.
+
+\index{tuning}%
+\menu{Notes\then Tuning} sets the frequency of A4, 440\,Hz by default
+(also 415, 430, 432, 435, 438, 442, 443, 444 or 446\,Hz): the notes are
+found and the tone is played in that tuning. The choices of the tone and
+the tuning are kept.
 
 \section{Exporting the audio}
 \label{sec:export}
@@ -1050,13 +1094,16 @@ changes.
 \key{Z} & zoom to the selection\\
 \key{Ctrl+wheel} & zoom around the pointer\\
 \key{L} & repeat the selection\\
-\key{Shift+drag} & select\\
+drag & select\\
 \key{I}, \key{O} & start, end of the selection at the position\\
 \key{Esc} & clear the selection\\
 \key{Ctrl+A} & select the whole file\\
 \key{Shift+L} & save the selection as a loop\\
 \key{C} & count in before playing\\
 \key{T} & tap the tempo, with the beat\\
+\key{K} & find the note of the selection\\
+\key{R} & the reference tone on or off\\
+\key{[}, \key{]} & the tone a semitone lower, higher\\
 \key{Ctrl+O} & open a file\\
 \key{Ctrl+E} & export the audio\\
 \key{Ctrl+W} & close the file (the program stays open)\\

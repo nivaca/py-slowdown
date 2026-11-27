@@ -650,8 +650,9 @@ si \menu{Como se oye} está marcado. El ecualizador atrasa el sonido unos
 \section{La forma de onda}
 
 \index{forma de onda}\index{posicion@posición}%
-Un clic en la forma de onda lleva allí la posición, y arrastrar la mueve,
-suene o no la grabación. La forma de onda va a la escala del punto más
+Un clic en la forma de onda lleva allí la posición, suene o no la
+grabación; arrastrar sobre ella selecciona una parte
+(sección~\ref{sec:repetir}). La forma de onda va a la escala del punto más
 fuerte del archivo, para que una grabación baja no se vea plana.
 
 \shot{zoom_es}{0.85}{Una vista de cerca, alrededor de un marcador}
@@ -722,8 +723,8 @@ archivo nuevo, sin marcadores.
 
 \index{seleccion@selección}\index{repetir}\index{bucle|see{repetir}}%
 Un pasaje se puede repetir sin fin, para oírlo hasta entenderlo o para
-tocar con él. Primero se selecciona: \key{Mayús+arrastrar} sobre la forma
-de onda; o, con la posición en su principio, \key{I}, y en su final,
+tocar con él. Primero se selecciona: se arrastra sobre la forma de onda
+(con \key{Mayús} o sin ella); o, con la posición en su principio, \key{I}, y en su final,
 \key{O} (una sola de las dos selecciona de la posición al final del
 archivo, o desde su principio); o, con el clic derecho,
 \menu{Seleccionar de aquí al marcador siguiente}. La selección se dibuja
@@ -845,6 +846,50 @@ minuto (de 20 a 300; figura~\ref{fig:countin_es}). Con \menu{Seguir la
 velocidad}, el tempo cambia con la velocidad: una canción a 120 BPM tocada
 a 0,5\,× se cuenta a 60, como va a sonar. El diálogo dice lo que se oirá a
 la velocidad de ese momento. Estos ajustes se conservan.
+
+\section{Las notas}
+\label{sec:notas}
+
+\index{nota!buscar}\index{altura!de un pasaje}%
+\menu{Notas\then Buscar la nota} (\key{K}) dice qué nota suena en la
+selección: se selecciona una nota tenida, o un acorde, y se oprime
+\key{K}. La nota se escribe sobre la selección, como Do4 (el do central),
+con los cents en que se aparta si son tres o más (\emph{La3 −20\,¢}: un
+poco baja), y a un lado se abre el panel \menu{Notas}, con la nota en
+grande, su frecuencia y las otras notas que destacan, las de un acorde. Sin
+selección, la nota de los dos segundos desde la posición aparece en grande
+un momento. Una selección nueva borra la nota hallada.
+
+El programa suma, para cada nota de Mi1 a Do7 (de diez en diez cents), lo
+que la grabación tiene en sus armónicos, los primeros con más peso, y se
+queda con la nota de la suma mayor: su fundamental, aunque su segundo o
+su tercer armónico suenen más fuerte. Cuanto más largo y estable el pasaje,
+más seguro el resultado; con varios instrumentos a la vez, la nota hallada
+es la más fuerte de la mezcla, a menudo la del bajo. Si la altura de la
+reproducción está cambiada, el panel dice también cómo se oye la nota.
+
+\index{tono de referencia}\index{bordon@bordón|see{tono de referencia}}%
+\menu{Notas\then Tono de referencia} (\key{R}, o \menu{Encendido} en el
+panel) hace sonar una nota fija con la grabación, tocando o en pausa: para
+hallar una nota en el instrumento, comprobar su afinación frente a la
+grabación, o sostener la tónica bajo un pasaje mientras se estudia. En el
+panel \menu{Notas}, tres perillas eligen su nota (de Do1 a Do7; la rueda y
+las flechas la mueven un semitono, \key{RePág} y \key{AvPág} una octava),
+sus cents (de −50 a +50) y su volumen, que es propio, aparte del de la
+grabación. \menu{Acorde} toca la nota sola, con su quinta, con su octava,
+o un acorde mayor o menor sobre ella; \menu{Sonido} la hace pura (una onda
+senoidal), suave o brillante, como de órgano. \key{[} y \key{]} la mueven
+un semitono desde el teclado. \menu{Notas\then Tono en la nota
+encontrada} (o \menu{Oírla}, en el panel) pone el tono en la nota recién
+hallada, con sus cents y con la altura de la reproducción, para que suene
+igual que la grabación. El tono no se exporta, y se apaga al cerrar el
+archivo.
+
+\index{afinacion@afinación}%
+\menu{Notas\then Afinación} fija la frecuencia del La4, 440\,Hz de
+entrada (también 415, 430, 432, 435, 438, 442, 443, 444 o 446\,Hz): las
+notas se buscan y el tono suena en esa afinación. Lo elegido para el tono
+y la afinación se conserva.
 
 \section{Exportar el audio}
 \label{sec:exportar}
@@ -1075,13 +1120,16 @@ dice, y nada más cambia.
 \key{Z} & acercar a la selección\\
 \key{Ctrl+rueda} & acercar o alejar alrededor del puntero\\
 \key{L} & repetir la selección\\
-\key{Mayús+arrastrar} & seleccionar\\
+arrastrar & seleccionar\\
 \key{I}, \key{O} & principio, final de la selección en la posición\\
 \key{Esc} & quitar la selección\\
 \key{Ctrl+A} & seleccionar el archivo entero\\
 \key{Mayús+L} & guardar la selección como bucle\\
 \key{C} & contar antes de tocar\\
 \key{T} & marcar el tempo, con el pulso\\
+\key{K} & buscar la nota de la selección\\
+\key{R} & encender o apagar el tono de referencia\\
+\key{[}, \key{]} & el tono un semitono más bajo, más alto\\
 \key{Ctrl+O} & abrir un archivo\\
 \key{Ctrl+E} & exportar el audio\\
 \key{Ctrl+W} & cerrar el archivo (el programa sigue abierto)\\

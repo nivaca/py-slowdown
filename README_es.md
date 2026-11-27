@@ -55,12 +55,25 @@ Lo que hace
 - Oye una parte de la mezcla (Oír): un canal, los dos en uno, la mezcla sin
   su centro (donde suelen estar la voz y el solo), solo los graves, o todo
   menos los graves.
-- Repite una selección sin fin y sin pausa (Mayús+arrastrar sobre la
+- Repite una selección sin fin y sin pausa (arrastrando sobre la
   forma de onda, o I y O, y luego L): el final del pasaje entra en su
   principio con un fundido breve, a cualquier velocidad; sin nada
   seleccionado, se repite el archivo entero. Las selecciones se
   pueden guardar como bucles con un nombre (Mayús+L), para repetirlas de
   nuevo con un doble clic.
+- Busca la nota de un pasaje (Notas > Buscar la nota, K): la nota principal
+  de la selección, como Do4, con los cents en que se aparta (−12 ¢) y su
+  frecuencia, escrita sobre la selección, con las otras notas que destacan
+  (las de un acorde). Si la altura de la reproducción está cambiada, dice
+  cómo se oye.
+- Un tono de referencia (Notas > Tono de referencia, R), que suena con la
+  grabación o solo, para hallar una nota en el instrumento, afinarlo con la
+  grabación o sostener un bordón bajo un pasaje. En el panel Notas: una
+  perilla para su nota (de Do1 a Do7; [ y ] la mueven un semitono), otra
+  para sus cents y otra para su volumen; la nota sola o con su quinta, su
+  octava, un acorde mayor o menor; un sonido puro, suave o brillante. Tono
+  en la nota encontrada lo pone en la nota recién hallada, como se oye. La
+  afinación (La4 = 440 Hz, o de 415 a 446) sirve para ambos.
 - Cuenta antes de tocar, como un metrónomo (C): se eligen cuántos golpes
   y el tempo, que puede seguir la velocidad; el tempo se puede medir
   marcando el pulso (T). Con el primer pulso de la grabación marcado
@@ -111,13 +124,16 @@ Teclado
 | Altura original                   | Mayús+N                          |
 | Deshacer los cambios del sonido   | Ctrl+Mayús+N                     |
 | Repetir la selección              | L                                |
-| Seleccionar                       | Mayús+arrastrar, o I y O         |
+| Seleccionar                       | Arrastrar, o I y O               |
 | Quitar la selección               | Esc                              |
 | Seleccionar el archivo entero     | Ctrl+A                           |
 | Guardar la selección como bucle   | Mayús+L                          |
 | Contar antes de tocar             | C                                |
 | Marcar el tempo (con el pulso)    | T                                |
 | El primer pulso está aquí         | Mayús+C                          |
+| Buscar la nota de la selección    | K                                |
+| Encender / apagar el tono         | R                                |
+| Tono un semitono abajo / arriba   | [ / ]                            |
 | Abrir un archivo                  | Ctrl+O                           |
 | Cerrar el archivo (sigue abierto) | Ctrl+W                           |
 | Salir                             | Alt+F4, Ctrl+Q                   |

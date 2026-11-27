@@ -5,6 +5,26 @@ AppImage, el paquete de Debian, el RPM, el wheel y el código fuente, están en
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) y
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Sin publicar
+
+Seleccionar arrastrando, la nota de un pasaje y un tono de referencia.
+
+- Arrastrar sobre la forma de onda selecciona, como lo hacía (y lo sigue
+  haciendo) Mayús+arrastrar. Un clic sin arrastrar lleva la posición allí,
+  como antes; arrastrar ya no mueve la posición.
+- Notas > Buscar la nota (K): la nota principal de la selección (o de los
+  dos segundos desde la posición), con sus cents y su frecuencia, escrita
+  sobre la selección y en un panel nuevo, Notas, con las otras notas que
+  destacan. Se halla sumando, para cada fundamental posible entre Mi1 y
+  Do7, lo que el espectro promediado tiene en sus armónicos.
+- Notas > Tono de referencia (R): un tono que suena con la grabación o
+  solo, en pausa o tocando, con su propio volumen. En el panel Notas: su
+  nota y sus cents en perillas, un acorde sobre ella (la nota sola, con su
+  quinta, con su octava, mayor, menor) y su sonido (puro, suave,
+  brillante). [ y ] lo mueven un semitono; Tono en la nota encontrada lo
+  pone en la nota recién hallada, como se oye con la altura cambiada.
+  Notas > Afinación fija el La4 (de 415 a 446 Hz) para ambos.
+
 ## 1.8.0 — 2026-11-26
 
 Un menú Archivo más corto.

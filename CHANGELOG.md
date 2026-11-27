@@ -5,6 +5,26 @@ Debian package, the RPM, the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-slowdown/releases) and
 [GitHub](https://github.com/nivaca/py-slowdown/releases).
 
+## Unreleased
+
+Selecting by dragging, the note of a passage, and a reference tone.
+
+- Dragging on the waveform selects, as Shift+drag did (and still does). A
+  click without dragging takes the position there, as before; dragging no
+  longer moves the position along.
+- Notes > Find the note (K): the main note of the selection (or of the two
+  seconds from the position), with its cents and its frequency, written on
+  the selection and in a new panel Notes, with the other notes that stand
+  out. It is found by adding up, for each possible fundamental from E1 to
+  C7, what the averaged spectrum has at its harmonics.
+- Notes > Reference tone (R): a tone that sounds with the recording or
+  alone, paused or playing, with its own volume. In the panel Notes: its
+  note and its cents on knobs, a chord on it (the note alone, with its
+  fifth, with its octave, major, minor), and its sound (pure, soft,
+  bright). [ and ] move it a semitone; Tone on the note found puts it on
+  the note just found, as it is heard with the pitch moved. Notes > Tuning
+  sets A4 (415 to 446 Hz) for both.
+
 ## 1.8.0 — 2026-11-26
 
 A shorter File menu.
