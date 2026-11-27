@@ -85,6 +85,9 @@ sudo dnf install rpm-build rpm-sign rpmdevtools python3-devel pyproject-rpm-macr
 
 `rpmbuild` checks the build dependencies of the spec, and `%check` runs the
 whole test suite on the installed package, so they must be installed here.
+It runs it as `tools/test.py` does, each test file in a process of its own,
+as many at once as the build may use (`RPM_BUILD_NCPUS` lowers it): the
+whole RPM is built in under a minute.
 (Where RPM Fusion's `ffmpeg` is installed, it provides `/usr/bin/ffmpeg`
 instead of `ffmpeg-free`.)
 

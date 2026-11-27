@@ -83,9 +83,11 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/io.github.nivaca.py-s
 export QT_QPA_PLATFORM=offscreen
 %pyproject_check_import
 # The whole test suite, on the installed package, with no settings of the
-# builder's and the window drawn offscreen.
+# builder's and the window drawn offscreen: each test file in a pytest of its
+# own, as many at once as the build may use (tools/test.py), and not all of
+# them one after the other in a single pytest.
 export HOME="$PWD/check-home"
-%pytest -q tests
+%{py3_test_envvars} %{python3} tools/test.py -j %{_smp_build_ncpus}
 %{py3_test_envvars} %{buildroot}%{_bindir}/py-slowdown --version | grep -q '%{version}'
 
 %files -f %{pyproject_files}

@@ -10,7 +10,8 @@ configuración propia que cada prueba ya tiene (conftest.py) y su pantalla virtu
 Los NOMBRE eligen qué correr: un archivo (test_findbar), un patrón (test_*bar*) o una carpeta (pages). Al
 final aparecen los archivos que fallaron, con su salida, y los totales; -v muestra además cada archivo a medida
 que termina. El código de salida es 1 si falló alguna prueba. (uv run pytest las corre una tras otra, como
-antes, y así las corren la publicación y el %check del RPM.)
+antes.) Así las corren también la publicación y el %check del RPM, este con el Python del sistema y el paquete
+ya instalado en su raíz de construcción.
 """
 
 from __future__ import annotations

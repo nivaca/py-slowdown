@@ -924,7 +924,8 @@ Testing
 -------
 
 The program has 262 tests (`tests/`), which `tools/test.py` runs at once,
-each file in a process of its own, in a few seconds. They read the five
+each file in a process of its own, in a few seconds; the `%check` of the
+RPM runs them the same way, with Fedora's Python, on the installed package. They read the five
 main kinds of files (WAV, FLAC, MP3, AAC and Opus), made by the tests
 themselves, with PyAV and with the ffmpeg program, and check that the
 decoded samples are the written ones, also when a file is longer than it
